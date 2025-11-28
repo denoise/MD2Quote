@@ -3,13 +3,14 @@ import re
 import yaml
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox, 
                              QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog,
-                             QVBoxLayout, QHBoxLayout, QToolButton, QFrame)
+                             QVBoxLayout, QHBoxLayout, QToolButton, QFrame, QSizePolicy)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtCore import Qt, QTimer, QDir
 
 from .editor import EditorWidget
 from .preview import PreviewWidget
 from .header import HeaderWidget
+from .config_dialog import ConfigDialog
 from .styles import get_stylesheet, COLORS
 from ..core.parser import MarkdownParser
 from ..core.renderer import TemplateRenderer
@@ -147,8 +148,19 @@ class MainWindow(QMainWindow):
         export_action.setShortcut("Ctrl+E")
         export_action.setToolTip("Export to PDF (⌘E)")
         export_action.triggered.connect(self.export_pdf_dialog)
-        # Style the export button differently
         toolbar.addAction(export_action)
+
+        # Spacer to push Settings to the right
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        toolbar.addWidget(spacer)
+
+        # Settings
+        settings_action = QAction("⚙ Settings", self)
+        settings_action.setShortcut("Ctrl+,")
+        settings_action.setToolTip("Open Configuration (⌘,)")
+        settings_action.triggered.connect(self.open_settings)
+        toolbar.addAction(settings_action)
 
     def update_quote_types(self):
         quote_types = config.get('quote_types', {})
@@ -406,3 +418,22 @@ class MainWindow(QMainWindow):
                 self.statusbar.showMessage(f"Export error: {str(e)}")
                 QMessageBox.critical(self, "Error", f"Export failed: {e}")
                 print(f"Export Error: {e}")
+
+    def open_settings(self):
+        """Opens the configuration dialog."""
+        dialog = ConfigDialog(config, self)
+        dialog.configSaved.connect(self.on_config_saved)
+        dialog.exec()
+
+    def on_config_saved(self):
+        """Called when configuration is saved."""
+        # Reload the config
+        config._ensure_config_exists()
+        config.config = config._load_config()
+        
+        # Update quote types in toolbar
+        self.update_quote_types()
+        
+        # Refresh preview with new settings
+        self.refresh_preview()
+        self.statusbar.showMessage("Configuration updated")
