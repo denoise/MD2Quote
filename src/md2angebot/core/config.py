@@ -58,6 +58,29 @@ class ConfigLoader:
             if 'presets' not in data:
                  return self._create_default_structure()
                  
+            # Backfill missing keys (like layout/snippets) in existing presets
+            updated = False
+            presets = data.get('presets', {})
+            for key, preset in presets.items():
+                empty = self._get_empty_preset("temp")
+                
+                if 'layout' not in preset:
+                    preset['layout'] = empty['layout']
+                    updated = True
+                    
+                if 'snippets' not in preset:
+                    preset['snippets'] = empty['snippets']
+                    updated = True
+                    
+            if updated:
+                print("Backfilled missing config keys (layout/snippets)")
+                # Save the updated config
+                try:
+                     with open(self.config_path, 'w', encoding='utf-8') as f:
+                        yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+                except Exception as e:
+                    print(f"Error saving backfilled config: {e}")
+
             return data
         except Exception as e:
             print(f"Error loading config: {e}")
@@ -86,6 +109,16 @@ class ConfigLoader:
             'contact': {},
             'legal': {},
             'bank': {},
+            'layout': {
+                'template': 'modern-split',
+                'page_margins': [20, 20, 20, 20]
+            },
+            'snippets': {
+                'intro_text': '',
+                'terms': '',
+                'signature_block': True,
+                'custom_footer': ''
+            },
             'defaults': {
                 'currency': 'EUR',
                 'tax_rate': 19,
@@ -135,6 +168,13 @@ class ConfigLoader:
             if section in old_data:
                 preset1[section] = old_data[section]
         
+        # Ensure new keys exist even if they weren't in old_data
+        empty = self._get_empty_preset("temp")
+        if 'layout' not in preset1:
+             preset1['layout'] = empty['layout']
+        if 'snippets' not in preset1:
+             preset1['snippets'] = empty['snippets']
+             
         preset1['name'] = old_data.get('company', {}).get('name', 'Migrated Profile')
         
         # Save the migrated config immediately

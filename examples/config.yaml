@@ -47,6 +47,19 @@ presets:
       bank_name: "ABN AMRO"
 
     # ==========================================
+    # LAYOUT & SNIPPETS
+    # ==========================================
+    layout:
+      template: "modern-split"
+      page_margins: [20, 20, 20, 20]
+      
+    snippets:
+      intro_text: "Thank you for your interest in my services."
+      terms: "Payment is due within 14 days of invoice date."
+      signature_block: true
+      custom_footer: ""
+
+    # ==========================================
     # DEFAULTS
     # ==========================================
     defaults:
@@ -124,6 +137,16 @@ presets:
       bic: "COBADEFFXXX"
       bank_name: "Commerzbank"
 
+    layout:
+      template: "elegant-centered"
+      page_margins: [25, 25, 25, 25]
+      
+    snippets:
+      intro_text: "It would be an honor to capture these moments for you."
+      terms: "A 50% deposit is required to secure the date."
+      signature_block: true
+      custom_footer: "Member of Professional Photographers Association"
+
     defaults:
       currency: "EUR"
       tax_rate: 19
@@ -186,6 +209,16 @@ presets:
       iban: "GB82 WEST 1234 5698 7654 32"
       bic: "WESTGB2L"
       bank_name: "NatWest"
+
+    layout:
+      template: "minimal-sidebar"
+      page_margins: [15, 15, 15, 15]
+      
+    snippets:
+      intro_text: "Please find below our proposal for the discussed engagement."
+      terms: "Standard consulting terms and conditions apply."
+      signature_block: true
+      custom_footer: "Confidential & Proprietary"
 
     defaults:
       currency: "GBP"
@@ -250,6 +283,16 @@ presets:
       bic: "RABONL2U"
       bank_name: "Rabobank"
 
+    layout:
+      template: "bold-stamp"
+      page_margins: [20, 20, 20, 20]
+      
+    snippets:
+      intro_text: "Let's make something amazing together!"
+      terms: "Creative rights transfer upon full payment."
+      signature_block: false
+      custom_footer: "Designed in Amsterdam with ❤️"
+
     defaults:
       currency: "EUR"
       tax_rate: 21
@@ -312,6 +355,16 @@ presets:
       iban: "BE68 5390 0754 7034"
       bic: "KREDBEBB"
       bank_name: "KBC Bank"
+
+    layout:
+      template: "classic-letterhead"
+      page_margins: [25, 20, 20, 20]
+      
+    snippets:
+      intro_text: "We appreciate the opportunity to quote for this project."
+      terms: "Valid for 30 days. Subject to our General Terms of Service."
+      signature_block: true
+      custom_footer: "Registered in Brussels under number BE0123456789"
 
     defaults:
       currency: "EUR"

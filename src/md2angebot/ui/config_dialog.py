@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox,
     QPushButton, QFileDialog, QScrollArea, QFrame, QGridLayout,
     QGroupBox, QColorDialog, QMessageBox, QSizePolicy, QListWidget,
-    QListWidgetItem, QInputDialog, QButtonGroup
+    QListWidgetItem, QInputDialog, QButtonGroup, QPlainTextEdit, QCheckBox
 )
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -289,6 +289,7 @@ class ConfigDialog(QDialog):
         self.tabs.addTab(self._create_company_tab(), "Company")
         self.tabs.addTab(self._create_contact_tab(), "Contact")
         self.tabs.addTab(self._create_legal_tab(), "Legal & Bank")
+        self.tabs.addTab(self._create_layout_tab(), "Layout & Snippets")
         self.tabs.addTab(self._create_defaults_tab(), "Defaults")
         self.tabs.addTab(self._create_typography_tab(), "Typography")
         self.tabs.addTab(self._create_colors_tab(), "Colors")
@@ -434,6 +435,73 @@ class ConfigDialog(QDialog):
         layout.addStretch()
         return scroll
     
+    def _create_layout_tab(self) -> QWidget:
+        scroll, layout = self._create_scrollable_tab()
+        
+        # Template Selection
+        layout.addWidget(SectionHeader("Layout Template"))
+        
+        self.layout_template = QComboBox()
+        self.layout_template.addItem("Modern Split (Default)", "modern-split")
+        self.layout_template.addItem("Elegant Centered (Photography)", "elegant-centered")
+        self.layout_template.addItem("Minimal Sidebar (Consulting)", "minimal-sidebar")
+        self.layout_template.addItem("Bold Stamp (Creative)", "bold-stamp")
+        self.layout_template.addItem("Classic Letterhead (Business)", "classic-letterhead")
+        layout.addWidget(FormRow("Template", self.layout_template))
+        
+        # Margins
+        layout.addWidget(SectionHeader("Page Margins (mm)"))
+        
+        margins_layout = QHBoxLayout()
+        margins_layout.setSpacing(10)
+        
+        self.margin_top = QSpinBox()
+        self.margin_top.setRange(0, 100)
+        self.margin_top.setPrefix("T: ")
+        margins_layout.addWidget(self.margin_top)
+        
+        self.margin_right = QSpinBox()
+        self.margin_right.setRange(0, 100)
+        self.margin_right.setPrefix("R: ")
+        margins_layout.addWidget(self.margin_right)
+        
+        self.margin_bottom = QSpinBox()
+        self.margin_bottom.setRange(0, 100)
+        self.margin_bottom.setPrefix("B: ")
+        margins_layout.addWidget(self.margin_bottom)
+        
+        self.margin_left = QSpinBox()
+        self.margin_left.setRange(0, 100)
+        self.margin_left.setPrefix("L: ")
+        margins_layout.addWidget(self.margin_left)
+        
+        layout.addLayout(margins_layout)
+        
+        # Snippets
+        layout.addWidget(SectionHeader("Content Snippets"))
+        
+        self.snippet_intro = QPlainTextEdit()
+        self.snippet_intro.setPlaceholderText("Introductory text before the line items...")
+        self.snippet_intro.setFixedHeight(60)
+        layout.addWidget(QLabel("Intro Text"))
+        layout.addWidget(self.snippet_intro)
+        
+        self.snippet_terms = QPlainTextEdit()
+        self.snippet_terms.setPlaceholderText("Payment terms, conditions, validity...")
+        self.snippet_terms.setFixedHeight(60)
+        layout.addWidget(QLabel("Terms & Conditions"))
+        layout.addWidget(self.snippet_terms)
+        
+        self.snippet_footer = QLineEdit()
+        self.snippet_footer.setPlaceholderText("Extra text for page footer (e.g. page number override or small print)")
+        layout.addWidget(FormRow("Custom Footer", self.snippet_footer))
+        
+        self.snippet_signature = QCheckBox("Show Signature Block")
+        layout.addWidget(self.snippet_signature)
+        
+        layout.addStretch()
+        return scroll
+
     def _create_defaults_tab(self) -> QWidget:
         scroll, layout = self._create_scrollable_tab()
         
@@ -670,6 +738,23 @@ class ConfigDialog(QDialog):
             'chamber_of_commerce': self.legal_kvk.text(),
         }
         
+        preset['layout'] = {
+            'template': self.layout_template.currentData(),
+            'page_margins': [
+                self.margin_top.value(),
+                self.margin_right.value(),
+                self.margin_bottom.value(),
+                self.margin_left.value()
+            ]
+        }
+        
+        preset['snippets'] = {
+            'intro_text': self.snippet_intro.toPlainText(),
+            'terms': self.snippet_terms.toPlainText(),
+            'custom_footer': self.snippet_footer.text(),
+            'signature_block': self.snippet_signature.isChecked()
+        }
+
         preset['bank'] = {
             'holder': self.bank_holder.text(),
             'iban': self.bank_iban.text(),
@@ -750,6 +835,27 @@ class ConfigDialog(QDialog):
         legal = preset.get('legal', {})
         self.legal_tax_id.setText(legal.get('tax_id', ''))
         self.legal_kvk.setText(legal.get('chamber_of_commerce', ''))
+        
+        # Layout
+        layout_config = preset.get('layout', {})
+        template = layout_config.get('template', 'modern-split')
+        idx = self.layout_template.findData(template)
+        if idx >= 0:
+            self.layout_template.setCurrentIndex(idx)
+        
+        margins = layout_config.get('page_margins', [20, 20, 20, 20])
+        if len(margins) == 4:
+            self.margin_top.setValue(margins[0])
+            self.margin_right.setValue(margins[1])
+            self.margin_bottom.setValue(margins[2])
+            self.margin_left.setValue(margins[3])
+            
+        # Snippets
+        snippets = preset.get('snippets', {})
+        self.snippet_intro.setPlainText(snippets.get('intro_text', ''))
+        self.snippet_terms.setPlainText(snippets.get('terms', ''))
+        self.snippet_footer.setText(snippets.get('custom_footer', ''))
+        self.snippet_signature.setChecked(snippets.get('signature_block', True))
         
         # Bank
         bank = preset.get('bank', {})

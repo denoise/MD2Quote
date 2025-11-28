@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="{{ defaults.language }}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quotation {{ quotation.number }}</title>
+    <link href="https://fonts.googleapis.com/css2?family={{ typography.heading|replace(' ', '+') }}:wght@600&family={{ typography.body|replace(' ', '+') }}:wght@400&family={{ typography.mono|replace(' ', '+') }}&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{ colors.primary }};
+            --accent: {{ colors.accent }};
+            --text: {{ colors.text }};
+            --muted: {{ colors.muted }};
+            --border: {{ colors.border }};
+            --table-alt: {{ colors.table_alt }};
+            --font-heading: '{{ typography.heading }}', sans-serif;
+            --font-body: '{{ typography.body }}', sans-serif;
+            --font-mono: '{{ typography.mono }}', monospace;
+        }
+        {% include 'minimal-sidebar.css' %}
+    </style>
+</head>
+<body>
+    <aside>
+        {% if company.logo %}
+        <img src="{{ company.logo }}" alt="Logo" class="logo">
+        {% endif %}
+        <h1 class="company-name">{{ company.name }}</h1>
+        <p class="tagline">{{ company.tagline }}</p>
+
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Kontakt{% elif defaults.language == 'nl' %}Contact{% else %}Contact{% endif %}</h4>
+            <p>{{ contact.street }}</p>
+            <p>{{ contact.postal_code }} {{ contact.city }}</p>
+            <p>{{ contact.country }}</p>
+            <p>{{ contact.phone }}</p>
+            <p>{{ contact.email }}</p>
+            <p>{{ contact.website }}</p>
+        </div>
+
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Info{% elif defaults.language == 'nl' %}Info{% else %}Info{% endif %}</h4>
+            <p>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'nl' %}Datum{% else %}Date{% endif %}: <strong>{{ quotation.date }}</strong></p>
+            <p>{% if defaults.language == 'de' %}Gültig{% elif defaults.language == 'nl' %}Geldig{% else %}Valid{% endif %}: <strong>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'nl' %}dagen{% else %}days{% endif %}</strong></p>
+            <p>{% if defaults.language == 'de' %}Nr.{% elif defaults.language == 'nl' %}Nr.{% else %}No.{% endif %}: <strong>{{ quotation.number }}</strong></p>
+        </div>
+
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Bank{% elif defaults.language == 'nl' %}Bank{% else %}Bank{% endif %}</h4>
+            <p>{{ bank.bank_name }}</p>
+            <p style="font-size: 8pt">{{ bank.iban }}</p>
+            <p>{{ bank.bic }}</p>
+        </div>
+        
+        {% if snippets.custom_footer %}
+        <div class="sidebar-section" style="margin-top: auto;">
+            <p>{{ snippets.custom_footer }}</p>
+        </div>
+        {% endif %}
+    </aside>
+
+    <main>
+        <div class="quotation-title">
+            {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}
+        </div>
+
+        <div class="client-section">
+            <h3>{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'nl' %}Aan{% else %}Prepared For{% endif %}</h3>
+            <p><strong>{{ client.name }}</strong></p>
+            <p>{{ client.address }}</p>
+            <p>{{ client.email }}</p>
+        </div>
+
+        {% if snippets.intro_text %}
+        <div class="intro-text">{{ snippets.intro_text }}</div>
+        {% endif %}
+
+        {{ content | safe }}
+        
+        {% if snippets.terms %}
+        <div class="terms">
+            {{ snippets.terms }}
+        </div>
+        {% endif %}
+        
+        {% if snippets.signature_block %}
+        <div class="signature-block">
+            <div class="signature-line"></div>
+            <div class="signature-label">{{ company.name }}</div>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>
+

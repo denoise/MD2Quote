@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="{{ defaults.language }}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quotation {{ quotation.number }}</title>
+    <link href="https://fonts.googleapis.com/css2?family={{ typography.heading|replace(' ', '+') }}:wght@700&family={{ typography.body|replace(' ', '+') }}:wght@400;700&family={{ typography.mono|replace(' ', '+') }}&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{ colors.primary }};
+            --accent: {{ colors.accent }};
+            --text: {{ colors.text }};
+            --muted: {{ colors.muted }};
+            --border: {{ colors.border }};
+            --table-alt: {{ colors.table_alt }};
+            --font-heading: '{{ typography.heading }}', sans-serif;
+            --font-body: '{{ typography.body }}', sans-serif;
+            --font-mono: '{{ typography.mono }}', monospace;
+        }
+        {% include 'classic-letterhead.css' %}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            {% if company.logo %}
+            <img src="{{ company.logo }}" alt="Logo" class="logo">
+            {% endif %}
+            <div>
+                <h1 class="company-name">{{ company.name }}</h1>
+                {% if company.tagline %}
+                <div style="font-size: 9pt; color: var(--muted);">{{ company.tagline }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="header-right">
+            <p><strong>{{ company.name }}</strong></p>
+            <p>{{ contact.street }}</p>
+            <p>{{ contact.postal_code }} {{ contact.city }}</p>
+            <p>{{ contact.country }}</p>
+            <p>{{ contact.phone }}</p>
+            <p>{{ contact.email }}</p>
+        </div>
+    </header>
+
+    <div class="doc-title">
+        <h2>{% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}</h2>
+    </div>
+
+    <div class="meta-grid">
+        <div class="client-address">
+            <p style="font-size: 9pt; color: var(--muted); text-transform: uppercase; margin-bottom: 5px;">
+                {% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'nl' %}Aan{% else %}To{% endif %}
+            </p>
+            <p><strong>{{ client.name }}</strong></p>
+            <p>{{ client.address }}</p>
+            <p>{{ client.email }}</p>
+        </div>
+
+        <div class="meta-data">
+            <table class="meta-table">
+                <tr>
+                    <td>{% if defaults.language == 'de' %}Nummer{% elif defaults.language == 'nl' %}Nummer{% else %}Number{% endif %}</td>
+                    <td>{{ quotation.number }}</td>
+                </tr>
+                <tr>
+                    <td>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'nl' %}Datum{% else %}Date{% endif %}</td>
+                    <td>{{ quotation.date }}</td>
+                </tr>
+                <tr>
+                    <td>{% if defaults.language == 'de' %}Gültig bis{% elif defaults.language == 'nl' %}Geldig tot{% else %}Valid until{% endif %}</td>
+                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'nl' %}dagen{% else %}days{% endif %}</td>
+                </tr>
+                {% if defaults.language == 'de' %}
+                <tr>
+                    <td>Kunden-Nr.</td>
+                    <td>-</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <main>
+        {% if snippets.intro_text %}
+        <div class="intro-text">{{ snippets.intro_text }}</div>
+        {% endif %}
+
+        {{ content | safe }}
+        
+        {% if snippets.terms %}
+        <div class="terms">
+            <h4>{% if defaults.language == 'de' %}Zahlungsbedingungen{% elif defaults.language == 'nl' %}Betalingsvoorwaarden{% else %}Payment Terms{% endif %}</h4>
+            <p>{{ snippets.terms }}</p>
+        </div>
+        {% endif %}
+        
+        {% if snippets.signature_block %}
+        <div class="signature-block">
+            <div class="signature-row">
+                <div class="sig-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">{% if defaults.language == 'de' %}Unterschrift{% elif defaults.language == 'nl' %}Handtekening{% else %}Signature{% endif %} ({{ company.name }})</div>
+                </div>
+                <div class="sig-box">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">{% if defaults.language == 'de' %}Unterschrift{% elif defaults.language == 'nl' %}Handtekening{% else %}Signature{% endif %} ({{ client.name }})</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p>
+            <strong>{{ company.name }}</strong> &bull; 
+            {{ bank.bank_name }} &bull; IBAN: {{ bank.iban }} &bull; BIC: {{ bank.bic }}
+        </p>
+        <p>
+            {% if defaults.language == 'de' %}Geschäftsführer{% elif defaults.language == 'nl' %}Eigenaar{% else %}Owner{% endif %}: {{ bank.holder }} &bull; 
+            {% if defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'nl' %}BTW{% else %}VAT ID{% endif %}: {{ legal.tax_id }} &bull; 
+            KvK: {{ legal.chamber_of_commerce }}
+        </p>
+    </footer>
+</body>
+</html>
+

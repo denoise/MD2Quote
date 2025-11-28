@@ -22,32 +22,58 @@ class TemplateRenderer:
     def render(self, template_name: str, context: dict, preset_config: dict = None) -> str:
         """
         Renders a template with the given context.
-        If template_name is not found, falls back to 'base.html'.
+        If template_name is 'base' (default), tries to use the preset's configured template.
         
         Args:
             template_name: Name of the template file (without extension)
             context: Data context for rendering
             preset_config: Optional preset configuration to merge
         """
-        try:
-            template = self.env.get_template(f"{template_name}.html")
-        except:
-            # Fallback if specific template doesn't exist
-            print(f"Template {template_name}.html not found, using base.html")
-            template = self.env.get_template("base.html")
-            
-        # Determine base configuration
-        # If preset_config is passed, use it. 
-        # If not, and context doesn't have company info, try to use active preset.
-        # We avoid merging config.config directly as it now has a different structure.
-        
+        # Determine base configuration first to check for template preference
         base_config = {}
         if preset_config:
              base_config = preset_config
         elif 'company' not in context:
              base_config = config.get_active_preset()
-             
+
+        # Check if we should use a preset-specific template
+        # Only override if template_name is the default "base"
+        if template_name == "base" and 'layout' in base_config:
+            preset_template = base_config['layout'].get('template')
+            if preset_template:
+                template_name = preset_template
+
+        try:
+            template = self.env.get_template(f"{template_name}.html")
+        except Exception as e:
+            print(f"Template {template_name}.html not found ({e}), attempting fallback...")
+            try:
+                # Try modern-split as the new default
+                template = self.env.get_template("modern-split.html")
+            except:
+                # Last resort, try base.html if it still exists
+                print("modern-split.html not found, trying base.html")
+                template = self.env.get_template("base.html")
+            
+        # Ensure full_context has layout and snippets to prevent "undefined" errors in template
         full_context = {**base_config, **context}
+        
+        # Default fallback for layout if missing
+        if 'layout' not in full_context:
+            full_context['layout'] = {
+                'template': 'modern-split',
+                'page_margins': [20, 20, 20, 20]
+            }
+        
+        # Default fallback for snippets if missing
+        if 'snippets' not in full_context:
+            full_context['snippets'] = {
+                'intro_text': '',
+                'terms': '',
+                'signature_block': True,
+                'custom_footer': ''
+            }
+            
         return template.render(**full_context)
 
     def _format_currency(self, value, currency="EUR"):

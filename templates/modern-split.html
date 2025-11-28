@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="{{ defaults.language }}">
+<head>
+    <meta charset="UTF-8">
+    <title>Quotation {{ quotation.number }}</title>
+    <link href="https://fonts.googleapis.com/css2?family={{ typography.heading|replace(' ', '+') }}:wght@600&family={{ typography.body|replace(' ', '+') }}:wght@400&family={{ typography.mono|replace(' ', '+') }}&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{ colors.primary }};
+            --accent: {{ colors.accent }};
+            --text: {{ colors.text }};
+            --muted: {{ colors.muted }};
+            --border: {{ colors.border }};
+            --table-alt: {{ colors.table_alt }};
+            --font-heading: '{{ typography.heading }}', sans-serif;
+            --font-body: '{{ typography.body }}', sans-serif;
+            --font-mono: '{{ typography.mono }}', monospace;
+        }
+        {% include 'modern-split.css' %}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="company-info">
+            {% if company.logo %}
+            <img src="{{ company.logo }}" alt="Logo" class="logo">
+            {% endif %}
+            <h1>{{ company.name }}</h1>
+            <p class="tagline">{{ company.tagline }}</p>
+        </div>
+        <div class="quotation-meta">
+            <h2>
+                {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}
+            </h2>
+            <table>
+                {% if quotation.number %}
+                <tr>
+                    <td>{% if defaults.language == 'de' %}Nr.{% elif defaults.language == 'nl' %}Nr.{% else %}No.{% endif %}</td>
+                    <td>{{ quotation.number }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'nl' %}Datum{% else %}Date{% endif %}</td>
+                    <td>{{ quotation.date }}</td>
+                </tr>
+                <tr>
+                    <td>{% if defaults.language == 'de' %}Gültig bis{% elif defaults.language == 'nl' %}Geldig tot{% else %}Valid until{% endif %}</td>
+                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'nl' %}dagen{% else %}days{% endif %}</td>
+                </tr>
+            </table>
+        </div>
+    </header>
+
+    <section class="client-info">
+        <h3>{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'nl' %}Aan{% else %}To{% endif %}</h3>
+        <p><strong>{{ client.name }}</strong></p>
+        <p>{{ client.address }}</p>
+        <p>{{ client.email }}</p>
+    </section>
+
+    <main>
+        {% if snippets.intro_text %}
+        <div class="intro-text">{{ snippets.intro_text }}</div>
+        {% endif %}
+
+        {{ content | safe }}
+        
+        {% if snippets.terms %}
+        <div class="terms">
+            <strong>{% if defaults.language == 'de' %}Bedingungen{% elif defaults.language == 'nl' %}Voorwaarden{% else %}Terms{% endif %}:</strong> {{ snippets.terms }}
+        </div>
+        {% endif %}
+        
+        {% if snippets.signature_block %}
+        <div class="signature-block">
+            <div class="signature-line">
+                {{ company.name }}
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer>
+        <div class="bank-details">
+            <h4>{% if defaults.language == 'de' %}Bankverbindung{% elif defaults.language == 'nl' %}Bankgegevens{% else %}Bank Details{% endif %}</h4>
+            <p>{{ bank.bank_name }} | IBAN: {{ bank.iban }} | BIC: {{ bank.bic }}</p>
+            <p>{% if defaults.language == 'de' %}Inhaber{% elif defaults.language == 'nl' %}Houder{% else %}Holder{% endif %}: {{ bank.holder }}</p>
+        </div>
+        <div class="company-footer">
+            <p>{{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}, {{ contact.country }}</p>
+            <p>{{ contact.email }} | {{ contact.website }}</p>
+            <p>{% if defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'nl' %}BTW Nr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }} | KvK: {{ legal.chamber_of_commerce }}</p>
+        </div>
+    </footer>
+</body>
+</html>
+

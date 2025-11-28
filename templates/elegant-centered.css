@@ -1,0 +1,180 @@
+@page {
+    size: A4;
+    margin: {{ layout.page_margins[0] }}mm {{ layout.page_margins[1] }}mm {{ layout.page_margins[2] }}mm {{ layout.page_margins[3] }}mm;
+    @bottom-center {
+        content: "- " counter(page) " -";
+        font-family: var(--font-heading);
+        font-size: 10pt;
+        color: var(--muted);
+    }
+    {% if snippets.custom_footer %}
+    @bottom-left {
+        content: "{{ snippets.custom_footer }}";
+        font-family: var(--font-body);
+        font-size: 8pt;
+        color: var(--muted);
+    }
+    {% endif %}
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: {{ typography.sizes.body }}pt;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+h1 { font-size: {{ typography.sizes.heading1 }}pt; margin: 1em 0 0.5em; }
+h2 { font-size: {{ typography.sizes.heading2 }}pt; border-bottom: none; }
+h3 { font-size: 12pt; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 60px;
+    position: relative;
+}
+
+.logo {
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.company-name {
+    font-size: {{ typography.sizes.company_name }}pt;
+    font-family: var(--font-heading);
+    color: var(--primary);
+    margin: 0;
+    letter-spacing: 3px;
+}
+
+.tagline {
+    font-family: var(--font-body);
+    font-style: italic;
+    color: var(--accent);
+    margin-top: 5px;
+    font-size: {{ typography.sizes.small }}pt;
+}
+
+.meta-corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    text-align: right;
+    font-size: 9pt;
+    color: var(--muted);
+}
+
+.meta-corner span {
+    display: block;
+}
+
+.meta-corner .number {
+    font-family: var(--font-mono);
+    color: var(--text);
+    font-weight: bold;
+}
+
+/* Client Info */
+.client-info {
+    margin: 0 auto 50px;
+    width: 80%;
+    text-align: center;
+}
+
+.client-info h3 {
+    text-align: center;
+    border: none;
+    font-size: 10pt;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.client-info p {
+    margin: 2px 0;
+    font-size: 12pt;
+}
+
+/* Content */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 40px 0;
+}
+
+th {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 8pt;
+    color: var(--muted);
+    border-bottom: 1px solid var(--primary);
+    padding: 10px;
+    text-align: left;
+    font-weight: normal;
+}
+
+td {
+    padding: 15px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+
+th:last-child, td:last-child,
+th:nth-last-child(2), td:nth-last-child(2),
+th:nth-last-child(3), td:nth-last-child(3) {
+    text-align: right;
+    font-family: var(--font-mono);
+}
+
+/* Snippets */
+.intro-text {
+    text-align: center;
+    margin: 0 auto 30px;
+    width: 80%;
+    font-style: italic;
+    color: var(--text);
+}
+
+.terms {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 9pt;
+    color: var(--muted);
+}
+
+.signature-block {
+    margin-top: 60px;
+    display: flex;
+    justify-content: center;
+}
+
+.signature-line {
+    width: 250px;
+    border-top: 1px solid var(--muted);
+    text-align: center;
+    padding-top: 10px;
+    font-size: 9pt;
+    font-style: italic;
+}
+
+/* Footer */
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 8pt;
+    color: var(--muted);
+    line-height: 1.8;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+

@@ -1,17 +1,25 @@
 @page {
     size: A4;
-    margin: 20mm;
+    margin: {{ layout.page_margins[0] }}mm {{ layout.page_margins[1] }}mm {{ layout.page_margins[2] }}mm {{ layout.page_margins[3] }}mm;
     @bottom-right {
         content: "Page " counter(page) " of " counter(pages);
         font-family: var(--font-body);
         font-size: 9pt;
         color: var(--muted);
     }
+    {% if snippets.custom_footer %}
+    @bottom-left {
+        content: "{{ snippets.custom_footer }}";
+        font-family: var(--font-body);
+        font-size: 8pt;
+        color: var(--muted);
+    }
+    {% endif %}
 }
 
 body {
     font-family: var(--font-body);
-    font-size: 10pt;
+    font-size: {{ typography.sizes.body }}pt;
     color: var(--text);
     line-height: 1.5;
 }
@@ -23,8 +31,8 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0.5em;
 }
 
-h1 { font-size: 18pt; }
-h2 { font-size: 14pt; border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+h1 { font-size: {{ typography.sizes.heading1 }}pt; }
+h2 { font-size: {{ typography.sizes.heading2 }}pt; border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
 h3 { font-size: 12pt; }
 
 /* Header Layout */
@@ -45,12 +53,13 @@ header {
 
 .company-info h1 {
     margin: 0;
-    font-size: 24pt; /* User config override handled by logic if needed, but css var usage requires more setup */
+    font-size: {{ typography.sizes.company_name }}pt;
 }
 
 .tagline {
     color: var(--muted);
     margin: 0;
+    font-size: {{ typography.sizes.small }}pt;
 }
 
 .quotation-meta {
@@ -71,6 +80,7 @@ header {
 
 .quotation-meta td {
     padding: 2px 0;
+    font-size: {{ typography.sizes.body }}pt;
 }
 
 .quotation-meta td:first-child {
@@ -108,11 +118,13 @@ th {
     font-weight: 600;
     text-align: left;
     padding: 8px 12px;
+    font-size: {{ typography.sizes.body }}pt;
 }
 
 td {
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
+    font-size: {{ typography.sizes.body }}pt;
 }
 
 /* Alternating rows */
@@ -120,7 +132,7 @@ tr:nth-child(even) {
     background-color: var(--table-alt);
 }
 
-/* Align numeric columns (assuming last columns are numbers) */
+/* Align numeric columns */
 th:last-child, td:last-child,
 th:nth-last-child(2), td:nth-last-child(2),
 th:nth-last-child(3), td:nth-last-child(3) {
@@ -135,7 +147,7 @@ footer {
     width: 100%;
     border-top: 1px solid var(--border);
     padding-top: 20px;
-    font-size: 8pt;
+    font-size: {{ typography.sizes.small }}pt;
     color: var(--muted);
     display: flex;
     justify-content: space-between;
@@ -143,11 +155,38 @@ footer {
 
 .bank-details h4 {
     margin-top: 0;
-    font-size: 9pt;
+    font-size: {{ typography.sizes.small }}pt;
     color: var(--text);
 }
 
 .company-footer {
     text-align: right;
+}
+
+/* Snippets */
+.intro-text {
+    margin-bottom: 20px;
+}
+
+.terms {
+    margin-top: 30px;
+    font-size: {{ typography.sizes.small }}pt;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+}
+
+.signature-block {
+    margin-top: 50px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.signature-line {
+    width: 200px;
+    border-top: 1px solid var(--text);
+    text-align: center;
+    padding-top: 5px;
+    font-size: {{ typography.sizes.small }}pt;
 }
 
