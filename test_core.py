@@ -30,6 +30,15 @@ def test_pipeline():
     with open("examples/config.yaml", 'r') as f:
         config.config = yaml.safe_load(f)
         
+    # Test Logo Path Resolution
+    print("Testing Logo Path Resolution:")
+    code_logo = config.get_logo_path('code')
+    print(f"Code Logo: {code_logo}")
+    
+    # Verify it resolves to something absolute or at least non-empty
+    if not code_logo:
+        print("ERROR: Code logo not resolved!")
+        
     context = {
         **metadata,
         "content": html_body
@@ -46,4 +55,3 @@ def test_pipeline():
 
 if __name__ == "__main__":
     test_pipeline()
-

@@ -1,6 +1,6 @@
 import os
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox, 
-                             QToolBar, QStatusBar, QApplication)
+                             QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence
 from PyQt6.QtCore import Qt, QTimer, QDir
 
@@ -9,6 +9,7 @@ from .preview import PreviewWidget
 from ..core.parser import MarkdownParser
 from ..core.renderer import TemplateRenderer
 from ..core.pdf import PDFGenerator
+from ..core.config import config
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -24,6 +25,7 @@ class MainWindow(QMainWindow):
         # State
         self.current_file = None
         self.is_modified = False
+        self.current_quote_type = "code" # Default
 
         # UI Setup
         self._setup_ui()
@@ -40,6 +42,9 @@ class MainWindow(QMainWindow):
         
         # Initial empty state
         self.statusbar.showMessage("Ready")
+        
+        # Ask for quote type on startup
+        QTimer.singleShot(0, self.ask_quote_type)
 
     def _setup_ui(self):
         # Splitter
@@ -77,12 +82,92 @@ class MainWindow(QMainWindow):
         save_action.triggered.connect(self.save_file)
         toolbar.addAction(save_action)
 
+        # Separator
+        toolbar.addSeparator()
+
+        # Quote Type Selector
+        type_label = QLabel(" Type: ")
+        toolbar.addWidget(type_label)
+        
+        self.type_combo = QComboBox()
+        self.type_combo.setMinimumWidth(150)
+        self.update_quote_types()
+        self.type_combo.currentTextChanged.connect(self.on_quote_type_changed)
+        toolbar.addWidget(self.type_combo)
+
+        # Separator
+        toolbar.addSeparator()
+
         # Export PDF
         export_action = QAction("Export PDF", self)
         # Cmd+E is not a standard key, create manually
         export_action.setShortcut("Ctrl+E") 
         export_action.triggered.connect(self.export_pdf_dialog)
         toolbar.addAction(export_action)
+
+    def update_quote_types(self):
+        quote_types = config.get('quote_types', {})
+        self.type_combo.clear()
+        
+        if not quote_types:
+            # Default fallback if config is empty
+            self.type_combo.addItem("Code / Development", "code")
+        else:
+            for key, data in quote_types.items():
+                self.type_combo.addItem(data.get('name', key), key)
+                
+        # Set current selection
+        index = self.type_combo.findData(self.current_quote_type)
+        if index >= 0:
+            self.type_combo.setCurrentIndex(index)
+
+    def ask_quote_type(self):
+        """Shows a dialog to select the quote type on startup."""
+        quote_types = config.get('quote_types', {})
+        if not quote_types:
+            # If no types defined, stick to default or don't ask
+            return
+
+        items = [data.get('name', key) for key, data in quote_types.items()]
+        # Map names back to keys
+        name_to_key = {data.get('name', key): key for key, data in quote_types.items()}
+        
+        current_name = quote_types.get(self.current_quote_type, {}).get('name', self.current_quote_type)
+        if current_name not in items:
+            current_name = items[0] if items else ""
+            
+        # Find index of current default
+        try:
+            current_index = items.index(current_name)
+        except ValueError:
+            current_index = 0
+
+        item, ok = QInputDialog.getItem(self, "Select Quote Type", 
+                                        "Choose the type of quotation:", 
+                                        items, current_index, False)
+        
+        if ok and item:
+            selected_key = name_to_key.get(item)
+            if selected_key:
+                self.set_quote_type(selected_key)
+
+    def set_quote_type(self, quote_type):
+        self.current_quote_type = quote_type
+        # Update combo box without triggering signal loop if possible
+        index = self.type_combo.findData(quote_type)
+        if index >= 0:
+            self.type_combo.blockSignals(True)
+            self.type_combo.setCurrentIndex(index)
+            self.type_combo.blockSignals(False)
+        
+        self.refresh_preview()
+
+    def on_quote_type_changed(self, text):
+        # Get data (key) from current item
+        quote_type = self.type_combo.currentData()
+        if quote_type:
+            self.current_quote_type = quote_type
+            self.refresh_preview()
 
     def on_text_changed(self):
         self.is_modified = True
@@ -119,13 +204,33 @@ class MainWindow(QMainWindow):
                 context[key] = value
 
         context["content"] = html_body
+        
+        # --- Logo Override Logic ---
+        # Get base company config
+        base_company = config.get('company', {}).copy()
+        
+        # Merge company info from metadata if present
+        if 'company' in metadata:
+            if isinstance(metadata['company'], dict):
+                base_company.update(metadata['company'])
+        
+        # Resolve logo for current quote type
+        logo_path = config.get_logo_path(self.current_quote_type)
+        if logo_path:
+            base_company['logo'] = logo_path
+            
+        context['company'] = base_company
+        # ---------------------------
+        
         return context
 
     def refresh_preview(self):
         """Generates PDF in memory and updates preview."""
         content = self.editor.get_text()
-        if not content.strip():
-            return
+        # Allow preview even if empty? Maybe just clear it.
+        if not content and not content.strip():
+             # But we might want to see the header/footer
+             pass
 
         try:
             self.statusbar.showMessage("Rendering preview...")
@@ -151,7 +256,7 @@ class MainWindow(QMainWindow):
             
             # Load CSS
             css_files = []
-            base_css_path = config.templates_dir.parent / 'templates' / 'quotation.css' # This path logic in config/pdf need syncing
+            # base_css_path = config.templates_dir.parent / 'templates' / 'quotation.css' # This path logic in config/pdf need syncing
             # Use the logic from pdf.py, but let's just call the generator if we modify it to return bytes
             # For now, inline for simplicity of "in-memory"
             
@@ -160,7 +265,7 @@ class MainWindow(QMainWindow):
             pdf_bytes = self.pdf_generator.generate_bytes(full_html)
             
             self.preview.update_preview(pdf_bytes)
-            self.statusbar.showMessage("Preview updated")
+            self.statusbar.showMessage(f"Preview updated ({self.current_quote_type})")
             
         except Exception as e:
             self.statusbar.showMessage(f"Preview error: {str(e)}")
@@ -221,4 +326,3 @@ class MainWindow(QMainWindow):
                 self.statusbar.showMessage(f"Export error: {str(e)}")
                 QMessageBox.critical(self, "Error", f"Export failed: {e}")
                 print(f"Export Error: {e}")
-

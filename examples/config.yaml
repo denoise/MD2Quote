@@ -7,8 +7,19 @@
 company:
   name: "Jane Doe Creative"
   tagline: "Digital Solutions & Art"
-  # Path to your logo image. Can be absolute or relative to home (~).
-  logo: "~/Pictures/Logos/jane_doe_logo.png"
+  # Default logo. Can be absolute or relative to home (~).
+  logo: "assets/images/logo_code.svg"
+
+quote_types:
+  code:
+    name: "Software Development"
+    logo: "assets/images/logo_code.svg"
+  photography:
+    name: "Photography"
+    logo: "assets/images/logo_photography.svg" # Example
+  design:
+    name: "Design"
+    logo: "assets/images/logo_design.svg" # Example
 
 # ==========================================
 # CONTACT DETAILS
