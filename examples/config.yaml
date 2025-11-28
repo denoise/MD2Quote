@@ -5,13 +5,13 @@ active_preset: preset_1
 
 presets:
   preset_1:
-    name: "Software Development"
+    name: "Edgard Berendsen"
     
     # ==========================================
     # COMPANY INFORMATION
     # ==========================================
     company:
-      name: "Jane Doe Creative"
+      name: "Edgard Berendsen"
       tagline: "Digital Solutions & Art"
       # Default logo. Can be absolute or relative to home (~).
       logo: "assets/images/logo_code.svg"
@@ -25,8 +25,8 @@ presets:
       postal_code: "1012 AB"
       country: "Netherlands"
       phone: "+31 6 1234 5678"
-      email: "hello@janedoe.com"
-      website: "www.janedoe.com"
+      email: "hello@edgardberendsen.com"
+      website: "www.edgardberendsen.com"
 
     # ==========================================
     # LEGAL INFORMATION
@@ -41,7 +41,7 @@ presets:
     # BANKING DETAILS
     # ==========================================
     bank:
-      holder: "Jane Doe"
+      holder: "Edgard Berendsen"
       iban: "NL91 ABNA 0417 1643 00"
       bic: "ABNANL2A"
       bank_name: "ABN AMRO"
@@ -51,7 +51,7 @@ presets:
     # ==========================================
     defaults:
       currency: "EUR"      # Currency symbol or code
-      tax_rate: 19         # Default VAT percentage (Germany)
+      tax_rate: 21         # Default VAT percentage (Netherlands)
       payment_days: 14     # Default payment term in days
       language: "en"       # Interface and output language (en, nl, de)
 
@@ -63,7 +63,7 @@ presets:
     # Counter resets monthly if format contains {MM}
     quotation_number:
       enabled: true
-      format: "DEV-{YYYY}-{NNN}"    # Example: DEV-2025-001
+      format: "EB-{YYYY}-{NNN}"    # Example: EB-2025-001
       counter: 0
       last_reset_year: null
       last_reset_month: null
@@ -94,32 +94,35 @@ presets:
       border: "#dee2e6"       # Table borders, dividers
       table_alt: "#f8f9fa"    # Alternating table row background
 
+  # ============================================================================
+  # PRESET 2: Lens & Light Photography
+  # ============================================================================
   preset_2:
-    name: "Photography Studio"
+    name: "Lens & Light Photography"
     
     company:
-      name: "Jane Doe Photography"
-      tagline: "Capturing Moments"
-      logo: "assets/images/logo_code.svg" # Placeholder
+      name: "Lens & Light Photography"
+      tagline: "Capturing Your Story"
+      logo: "assets/images/logo_camera.svg"
 
     contact:
-      street: "Studio Lane 5"
+      street: "Kurfürstendamm 195"
       city: "Berlin"
-      postal_code: "10115"
+      postal_code: "10707"
       country: "Germany"
-      phone: "+49 30 1234567"
-      email: "photo@janedoe.com"
-      website: "photo.janedoe.com"
+      phone: "+49 30 8821 4455"
+      email: "studio@lensandlight.de"
+      website: "www.lensandlight.de"
 
     legal:
-      tax_id: "DE123456789"
+      tax_id: "DE298765432"
       chamber_of_commerce: ""
 
     bank:
-      holder: "Jane Doe Photography"
-      iban: "DE12 3456 7890 1234 56"
-      bic: "GENODED1BER"
-      bank_name: "Berliner Bank"
+      holder: "Lens & Light Photography GmbH"
+      iban: "DE89 3704 0044 0532 0130 00"
+      bic: "COBADEFFXXX"
+      bank_name: "Commerzbank"
 
     defaults:
       currency: "EUR"
@@ -127,7 +130,6 @@ presets:
       payment_days: 7
       language: "de"
 
-    # Different quotation format for photography (monthly reset)
     quotation_number:
       enabled: true
       format: "PHOTO-{YY}{MM}-{NN}"    # Example: PHOTO-2501-01
@@ -147,62 +149,199 @@ presets:
         small: 9
 
     colors:
-      primary: "#222222"
-      accent: "#d4a373"
-      background: "#fafafa"
-      text: "#333333"
-      muted: "#888888"
-      border: "#dddddd"
-      table_alt: "#f0f0f0"
+      primary: "#222222"        # Charcoal Black - Elegant headers
+      accent: "#d4a373"         # Warm Gold - Luxurious highlights
+      background: "#fafafa"     # Off-white - Soft background
+      text: "#333333"           # Dark Gray - Readable text
+      muted: "#888888"          # Medium Gray - Secondary text
+      border: "#cccccc"         # Light Gray - Subtle borders
+      table_alt: "#f0f0f0"      # Very Light Gray - Table rows
 
-  # Presets 3-5 can be defined similarly
+  # ============================================================================
+  # PRESET 3: Vertex Consulting Group
+  # ============================================================================
   preset_3:
-    name: "Consulting"
-    company: {}
-    contact: {}
-    legal: {}
-    bank: {}
-    defaults: {}
-    # Invoice style quotation format
+    name: "Vertex Consulting Group"
+    
+    company:
+      name: "Vertex Consulting Group"
+      tagline: "Strategic Excellence"
+      logo: "assets/images/logo_consulting.svg"
+
+    contact:
+      street: "Canary Wharf Tower, Level 32"
+      city: "London"
+      postal_code: "E14 5AB"
+      country: "United Kingdom"
+      phone: "+44 20 7946 0958"
+      email: "enquiries@vertexconsulting.co.uk"
+      website: "www.vertexconsulting.co.uk"
+
+    legal:
+      tax_id: "GB123456789"
+      chamber_of_commerce: "09876543"
+
+    bank:
+      holder: "Vertex Consulting Group Ltd"
+      iban: "GB82 WEST 1234 5698 7654 32"
+      bic: "WESTGB2L"
+      bank_name: "NatWest"
+
+    defaults:
+      currency: "GBP"
+      tax_rate: 20
+      payment_days: 30
+      language: "en"
+
     quotation_number:
       enabled: true
-      format: "INV-{YYYY}-{NNNN}"    # Example: INV-2025-0001
+      format: "VCG-{YYYY}-{NNNN}"    # Example: VCG-2025-0001
       counter: 0
       last_reset_year: null
       last_reset_month: null
-    typography: {}
-    colors: {}
 
+    typography:
+      heading: "Merriweather"
+      body: "Open Sans"
+      mono: "Fira Code"
+      sizes:
+        company_name: 22
+        heading1: 16
+        heading2: 13
+        body: 10
+        small: 8
+
+    colors:
+      primary: "#023e8a"        # Corporate Blue - Professional headers
+      accent: "#0077b6"         # Ocean Blue - Accent elements
+      background: "#ffffff"     # Pure White - Clean background
+      text: "#1d3557"           # Navy Blue - Authoritative text
+      muted: "#457b9d"          # Steel Blue - Secondary text
+      border: "#a8dadc"         # Light Teal - Soft borders
+      table_alt: "#f1faee"      # Mint Cream - Subtle table rows
+
+  # ============================================================================
+  # PRESET 4: Aurora Creative Studio
+  # ============================================================================
   preset_4:
-    name: "Freelance (No Numbers)"
-    company: {}
-    contact: {}
-    legal: {}
-    bank: {}
-    defaults: {}
-    # Quotation numbering disabled - manual entry only
+    name: "Aurora Creative Studio"
+    
+    company:
+      name: "Aurora Creative Studio"
+      tagline: ""
+      logo: "assets/images/logo_creative.svg"
+
+    contact:
+      street: "Prinsengracht 263"
+      city: "Amsterdam"
+      postal_code: "1016 GV"
+      country: "Netherlands"
+      phone: "+31 20 555 8899"
+      email: "hello@auroracreative.nl"
+      website: "www.auroracreative.nl"
+
+    legal:
+      tax_id: "NL862194701B01"
+      chamber_of_commerce: "81234567"
+
+    bank:
+      holder: "Aurora Creative Studio"
+      iban: "NL18 RABO 0123 4567 89"
+      bic: "RABONL2U"
+      bank_name: "Rabobank"
+
+    defaults:
+      currency: "EUR"
+      tax_rate: 21
+      payment_days: 14
+      language: "nl"
+
     quotation_number:
       enabled: false
       format: ""
       counter: 0
       last_reset_year: null
       last_reset_month: null
-    typography: {}
-    colors: {}
-  
+
+    typography:
+      heading: "Poppins"
+      body: "Nunito"
+      mono: "IBM Plex Mono"
+      sizes:
+        company_name: 26
+        heading1: 19
+        heading2: 15
+        body: 11
+        small: 9
+
+    colors:
+      primary: "#240046"        # Deep Purple - Bold headers
+      accent: "#9d4edd"         # Vibrant Purple - Creative highlights
+      background: "#fefefe"     # Almost White - Clean canvas
+      text: "#3c096c"           # Purple Black - Expressive text
+      muted: "#7b2cbf"          # Medium Purple - Secondary text
+      border: "#e0aaff"         # Light Lavender - Soft borders
+      table_alt: "#f8f0fc"      # Pale Lavender - Artistic table rows
+
+  # ============================================================================
+  # PRESET 5: Terra Global Solutions
+  # ============================================================================
   preset_5:
-    name: "International"
-    company: {}
-    contact: {}
-    legal: {}
-    bank: {}
-    defaults: {}
-    # Compact format with company prefix
+    name: "Terra Global Solutions"
+    
+    company:
+      name: "Terra Global Solutions"
+      tagline: "Worldwide Expertise, Local Touch"
+      logo: "assets/images/logo_global.svg"
+
+    contact:
+      street: "Rue de la Loi 200"
+      city: "Brussels"
+      postal_code: "1049"
+      country: "Belgium"
+      phone: "+32 2 555 7788"
+      email: "info@terraglobal.eu"
+      website: "www.terraglobal.eu"
+
+    legal:
+      tax_id: "BE0123456789"
+      chamber_of_commerce: "0876.543.210"
+
+    bank:
+      holder: "Terra Global Solutions BVBA"
+      iban: "BE68 5390 0754 7034"
+      bic: "KREDBEBB"
+      bank_name: "KBC Bank"
+
+    defaults:
+      currency: "EUR"
+      tax_rate: 21
+      payment_days: 21
+      language: "en"
+
     quotation_number:
       enabled: true
-      format: "{PREFIX}-{YY}-{NNN}"    # Example: INT-25-001
+      format: "{PREFIX}-{YY}-{NNN}"    # Example: TGS-25-001
       counter: 0
       last_reset_year: null
       last_reset_month: null
-    typography: {}
-    colors: {}
+
+    typography:
+      heading: "Raleway"
+      body: "Roboto"
+      mono: "Source Code Pro"
+      sizes:
+        company_name: 24
+        heading1: 18
+        heading2: 14
+        body: 10
+        small: 8
+
+    colors:
+      primary: "#1b4332"        # Forest Green - Natural authority
+      accent: "#40916c"         # Sage Green - Fresh highlights
+      background: "#ffffff"     # White - Universal background
+      text: "#2d6a4f"           # Deep Green - Grounded text
+      muted: "#52b788"          # Medium Green - Secondary text
+      border: "#95d5b2"         # Light Green - Organic borders
+      table_alt: "#d8f3dc"      # Pale Green - Natural table rows

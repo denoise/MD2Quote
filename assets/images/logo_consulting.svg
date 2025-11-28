@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Abstract Corporate Identicon for Consulting -->
+  <defs>
+    <linearGradient id="consult_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0077b6"/>
+      <stop offset="100%" style="stop-color:#023e8a"/>
+    </linearGradient>
+  </defs>
+  <!-- Three ascending bars -->
+  <rect x="25" y="110" width="40" height="70" rx="4" fill="#90e0ef"/>
+  <rect x="80" y="70" width="40" height="110" rx="4" fill="#00b4d8"/>
+  <rect x="135" y="30" width="40" height="150" rx="4" fill="url(#consult_grad)"/>
+  <!-- Upward arrow overlay -->
+  <polygon points="100,15 130,45 115,45 115,55 85,55 85,45 70,45" fill="#caf0f8"/>
+</svg>
+

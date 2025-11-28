@@ -1,3 +1,4 @@
+import copy
 import os
 import re
 import yaml
@@ -261,8 +262,8 @@ class MainWindow(QMainWindow):
         context["content"] = html_body
         
         # --- PRESET CONFIG INTEGRATION ---
-        # Load full config from the selected preset
-        preset_config = config.get_preset(self.current_preset).copy()
+        # Load full config from the selected preset (deep copy to avoid modifying original)
+        preset_config = copy.deepcopy(config.get_preset(self.current_preset))
         
         # Allow metadata overrides if specified in markdown (optional feature)
         if 'company' in metadata and isinstance(metadata['company'], dict):
@@ -271,6 +272,19 @@ class MainWindow(QMainWindow):
             if 'company' not in preset_config:
                 preset_config['company'] = {}
             preset_config['company'].update(metadata['company'])
+        
+        # Resolve logo path to absolute file:// URL for WeasyPrint
+        if 'company' in preset_config and preset_config['company'].get('logo'):
+            logo_str = preset_config['company']['logo']
+            # Skip if already a file:// URL
+            if not logo_str.startswith('file://'):
+                logo_path = config.resolve_path(logo_str)
+                if logo_path and logo_path.exists():
+                    # Use Path.as_uri() for proper URL encoding (handles spaces, special chars)
+                    preset_config['company']['logo'] = logo_path.as_uri()
+                else:
+                    # Clear invalid logo path to prevent broken image
+                    preset_config['company']['logo'] = ''
             
         # Add the preset config to the context
         # We need to ensure company, contact, bank, legal, etc. are in context root

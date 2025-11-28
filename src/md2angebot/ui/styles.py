@@ -78,7 +78,7 @@ def get_stylesheet():
     QWidget {{
         background-color: transparent;
         color: {COLORS['text_primary']};
-        font-family: "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
         font-size: 13px;
     }}
     
