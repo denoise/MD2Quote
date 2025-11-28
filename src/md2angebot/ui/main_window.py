@@ -35,7 +35,8 @@ class MainWindow(QMainWindow):
         # State
         self.current_file = None
         self.is_modified = False
-        self.current_quote_type = "code"  # Default
+        # Default to active preset from config
+        self.current_preset = config.get_active_preset_name()
 
         # UI Setup
         self._setup_ui()
@@ -54,10 +55,11 @@ class MainWindow(QMainWindow):
         self.header.dataChanged.connect(self.on_header_changed)
         
         # Initial empty state
-        self.statusbar.showMessage("Ready — Select a quote type to begin")
+        self.statusbar.showMessage("Ready — Select a preset to begin")
         
-        # Ask for quote type on startup
-        QTimer.singleShot(100, self.ask_quote_type)
+        # Ask for preset on startup if not set (or just sync UI)
+        # Actually, let's just sync UI since we have a default from config now
+        QTimer.singleShot(100, self.sync_preset_ui)
 
     def _setup_ui(self):
         # Main Container
@@ -123,8 +125,8 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Quote Type Selector with label
-        type_label = QLabel("Type")
+        # Preset Selector with label
+        type_label = QLabel("Profile")
         type_label.setStyleSheet(f"""
             color: {COLORS['text_muted']};
             font-size: 11px;
@@ -135,11 +137,11 @@ class MainWindow(QMainWindow):
         """)
         toolbar.addWidget(type_label)
         
-        self.type_combo = QComboBox()
-        self.type_combo.setMinimumWidth(180)
-        self.update_quote_types()
-        self.type_combo.currentTextChanged.connect(self.on_quote_type_changed)
-        toolbar.addWidget(self.type_combo)
+        self.preset_combo = QComboBox()
+        self.preset_combo.setMinimumWidth(200)
+        self.update_preset_selector()
+        self.preset_combo.currentTextChanged.connect(self.on_preset_changed)
+        toolbar.addWidget(self.preset_combo)
 
         toolbar.addSeparator()
 
@@ -162,67 +164,45 @@ class MainWindow(QMainWindow):
         settings_action.triggered.connect(self.open_settings)
         toolbar.addAction(settings_action)
 
-    def update_quote_types(self):
-        quote_types = config.get('quote_types', {})
-        self.type_combo.clear()
+    def update_preset_selector(self):
+        """Updates the preset combo box from config."""
+        presets = config.get('presets', {})
+        self.preset_combo.blockSignals(True)
+        self.preset_combo.clear()
         
-        if not quote_types:
-            self.type_combo.addItem("Code / Development", "code")
-        else:
-            for key, data in quote_types.items():
-                self.type_combo.addItem(data.get('name', key), key)
+        # Sort by key to ensure order 1-5
+        for key in sorted(presets.keys()):
+            data = presets[key]
+            # Extract number from key e.g. preset_1 -> 1
+            num = key.split('_')[-1]
+            name = data.get('name', f"Preset {num}")
+            self.preset_combo.addItem(f"{num}. {name}", key)
                 
         # Set current selection
-        index = self.type_combo.findData(self.current_quote_type)
+        index = self.preset_combo.findData(self.current_preset)
         if index >= 0:
-            self.type_combo.setCurrentIndex(index)
+            self.preset_combo.setCurrentIndex(index)
+        self.preset_combo.blockSignals(False)
 
-    def ask_quote_type(self):
-        """Shows a dialog to select the quote type on startup."""
-        quote_types = config.get('quote_types', {})
-        if not quote_types:
-            return
-
-        items = [data.get('name', key) for key, data in quote_types.items()]
-        name_to_key = {data.get('name', key): key for key, data in quote_types.items()}
-        
-        current_name = quote_types.get(self.current_quote_type, {}).get('name', self.current_quote_type)
-        if current_name not in items:
-            current_name = items[0] if items else ""
-            
-        try:
-            current_index = items.index(current_name)
-        except ValueError:
-            current_index = 0
-
-        item, ok = QInputDialog.getItem(
-            self, 
-            "Select Quote Type", 
-            "Choose the type of quotation:",
-            items, 
-            current_index, 
-            False
-        )
-        
-        if ok and item:
-            selected_key = name_to_key.get(item)
-            if selected_key:
-                self.set_quote_type(selected_key)
-
-    def set_quote_type(self, quote_type):
-        self.current_quote_type = quote_type
-        index = self.type_combo.findData(quote_type)
+    def sync_preset_ui(self):
+        """Syncs the UI to the current preset state."""
+        self.current_preset = config.get_active_preset_name()
+        index = self.preset_combo.findData(self.current_preset)
         if index >= 0:
-            self.type_combo.blockSignals(True)
-            self.type_combo.setCurrentIndex(index)
-            self.type_combo.blockSignals(False)
+            self.preset_combo.setCurrentIndex(index)
+        else:
+            # Fallback to first if active not found
+            if self.preset_combo.count() > 0:
+                self.preset_combo.setCurrentIndex(0)
+                self.current_preset = self.preset_combo.currentData()
         
         self.refresh_preview()
 
-    def on_quote_type_changed(self, text):
-        quote_type = self.type_combo.currentData()
-        if quote_type:
-            self.current_quote_type = quote_type
+    def on_preset_changed(self, text):
+        preset_key = self.preset_combo.currentData()
+        if preset_key:
+            self.current_preset = preset_key
+            config.set_active_preset(preset_key)
             self.refresh_preview()
 
     def on_text_changed(self):
@@ -264,18 +244,22 @@ class MainWindow(QMainWindow):
 
         context["content"] = html_body
         
-        # Logo Override Logic
-        base_company = config.get('company', {}).copy()
+        # --- PRESET CONFIG INTEGRATION ---
+        # Load full config from the selected preset
+        preset_config = config.get_preset(self.current_preset).copy()
         
-        if 'company' in metadata:
-            if isinstance(metadata['company'], dict):
-                base_company.update(metadata['company'])
-        
-        logo_path = config.get_logo_path(self.current_quote_type)
-        if logo_path:
-            base_company['logo'] = logo_path
+        # Allow metadata overrides if specified in markdown (optional feature)
+        if 'company' in metadata and isinstance(metadata['company'], dict):
+            # We deep merge or just update top level? 
+            # Let's do a simple update for now to allow overrides
+            if 'company' not in preset_config:
+                preset_config['company'] = {}
+            preset_config['company'].update(metadata['company'])
             
-        context['company'] = base_company
+        # Add the preset config to the context
+        # We need to ensure company, contact, bank, legal, etc. are in context root
+        # ConfigLoader returns { company: ..., contact: ... } so we update context with it
+        context.update(preset_config)
         
         return context
 
@@ -300,16 +284,33 @@ class MainWindow(QMainWindow):
             self.statusbar.showMessage("Rendering preview...")
             metadata, html_body = self.parser.parse_text(content)
             self._merge_header_data(metadata, self.header.get_data())
+            
+            # Get context which includes preset data
             context = self._get_safe_context(metadata, html_body)
+            
             template_name = metadata.get("template", "base")
-            full_html = self.renderer.render(template_name, context)
+            
+            # Pass preset key to renderer if needed, but actually we passed full context
+            # The renderer might need to know where to look for templates?
+            # Current renderer takes (template_name, context).
+            # And inside context we have all the config.
+            # But `renderer.render` also merges `config.config` in the original code.
+            # We should update the renderer to NOT merge the global config blindly,
+            # or we should ensure `context` overrides it. 
+            # Actually, `renderer.render` logic was: `full_context = {**config.config, **context}`.
+            # `config.config` is now the root dict with `presets`.
+            # So the old renderer logic of accessing `{{ company.name }}` from `config.config` will fail
+            # because `company` is no longer at root of `config.config`.
+            # We need to fix the renderer to accept the PRESET config.
+            
+            full_html = self.renderer.render(template_name, context, preset_config=context) # Passing context as config too
             pdf_bytes = self.pdf_generator.generate_bytes(full_html)
             
             self.preview.update_preview(pdf_bytes)
             
             # Show current type in status
-            type_name = self.type_combo.currentText()
-            self.statusbar.showMessage(f"Preview updated — {type_name}")
+            preset_name = self.preset_combo.currentText()
+            self.statusbar.showMessage(f"Preview updated — {preset_name}")
             
         except Exception as e:
             self.statusbar.showMessage(f"Preview error: {str(e)}")
@@ -408,8 +409,13 @@ class MainWindow(QMainWindow):
                 
                 metadata, html_body = self.parser.parse_text(content)
                 self._merge_header_data(metadata, header_data)
+                
+                # Use safe context which uses preset
                 context = self._get_safe_context(metadata, html_body)
-                full_html = self.renderer.render(metadata.get("template", "base"), context)
+                
+                # Use current preset for rendering
+                # Note: context already contains the preset data
+                full_html = self.renderer.render(metadata.get("template", "base"), context, preset_config=context)
                 
                 self.pdf_generator.generate(full_html, path)
                 self.statusbar.showMessage(f"Exported to {path}")
@@ -431,9 +437,8 @@ class MainWindow(QMainWindow):
         config._ensure_config_exists()
         config.config = config._load_config()
         
-        # Update quote types in toolbar
-        self.update_quote_types()
+        # Update preset selector
+        self.update_preset_selector()
+        self.sync_preset_ui()
         
-        # Refresh preview with new settings
-        self.refresh_preview()
         self.statusbar.showMessage("Configuration updated")

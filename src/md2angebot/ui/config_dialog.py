@@ -6,13 +6,14 @@ A visually refined settings dialog with tabs for each configuration category.
 
 import os
 import yaml
+import copy
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget,
     QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox,
     QPushButton, QFileDialog, QScrollArea, QFrame, QGridLayout,
     QGroupBox, QColorDialog, QMessageBox, QSizePolicy, QListWidget,
-    QListWidgetItem, QInputDialog
+    QListWidgetItem, QInputDialog, QButtonGroup
 )
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -126,6 +127,7 @@ class FormRow(QWidget):
         layout.setSpacing(SPACING['md'])
         
         lbl = QLabel(label)
+        self.label_widget = lbl
         lbl.setFixedWidth(140)
         lbl.setStyleSheet(f"""
             color: {COLORS['text_secondary']};
@@ -144,14 +146,18 @@ class ConfigDialog(QDialog):
     def __init__(self, config_loader, parent=None):
         super().__init__(parent)
         self.config_loader = config_loader
-        self.config = config_loader.config.copy()
+        # Deep copy config so we can modify freely
+        self.config = copy.deepcopy(config_loader.config)
+        
+        # Track which preset we are currently editing
+        self.current_preset_key = self.config.get('active_preset', 'preset_1')
         
         self.setWindowTitle("Configuration Assistant")
-        self.setMinimumSize(700, 600)
-        self.resize(800, 700)
+        self.setMinimumSize(800, 700)
+        self.resize(900, 800)
         
         self._setup_ui()
-        self._load_values()
+        self._load_preset_values(self.current_preset_key)
         self._apply_dialog_style()
     
     def _apply_dialog_style(self):
@@ -207,23 +213,6 @@ class ConfigDialog(QDialog):
             QScrollArea > QWidget > QWidget {{
                 background-color: transparent;
             }}
-            QListWidget {{
-                background-color: {COLORS['bg_dark']};
-                border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
-                padding: {SPACING['xs']}px;
-            }}
-            QListWidget::item {{
-                padding: {SPACING['sm']}px {SPACING['md']}px;
-                border-radius: {RADIUS['sm']}px;
-            }}
-            QListWidget::item:selected {{
-                background-color: {COLORS['accent']};
-                color: white;
-            }}
-            QListWidget::item:hover:!selected {{
-                background-color: {COLORS['bg_hover']};
-            }}
         """)
     
     def _setup_ui(self):
@@ -232,6 +221,9 @@ class ConfigDialog(QDialog):
         layout.setContentsMargins(SPACING['lg'], SPACING['lg'], SPACING['lg'], SPACING['lg'])
         
         # Title
+        title_container = QHBoxLayout()
+        title_col = QVBoxLayout()
+        
         title = QLabel("Configuration Assistant")
         title.setStyleSheet(f"""
             font-size: 20px;
@@ -239,15 +231,55 @@ class ConfigDialog(QDialog):
             color: {COLORS['text_primary']};
             padding-bottom: {SPACING['sm']}px;
         """)
-        layout.addWidget(title)
+        title_col.addWidget(title)
         
-        subtitle = QLabel("Customize your company details, styling, and default values")
+        subtitle = QLabel("Customize your 5 sender presets")
         subtitle.setStyleSheet(f"""
             color: {COLORS['text_muted']};
             font-size: 13px;
-            padding-bottom: {SPACING['md']}px;
         """)
-        layout.addWidget(subtitle)
+        title_col.addWidget(subtitle)
+        
+        title_container.addLayout(title_col)
+        title_container.addStretch()
+        layout.addLayout(title_container)
+        
+        # Preset Selector
+        preset_layout = QHBoxLayout()
+        preset_layout.setSpacing(SPACING['sm'])
+        
+        self.preset_group = QButtonGroup(self)
+        self.preset_group.setExclusive(True)
+        self.preset_group.buttonClicked.connect(self._on_preset_changed)
+        
+        presets = self.config.get('presets', {})
+        for i in range(1, 6):
+            key = f"preset_{i}"
+            preset_data = presets.get(key, {})
+            name = preset_data.get('name', f"Preset {i}")
+            
+            btn = QPushButton(f"{i}. {name}")
+            btn.setCheckable(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setProperty("preset_key", key)
+            btn.setFixedHeight(40)
+            
+            if key == self.current_preset_key:
+                btn.setChecked(True)
+                
+            self.preset_group.addButton(btn)
+            preset_layout.addWidget(btn)
+            
+        layout.addLayout(preset_layout)
+        
+        # Current Preset Name Editor
+        name_layout = QHBoxLayout()
+        name_layout.addWidget(QLabel("Preset Name:"))
+        self.preset_name_edit = QLineEdit()
+        self.preset_name_edit.setPlaceholderText("e.g. Company A, Freelance, Private")
+        self.preset_name_edit.textChanged.connect(self._update_preset_button_text)
+        name_layout.addWidget(self.preset_name_edit)
+        layout.addLayout(name_layout)
         
         # Tab widget
         self.tabs = QTabWidget()
@@ -255,7 +287,6 @@ class ConfigDialog(QDialog):
         
         # Create tabs
         self.tabs.addTab(self._create_company_tab(), "Company")
-        self.tabs.addTab(self._create_quote_types_tab(), "Quote Types")
         self.tabs.addTab(self._create_contact_tab(), "Contact")
         self.tabs.addTab(self._create_legal_tab(), "Legal & Bank")
         self.tabs.addTab(self._create_defaults_tab(), "Defaults")
@@ -276,6 +307,26 @@ class ConfigDialog(QDialog):
         btn_layout.addWidget(save_btn)
         
         layout.addLayout(btn_layout)
+        
+        # Style for preset buttons
+        self.setStyleSheet(self.styleSheet() + f"""
+            QPushButton[checkable="true"] {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                color: {COLORS['text_secondary']};
+                padding: 0 16px;
+                border-radius: {RADIUS['md']}px;
+                text-align: left;
+            }}
+            QPushButton[checkable="true"]:checked {{
+                background-color: {COLORS['accent']};
+                color: white;
+                border: 1px solid {COLORS['accent']};
+            }}
+            QPushButton[checkable="true"]:hover:!checked {{
+                background-color: {COLORS['bg_hover']};
+            }}
+        """)
     
     def _create_scrollable_tab(self) -> tuple[QScrollArea, QVBoxLayout]:
         """Creates a scrollable container for tab content."""
@@ -306,66 +357,7 @@ class ConfigDialog(QDialog):
         layout.addWidget(FormRow("Tagline", self.company_tagline))
         
         self.company_logo = PathSelector("Images (*.svg *.png *.jpg *.jpeg)")
-        layout.addWidget(FormRow("Default Logo", self.company_logo))
-        
-        layout.addStretch()
-        return scroll
-    
-    def _create_quote_types_tab(self) -> QWidget:
-        scroll, layout = self._create_scrollable_tab()
-        
-        layout.addWidget(SectionHeader("Quote Types"))
-        
-        desc = QLabel("Define different types of quotations with their own names and logos.")
-        desc.setWordWrap(True)
-        desc.setStyleSheet(f"color: {COLORS['text_muted']}; margin-bottom: {SPACING['md']}px;")
-        layout.addWidget(desc)
-        
-        # List and buttons
-        list_layout = QHBoxLayout()
-        
-        self.quote_types_list = QListWidget()
-        self.quote_types_list.currentRowChanged.connect(self._on_quote_type_selected)
-        list_layout.addWidget(self.quote_types_list, 1)
-        
-        btn_col = QVBoxLayout()
-        btn_col.setSpacing(SPACING['sm'])
-        
-        add_btn = QPushButton("Add")
-        add_btn.clicked.connect(self._add_quote_type)
-        btn_col.addWidget(add_btn)
-        
-        remove_btn = QPushButton("Remove")
-        remove_btn.clicked.connect(self._remove_quote_type)
-        btn_col.addWidget(remove_btn)
-        
-        btn_col.addStretch()
-        list_layout.addLayout(btn_col)
-        
-        layout.addLayout(list_layout)
-        
-        # Editor for selected type
-        self.quote_type_editor = QGroupBox("Selected Quote Type")
-        editor_layout = QVBoxLayout(self.quote_type_editor)
-        
-        self.quote_type_key = QLineEdit()
-        self.quote_type_key.setPlaceholderText("e.g., code, photography, design")
-        self.quote_type_key.setEnabled(False)
-        editor_layout.addWidget(FormRow("Key", self.quote_type_key))
-        
-        self.quote_type_name = QLineEdit()
-        self.quote_type_name.setPlaceholderText("Display name")
-        self.quote_type_name.textChanged.connect(self._update_quote_type_name)
-        editor_layout.addWidget(FormRow("Name", self.quote_type_name))
-        
-        self.quote_type_logo = PathSelector("Images (*.svg *.png *.jpg *.jpeg)")
-        editor_layout.addWidget(FormRow("Logo", self.quote_type_logo))
-        
-        layout.addWidget(self.quote_type_editor)
-        self.quote_type_editor.setEnabled(False)
-        
-        # Store quote types data
-        self._quote_types_data = {}
+        layout.addWidget(FormRow("Logo", self.company_logo))
         
         layout.addStretch()
         return scroll
@@ -544,22 +536,125 @@ class ConfigDialog(QDialog):
         layout.addStretch()
         return scroll
     
-    def _load_values(self):
-        """Load current configuration values into the UI."""
-        config = self.config
+    def _on_preset_changed(self, button):
+        """Handle preset switching. Save current form to memory, load new preset."""
+        new_key = button.property("preset_key")
+        if new_key == self.current_preset_key:
+            return
+        
+        # Save current values to memory
+        self._save_current_preset_to_memory()
+        
+        # Update current key
+        self.current_preset_key = new_key
+        
+        # Load new values
+        self._load_preset_values(new_key)
+        
+    def _update_preset_button_text(self, text):
+        """Update the text of the button for the current preset."""
+        button = self.preset_group.checkedButton()
+        if button:
+            # Extract number prefix
+            current_text = button.text()
+            prefix = current_text.split('.')[0]
+            button.setText(f"{prefix}. {text}")
+            
+            # Also update in memory config immediately for name
+            # Ensure keys exist
+            if 'presets' not in self.config:
+                self.config['presets'] = {}
+            if self.current_preset_key not in self.config['presets']:
+                self.config['presets'][self.current_preset_key] = {}
+                
+            self.config['presets'][self.current_preset_key]['name'] = text
+            
+    def _save_current_preset_to_memory(self):
+        """Saves values from UI fields into self.config for the current preset."""
+        presets = self.config.setdefault('presets', {})
+        preset = presets.setdefault(self.current_preset_key, {})
+        
+        preset['name'] = self.preset_name_edit.text()
+        
+        preset['company'] = {
+            'name': self.company_name.text(),
+            'tagline': self.company_tagline.text(),
+            'logo': self.company_logo.path(),
+        }
+        
+        preset['contact'] = {
+            'street': self.contact_street.text(),
+            'city': self.contact_city.text(),
+            'postal_code': self.contact_postal.text(),
+            'country': self.contact_country.text(),
+            'phone': self.contact_phone.text(),
+            'email': self.contact_email.text(),
+            'website': self.contact_website.text(),
+        }
+        
+        preset['legal'] = {
+            'tax_id': self.legal_tax_id.text(),
+            'chamber_of_commerce': self.legal_kvk.text(),
+        }
+        
+        preset['bank'] = {
+            'holder': self.bank_holder.text(),
+            'iban': self.bank_iban.text(),
+            'bic': self.bank_bic.text(),
+            'bank_name': self.bank_name.text(),
+        }
+        
+        preset['defaults'] = {
+            'currency': self.defaults_currency.text(),
+            'tax_rate': self.defaults_tax_rate.value(),
+            'payment_days': self.defaults_payment_days.value(),
+            'language': self.defaults_language.currentText(),
+        }
+        
+        preset['typography'] = {
+            'heading': self.typo_heading.text(),
+            'body': self.typo_body.text(),
+            'mono': self.typo_mono.text(),
+            'sizes': {
+                'company_name': self.typo_size_company.value(),
+                'heading1': self.typo_size_h1.value(),
+                'heading2': self.typo_size_h2.value(),
+                'body': self.typo_size_body.value(),
+                'small': self.typo_size_small.value(),
+            }
+        }
+        
+        preset['colors'] = {
+            'primary': self.color_primary.color(),
+            'accent': self.color_accent.color(),
+            'background': self.color_background.color(),
+            'text': self.color_text.color(),
+            'muted': self.color_muted.color(),
+            'border': self.color_border.color(),
+            'table_alt': self.color_table_alt.color(),
+        }
+        
+    def _load_preset_values(self, preset_key: str):
+        """Load configuration values for the given preset into the UI."""
+        presets = self.config.get('presets', {})
+        # Get preset or defaults from empty preset in loader logic, but we are working on a dict here
+        # So if missing, we should probably use the helper from loader or just empty dicts.
+        # To be safe, let's get it from self.config
+        preset = presets.get(preset_key, {})
+        
+        # Name
+        self.preset_name_edit.blockSignals(True)
+        self.preset_name_edit.setText(preset.get('name', ''))
+        self.preset_name_edit.blockSignals(False)
         
         # Company
-        company = config.get('company', {})
+        company = preset.get('company', {})
         self.company_name.setText(company.get('name', ''))
         self.company_tagline.setText(company.get('tagline', ''))
         self.company_logo.setPath(company.get('logo', ''))
         
-        # Quote Types
-        self._quote_types_data = config.get('quote_types', {}).copy()
-        self._refresh_quote_types_list()
-        
         # Contact
-        contact = config.get('contact', {})
+        contact = preset.get('contact', {})
         self.contact_street.setText(contact.get('street', ''))
         self.contact_city.setText(contact.get('city', ''))
         self.contact_postal.setText(contact.get('postal_code', ''))
@@ -569,19 +664,19 @@ class ConfigDialog(QDialog):
         self.contact_website.setText(contact.get('website', ''))
         
         # Legal
-        legal = config.get('legal', {})
+        legal = preset.get('legal', {})
         self.legal_tax_id.setText(legal.get('tax_id', ''))
         self.legal_kvk.setText(legal.get('chamber_of_commerce', ''))
         
         # Bank
-        bank = config.get('bank', {})
+        bank = preset.get('bank', {})
         self.bank_holder.setText(bank.get('holder', ''))
         self.bank_iban.setText(bank.get('iban', ''))
         self.bank_bic.setText(bank.get('bic', ''))
         self.bank_name.setText(bank.get('bank_name', ''))
         
         # Defaults
-        defaults = config.get('defaults', {})
+        defaults = preset.get('defaults', {})
         self.defaults_currency.setText(defaults.get('currency', 'EUR'))
         self.defaults_tax_rate.setValue(defaults.get('tax_rate', 19))
         self.defaults_payment_days.setValue(defaults.get('payment_days', 14))
@@ -591,7 +686,7 @@ class ConfigDialog(QDialog):
             self.defaults_language.setCurrentIndex(idx)
         
         # Typography
-        typography = config.get('typography', {})
+        typography = preset.get('typography', {})
         self.typo_heading.setText(typography.get('heading', 'Montserrat'))
         self.typo_body.setText(typography.get('body', 'Source Sans Pro'))
         self.typo_mono.setText(typography.get('mono', 'JetBrains Mono'))
@@ -604,7 +699,7 @@ class ConfigDialog(QDialog):
         self.typo_size_small.setValue(sizes.get('small', 8))
         
         # Colors
-        colors = config.get('colors', {})
+        colors = preset.get('colors', {})
         self.color_primary.setColor(colors.get('primary', '#1a1a2e'))
         self.color_accent.setColor(colors.get('accent', '#e94560'))
         self.color_background.setColor(colors.get('background', '#ffffff'))
@@ -612,172 +707,25 @@ class ConfigDialog(QDialog):
         self.color_muted.setColor(colors.get('muted', '#6c757d'))
         self.color_border.setColor(colors.get('border', '#dee2e6'))
         self.color_table_alt.setColor(colors.get('table_alt', '#f8f9fa'))
-    
-    def _refresh_quote_types_list(self):
-        """Refresh the quote types list widget."""
-        self.quote_types_list.clear()
-        for key, data in self._quote_types_data.items():
-            item = QListWidgetItem(f"{data.get('name', key)} ({key})")
-            item.setData(Qt.ItemDataRole.UserRole, key)
-            self.quote_types_list.addItem(item)
-    
-    def _on_quote_type_selected(self, row: int):
-        """Handle quote type selection."""
-        if row < 0:
-            self.quote_type_editor.setEnabled(False)
-            self.quote_type_key.clear()
-            self.quote_type_name.clear()
-            self.quote_type_logo.setPath('')
-            return
-        
-        item = self.quote_types_list.item(row)
-        if not item:
-            return
-        
-        key = item.data(Qt.ItemDataRole.UserRole)
-        data = self._quote_types_data.get(key, {})
-        
-        self.quote_type_editor.setEnabled(True)
-        self.quote_type_key.setText(key)
-        self.quote_type_name.blockSignals(True)
-        self.quote_type_name.setText(data.get('name', ''))
-        self.quote_type_name.blockSignals(False)
-        self.quote_type_logo.setPath(data.get('logo', ''))
-    
-    def _update_quote_type_name(self, name: str):
-        """Update the name of the selected quote type."""
-        row = self.quote_types_list.currentRow()
-        if row < 0:
-            return
-        
-        item = self.quote_types_list.item(row)
-        key = item.data(Qt.ItemDataRole.UserRole)
-        
-        if key in self._quote_types_data:
-            self._quote_types_data[key]['name'] = name
-            item.setText(f"{name} ({key})")
-    
-    def _add_quote_type(self):
-        """Add a new quote type."""
-        key, ok = QInputDialog.getText(
-            self, "Add Quote Type", 
-            "Enter a unique key (e.g., photography, design):"
-        )
-        if ok and key:
-            key = key.lower().replace(' ', '_')
-            if key in self._quote_types_data:
-                QMessageBox.warning(self, "Duplicate Key", f"The key '{key}' already exists.")
-                return
-            
-            self._quote_types_data[key] = {'name': key.replace('_', ' ').title(), 'logo': ''}
-            self._refresh_quote_types_list()
-            
-            # Select the new item
-            for i in range(self.quote_types_list.count()):
-                item = self.quote_types_list.item(i)
-                if item.data(Qt.ItemDataRole.UserRole) == key:
-                    self.quote_types_list.setCurrentRow(i)
-                    break
-    
-    def _remove_quote_type(self):
-        """Remove the selected quote type."""
-        row = self.quote_types_list.currentRow()
-        if row < 0:
-            return
-        
-        item = self.quote_types_list.item(row)
-        key = item.data(Qt.ItemDataRole.UserRole)
-        
-        reply = QMessageBox.question(
-            self, "Remove Quote Type",
-            f"Are you sure you want to remove '{key}'?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            del self._quote_types_data[key]
-            self._refresh_quote_types_list()
-    
-    def _gather_values(self) -> dict:
-        """Gather all values from the UI into a config dict."""
-        # Update quote types with current editor values
-        row = self.quote_types_list.currentRow()
-        if row >= 0:
-            item = self.quote_types_list.item(row)
-            key = item.data(Qt.ItemDataRole.UserRole)
-            if key in self._quote_types_data:
-                self._quote_types_data[key]['name'] = self.quote_type_name.text()
-                self._quote_types_data[key]['logo'] = self.quote_type_logo.path()
-        
-        return {
-            'company': {
-                'name': self.company_name.text(),
-                'tagline': self.company_tagline.text(),
-                'logo': self.company_logo.path(),
-            },
-            'quote_types': self._quote_types_data,
-            'contact': {
-                'street': self.contact_street.text(),
-                'city': self.contact_city.text(),
-                'postal_code': self.contact_postal.text(),
-                'country': self.contact_country.text(),
-                'phone': self.contact_phone.text(),
-                'email': self.contact_email.text(),
-                'website': self.contact_website.text(),
-            },
-            'legal': {
-                'tax_id': self.legal_tax_id.text(),
-                'chamber_of_commerce': self.legal_kvk.text(),
-            },
-            'bank': {
-                'holder': self.bank_holder.text(),
-                'iban': self.bank_iban.text(),
-                'bic': self.bank_bic.text(),
-                'bank_name': self.bank_name.text(),
-            },
-            'defaults': {
-                'currency': self.defaults_currency.text(),
-                'tax_rate': self.defaults_tax_rate.value(),
-                'payment_days': self.defaults_payment_days.value(),
-                'language': self.defaults_language.currentText(),
-            },
-            'typography': {
-                'heading': self.typo_heading.text(),
-                'body': self.typo_body.text(),
-                'mono': self.typo_mono.text(),
-                'sizes': {
-                    'company_name': self.typo_size_company.value(),
-                    'heading1': self.typo_size_h1.value(),
-                    'heading2': self.typo_size_h2.value(),
-                    'body': self.typo_size_body.value(),
-                    'small': self.typo_size_small.value(),
-                }
-            },
-            'colors': {
-                'primary': self.color_primary.color(),
-                'accent': self.color_accent.color(),
-                'background': self.color_background.color(),
-                'text': self.color_text.color(),
-                'muted': self.color_muted.color(),
-                'border': self.color_border.color(),
-                'table_alt': self.color_table_alt.color(),
-            }
-        }
-    
+
     def _save_config(self):
         """Save the configuration to the YAML file."""
-        new_config = self._gather_values()
+        # Ensure the currently edited preset is saved to the config dict
+        self._save_current_preset_to_memory()
+        
+        # Also update active preset to current one? Yes, likely what user expects.
+        self.config['active_preset'] = self.current_preset_key
         
         try:
-            # Generate YAML with nice formatting
-            yaml_content = self._generate_yaml(new_config)
+            # Generate YAML
+            yaml_content = self._generate_yaml(self.config)
             
             # Write to file
             with open(self.config_loader.config_path, 'w', encoding='utf-8') as f:
                 f.write(yaml_content)
             
             # Update the config loader's config
-            self.config_loader.config = new_config
+            self.config_loader.config = self.config
             
             self.configSaved.emit()
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
@@ -787,68 +735,32 @@ class ConfigDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to save configuration:\n{e}")
     
     def _generate_yaml(self, config: dict) -> str:
-        """Generate formatted YAML with section comments."""
+        """Generate formatted YAML."""
         lines = [
             "# MD2Angebot User Configuration",
             f"# Config path: {self.config_loader.config_path}",
             "",
-            "# ==========================================",
-            "# COMPANY INFORMATION",
-            "# ==========================================",
+            f"active_preset: {config.get('active_preset', 'preset_1')}",
+            "",
+            "presets:"
         ]
         
-        lines.append(yaml.dump({'company': config['company']}, allow_unicode=True, sort_keys=False).strip())
-        lines.append("")
-        lines.append(yaml.dump({'quote_types': config['quote_types']}, allow_unicode=True, sort_keys=False).strip())
-        
-        lines.extend([
-            "",
-            "# ==========================================",
-            "# CONTACT DETAILS",
-            "# ==========================================",
-        ])
-        lines.append(yaml.dump({'contact': config['contact']}, allow_unicode=True, sort_keys=False).strip())
-        
-        lines.extend([
-            "",
-            "# ==========================================",
-            "# LEGAL INFORMATION",
-            "# ==========================================",
-        ])
-        lines.append(yaml.dump({'legal': config['legal']}, allow_unicode=True, sort_keys=False).strip())
-        
-        lines.extend([
-            "",
-            "# ==========================================",
-            "# BANKING DETAILS",
-            "# ==========================================",
-        ])
-        lines.append(yaml.dump({'bank': config['bank']}, allow_unicode=True, sort_keys=False).strip())
-        
-        lines.extend([
-            "",
-            "# ==========================================",
-            "# DEFAULTS",
-            "# ==========================================",
-        ])
-        lines.append(yaml.dump({'defaults': config['defaults']}, allow_unicode=True, sort_keys=False).strip())
-        
-        lines.extend([
-            "",
-            "# ==========================================",
-            "# TYPOGRAPHY",
-            "# ==========================================",
-        ])
-        lines.append(yaml.dump({'typography': config['typography']}, allow_unicode=True, sort_keys=False).strip())
-        
-        lines.extend([
-            "",
-            "# ==========================================",
-            "# COLOR SCHEME",
-            "# ==========================================",
-        ])
-        lines.append(yaml.dump({'colors': config['colors']}, allow_unicode=True, sort_keys=False).strip())
-        lines.append("")
-        
+        presets = config.get('presets', {})
+        for key in sorted(presets.keys()):
+            preset = presets[key]
+            # We dump each preset indented
+            preset_yaml = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
+            # Indent is handled by yaml dump if we dump the dict with key, but let's check indentation
+            # yaml.dump({key: preset}) will output "key:\n  value..."
+            # We want it under "presets:" which we already added.
+            # So we can just append indented lines.
+            
+            dumped = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
+            lines.append(self._indent_text(dumped, 2))
+            lines.append("")
+            
         return "\n".join(lines)
 
+    def _indent_text(self, text: str, spaces: int) -> str:
+        indent = " " * spaces
+        return "\n".join(indent + line if line else line for line in text.splitlines())

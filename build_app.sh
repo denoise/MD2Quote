@@ -8,7 +8,7 @@ echo ""
 
 # Clean previous builds
 echo "Cleaning previous builds..."
-rm -rf build dist
+rm -rf build dist || { echo "Cleanup failed, retrying in 1s..."; sleep 1; rm -rf build dist; }
 
 # Check if we're in a virtual environment
 if [[ -z "$VIRTUAL_ENV" ]]; then
@@ -18,11 +18,11 @@ fi
 
 # Install dependencies if needed
 echo "Installing dependencies..."
-pip3 install -q py2app
+pip3 install -q pyinstaller
 
 # Build the app
-echo "Building app bundle..."
-python3 setup.py py2app
+echo "Building app bundle with PyInstaller..."
+pyinstaller --clean --noconfirm md2angebot.spec
 
 echo ""
 echo "✅ Build complete!"
@@ -37,4 +37,3 @@ echo "  cp -r dist/MD2Angebot.app /Applications/"
 echo ""
 echo "⚠️  Note: Users still need to install system dependencies once:"
 echo "  brew install pango glib gobject-introspection"
-
