@@ -1,14 +1,13 @@
 from weasyprint import HTML, CSS
 from pathlib import Path
 from .config import config
+from ..utils import get_templates_path
 
 class PDFGenerator:
     def _get_css_files(self):
         css_files = []
-        # 1. App bundled CSS
-        # Adjust path to find templates relative to this file
-        # src/md2angebot/core/pdf.py -> src/md2angebot/core -> src/md2angebot -> src -> root -> templates
-        base_css_path = Path(__file__).parent.parent.parent.parent / 'templates' / 'quotation.css'
+        # 1. App bundled CSS (works both in development and bundled app)
+        base_css_path = get_templates_path() / 'quotation.css'
         
         if base_css_path.exists():
             css_files.append(CSS(filename=base_css_path))

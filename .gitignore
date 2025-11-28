@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 .DS_Store
 /project_resources/
+
+# Build artifacts
+/build/
+/dist/
+*.egg-info/

@@ -1,13 +1,14 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 from .config import config
+from ..utils import get_templates_path
 
 class TemplateRenderer:
     def __init__(self):
         # Load templates from user config dir first, then app package
         template_dirs = [
             config.templates_dir,
-            Path(__file__).parent.parent.parent.parent / 'templates' # Development path
+            get_templates_path()  # Works both in development and bundled app
         ]
         
         self.env = Environment(

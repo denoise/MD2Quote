@@ -2,12 +2,13 @@ import os
 import yaml
 import shutil
 from pathlib import Path
+from ..utils import get_app_path
 
 class ConfigLoader:
     APP_NAME = "md2angebot"
     
     def __init__(self):
-        self.project_root = Path(__file__).parent.parent.parent.parent
+        self.project_root = get_app_path()  # Works both in development and bundled app
         self.config_dir = self._get_config_dir()
         self.config_path = self.config_dir / "config.yaml"
         self.templates_dir = self.config_dir / "templates"
