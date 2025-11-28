@@ -1,0 +1,78 @@
+# MD2Angebot User Configuration
+# Save this file to ~/.config/md2angebot/config.yaml
+
+# ==========================================
+# COMPANY INFORMATION
+# ==========================================
+company:
+  name: "Jane Doe Creative"
+  tagline: "Digital Solutions & Art"
+  # Path to your logo image. Can be absolute or relative to home (~).
+  logo: "~/Pictures/Logos/jane_doe_logo.png"
+
+# ==========================================
+# CONTACT DETAILS
+# ==========================================
+contact:
+  street: "Creative Avenue 42"
+  city: "Amsterdam"
+  postal_code: "1012 AB"
+  country: "Netherlands"
+  phone: "+31 6 1234 5678"
+  email: "hello@janedoe.com"
+  website: "www.janedoe.com"
+
+# ==========================================
+# LEGAL INFORMATION
+# ==========================================
+legal:
+  # Value Added Tax ID
+  tax_id: "NL853492812B01"
+  # Chamber of Commerce (KvK) number
+  chamber_of_commerce: "67891234"
+
+# ==========================================
+# BANKING DETAILS
+# ==========================================
+bank:
+  holder: "Jane Doe"
+  iban: "NL91 ABNA 0417 1643 00"
+  bic: "ABNANL2A"
+  bank_name: "ABN AMRO"
+
+# ==========================================
+# DEFAULTS
+# ==========================================
+defaults:
+  currency: "EUR"      # Currency symbol or code
+  tax_rate: 19         # Default VAT percentage (Germany)
+  payment_days: 14     # Default payment term in days
+  language: "de"       # Interface and output language (en, nl, de)
+
+# ==========================================
+# TYPOGRAPHY
+# ==========================================
+# You can use system fonts or Google Fonts names if available on your system.
+typography:
+  heading: "Montserrat"
+  body: "Source Sans Pro"
+  mono: "JetBrains Mono"
+  sizes:
+    company_name: 24
+    heading1: 18
+    heading2: 14
+    body: 10
+    small: 8
+
+# ==========================================
+# COLOR SCHEME
+# ==========================================
+colors:
+  primary: "#1a1a2e"      # Deep Navy - Headers, strong elements
+  accent: "#e94560"       # Coral Red - Highlights, totals
+  background: "#ffffff"   # Document background
+  text: "#2d2d2d"         # Main text color
+  muted: "#6c757d"        # Secondary text, less important info
+  border: "#dee2e6"       # Table borders, dividers
+  table_alt: "#f8f9fa"    # Alternating table row background
+
