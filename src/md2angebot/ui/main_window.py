@@ -1,11 +1,15 @@
 import os
+import re
+import yaml
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox, 
-                             QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog)
+                             QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog,
+                             QVBoxLayout)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence
 from PyQt6.QtCore import Qt, QTimer, QDir
 
 from .editor import EditorWidget
 from .preview import PreviewWidget
+from .header import HeaderWidget
 from ..core.parser import MarkdownParser
 from ..core.renderer import TemplateRenderer
 from ..core.pdf import PDFGenerator
@@ -39,6 +43,9 @@ class MainWindow(QMainWindow):
         
         # Connect editor
         self.editor.textChanged.connect(self.on_text_changed)
+
+        # Connect Header
+        self.header.dataChanged.connect(self.on_header_changed)
         
         # Initial empty state
         self.statusbar.showMessage("Ready")
@@ -47,9 +54,19 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self.ask_quote_type)
 
     def _setup_ui(self):
-        # Splitter
+        # Main Container
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QVBoxLayout(main_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Header Widget (Top)
+        self.header = HeaderWidget()
+        main_layout.addWidget(self.header)
+
+        # Splitter (Bottom)
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.setCentralWidget(self.splitter)
+        main_layout.addWidget(self.splitter)
 
         # Editor (Left)
         self.editor = EditorWidget()
@@ -174,6 +191,11 @@ class MainWindow(QMainWindow):
         self.statusbar.showMessage("Modified")
         self.preview_timer.start() # Restart timer
 
+    def on_header_changed(self):
+        self.is_modified = True
+        self.statusbar.showMessage("Modified (Header)")
+        self.preview_timer.start()
+
     def _get_safe_context(self, metadata, html_body):
         """Ensures context has all required fields with defaults to prevent template errors."""
         defaults = {
@@ -224,44 +246,37 @@ class MainWindow(QMainWindow):
         
         return context
 
+    def _merge_header_data(self, metadata, header_data):
+        """Merges header data into metadata, prioritizing header data."""
+        for section in ['quotation', 'client']:
+            if section in header_data and header_data[section]:
+                if section not in metadata:
+                    metadata[section] = {}
+                elif not isinstance(metadata[section], dict):
+                    metadata[section] = {}
+                
+                for k, v in header_data[section].items():
+                    if v:
+                        metadata[section][k] = v
+
     def refresh_preview(self):
         """Generates PDF in memory and updates preview."""
         content = self.editor.get_text()
-        # Allow preview even if empty? Maybe just clear it.
-        if not content and not content.strip():
-             # But we might want to see the header/footer
-             pass
-
+        
         try:
             self.statusbar.showMessage("Rendering preview...")
-            # 1. Parse
+            # 1. Parse text
             metadata, html_body = self.parser.parse_text(content)
             
-            # 2. Render HTML
+            # 2. Merge Header Data (Header overrides text metadata)
+            self._merge_header_data(metadata, self.header.get_data())
+            
+            # 3. Render HTML
             context = self._get_safe_context(metadata, html_body)
             template_name = metadata.get("template", "base")
             full_html = self.renderer.render(template_name, context)
             
-            # 3. Generate PDF bytes
-            # WeasyPrint can write to a file-like object (BytesIO) but it's simpler to just write to a tmp file 
-            # OR use write_pdf() which returns bytes if target is None? 
-            # Checking WeasyPrint docs: HTML(...).write_pdf() returns bytes if target is None.
-            
-            # We need the PDF generator to support returning bytes
-            from weasyprint import HTML, CSS
-            from ..core.config import config
-            
-            # Re-implementing minimal generation here to get bytes
-            # or update PDFGenerator to support bytes return
-            
-            # Load CSS
-            css_files = []
-            # base_css_path = config.templates_dir.parent / 'templates' / 'quotation.css' # This path logic in config/pdf need syncing
-            # Use the logic from pdf.py, but let's just call the generator if we modify it to return bytes
-            # For now, inline for simplicity of "in-memory"
-            
-            from ..core.pdf import PDFGenerator
-            # I'll modify PDFGenerator in a moment to support returning bytes
+            # 4. Generate PDF bytes
             pdf_bytes = self.pdf_generator.generate_bytes(full_html)
             
             self.preview.update_preview(pdf_bytes)
@@ -281,12 +296,39 @@ class MainWindow(QMainWindow):
             with open(path, 'r', encoding='utf-8') as f:
                 text = f.read()
             self.editor.set_text(text)
+            
+            # Parse and populate header
+            metadata, _ = self.parser.parse_text(text)
+            self.header.set_data(metadata)
+
             self.current_file = path
             self.setWindowTitle(f"MD2Angebot - {os.path.basename(path)}")
             self.is_modified = False
             self.refresh_preview()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not open file: {e}")
+
+    def _merge_header_to_text(self, text, header_data):
+        """Updates YAML frontmatter in text with header data."""
+        frontmatter_regex = re.compile(r'^---\s*\n(.*?)\n---\s*\n', re.DOTALL)
+        match = frontmatter_regex.match(text)
+        
+        if match:
+            existing_yaml = match.group(1)
+            try:
+                metadata = yaml.safe_load(existing_yaml) or {}
+            except:
+                metadata = {}
+            body = text[match.end():]
+        else:
+            metadata = {}
+            body = text
+
+        # Merge header data
+        self._merge_header_data(metadata, header_data)
+        
+        new_yaml = yaml.dump(metadata, allow_unicode=True, sort_keys=False)
+        return f"---\n{new_yaml}---\n{body}"
 
     def save_file(self):
         if not self.current_file:
@@ -296,8 +338,17 @@ class MainWindow(QMainWindow):
             self.current_file = path
 
         try:
+            # Sync header to text before saving
+            current_text = self.editor.get_text()
+            header_data = self.header.get_data()
+            new_text = self._merge_header_to_text(current_text, header_data)
+            
+            # Update editor to reflect saved state
+            self.editor.set_text(new_text)
+            
             with open(self.current_file, 'w', encoding='utf-8') as f:
-                f.write(self.editor.get_text())
+                f.write(new_text)
+            
             self.is_modified = False
             self.setWindowTitle(f"MD2Angebot - {os.path.basename(self.current_file)}")
             self.statusbar.showMessage("Saved")
@@ -313,8 +364,17 @@ class MainWindow(QMainWindow):
         if path:
             try:
                 # Force a refresh/generation to ensure latest state
+                # And ensure header data is used
+                
+                # Get content and header data
                 content = self.editor.get_text()
+                header_data = self.header.get_data()
+                
                 metadata, html_body = self.parser.parse_text(content)
+                
+                # Merge Header
+                self._merge_header_data(metadata, header_data)
+                
                 context = self._get_safe_context(metadata, html_body)
                 
                 full_html = self.renderer.render(metadata.get("template", "base"), context)
