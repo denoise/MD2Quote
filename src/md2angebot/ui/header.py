@@ -1,6 +1,64 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
                              QLineEdit, QDateEdit, QTextEdit, QSizePolicy, QFrame, QLabel, QGridLayout)
 from PyQt6.QtCore import QDate, pyqtSignal, Qt
+from .styles import COLORS, SPACING, RADIUS
+
+
+class SectionCard(QFrame):
+    """A styled card container for form sections."""
+    def __init__(self, title: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("header-section")
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
+        layout.setSpacing(SPACING['sm'])
+        
+        # Section title
+        title_label = QLabel(title)
+        title_label.setObjectName("header-title")
+        title_label.setStyleSheet(f"""
+            color: {COLORS['accent']};
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0;
+            margin-bottom: 4px;
+        """)
+        layout.addWidget(title_label)
+        
+        # Content area
+        self.content_layout = QVBoxLayout()
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(SPACING['sm'])
+        layout.addLayout(self.content_layout)
+        
+        self.setStyleSheet(f"""
+            SectionCard {{
+                background-color: {COLORS['bg_elevated']};
+                border-radius: {RADIUS['lg']}px;
+                border: 1px solid {COLORS['border']};
+            }}
+        """)
+
+
+class ModernLineEdit(QLineEdit):
+    """A styled line edit with floating label appearance."""
+    def __init__(self, placeholder="", parent=None):
+        super().__init__(parent)
+        self.setPlaceholderText(placeholder)
+        self.setMinimumHeight(36)
+
+
+class ModernTextEdit(QTextEdit):
+    """A styled multiline text edit."""
+    def __init__(self, placeholder="", parent=None):
+        super().__init__(parent)
+        self.setPlaceholderText(placeholder)
+        self.setMaximumHeight(60)
+        self.setTabChangesFocus(True)
+
 
 class HeaderWidget(QWidget):
     dataChanged = pyqtSignal()
@@ -8,73 +66,95 @@ class HeaderWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        self.setObjectName("header-widget")
         self.init_ui()
 
     def init_ui(self):
-        # Use a horizontal layout to split Quote Info and Client Info
+        # Main horizontal layout
         main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 5, 5)
-        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
+        main_layout.setSpacing(SPACING['md'])
 
-        # --- Quote Info Section (Left) ---
-        quote_layout = QFormLayout()
-        quote_layout.setContentsMargins(0, 0, 0, 0)
-        quote_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+        # === Quotation Section (Left) ===
+        quote_card = SectionCard("Quotation")
+        quote_grid = QGridLayout()
+        quote_grid.setContentsMargins(0, 0, 0, 0)
+        quote_grid.setHorizontalSpacing(SPACING['md'])
+        quote_grid.setVerticalSpacing(SPACING['sm'])
         
-        self.quote_number_edit = QLineEdit()
-        self.quote_number_edit.setPlaceholderText("e.g. 2023-001")
-        self.quote_number_edit.setFixedWidth(120)
+        # Number field
+        number_label = self._create_label("Number")
+        quote_grid.addWidget(number_label, 0, 0)
+        
+        self.quote_number_edit = ModernLineEdit("e.g. 2025-001")
+        self.quote_number_edit.setMaximumWidth(140)
         self.quote_number_edit.textChanged.connect(self.on_changed)
-        quote_layout.addRow("Quotation #:", self.quote_number_edit)
+        quote_grid.addWidget(self.quote_number_edit, 0, 1)
 
+        # Date field
+        date_label = self._create_label("Date")
+        quote_grid.addWidget(date_label, 1, 0)
+        
         self.date_edit = QDateEdit()
         self.date_edit.setDate(QDate.currentDate())
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDisplayFormat("yyyy-MM-dd")
-        self.date_edit.setFixedWidth(120)
+        self.date_edit.setMaximumWidth(140)
+        self.date_edit.setMinimumHeight(36)
         self.date_edit.dateChanged.connect(self.on_changed)
-        quote_layout.addRow("Date:", self.date_edit)
-
-        main_layout.addLayout(quote_layout)
+        quote_grid.addWidget(self.date_edit, 1, 1)
         
-        # Vertical divider
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.VLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        main_layout.addWidget(line)
+        quote_card.content_layout.addLayout(quote_grid)
+        main_layout.addWidget(quote_card)
 
-        # --- Client Info Section (Right) ---
-        client_layout = QGridLayout()
-        client_layout.setContentsMargins(0, 0, 0, 0)
-        client_layout.setVerticalSpacing(5)
-        client_layout.setHorizontalSpacing(10)
+        # === Client Section (Right, takes more space) ===
+        client_card = SectionCard("Client")
+        client_grid = QGridLayout()
+        client_grid.setContentsMargins(0, 0, 0, 0)
+        client_grid.setHorizontalSpacing(SPACING['md'])
+        client_grid.setVerticalSpacing(SPACING['sm'])
 
-        # Row 0: Name | Email
-        client_layout.addWidget(QLabel("Client Name:"), 0, 0)
-        self.receiver_name = QLineEdit()
-        self.receiver_name.setPlaceholderText("Client Name")
+        # Row 0: Name and Email
+        name_label = self._create_label("Name")
+        client_grid.addWidget(name_label, 0, 0)
+        
+        self.receiver_name = ModernLineEdit("Company or contact name")
         self.receiver_name.textChanged.connect(self.on_changed)
-        client_layout.addWidget(self.receiver_name, 0, 1)
+        client_grid.addWidget(self.receiver_name, 0, 1)
 
-        client_layout.addWidget(QLabel("Email:"), 0, 2)
-        self.receiver_email = QLineEdit()
-        self.receiver_email.setPlaceholderText("client@example.com")
-        self.receiver_email.textChanged.connect(self.on_changed)
-        client_layout.addWidget(self.receiver_email, 0, 3)
+        email_label = self._create_label("Email")
+        client_grid.addWidget(email_label, 0, 2)
         
-        # Row 1: Address (Label | TextEdit)
-        client_layout.addWidget(QLabel("Address:"), 1, 0)
-        self.receiver_address = QTextEdit()
-        self.receiver_address.setPlaceholderText("Street, City, Zip...")
-        self.receiver_address.setMaximumHeight(45) # Compact height ~2 lines
-        self.receiver_address.setTabChangesFocus(True)
+        self.receiver_email = ModernLineEdit("client@example.com")
+        self.receiver_email.textChanged.connect(self.on_changed)
+        client_grid.addWidget(self.receiver_email, 0, 3)
+        
+        # Row 1: Address (spanning multiple columns)
+        address_label = self._create_label("Address")
+        client_grid.addWidget(address_label, 1, 0, Qt.AlignmentFlag.AlignTop)
+        
+        self.receiver_address = ModernTextEdit("Street, City, Postal Code...")
         self.receiver_address.textChanged.connect(self.on_changed)
-        # Span columns 1-3
-        client_layout.addWidget(self.receiver_address, 1, 1, 1, 3) 
+        client_grid.addWidget(self.receiver_address, 1, 1, 1, 3)
+        
+        # Set column stretch
+        client_grid.setColumnStretch(1, 1)
+        client_grid.setColumnStretch(3, 1)
 
-        # Add client layout with stretch
-        main_layout.addLayout(client_layout)
-        main_layout.setStretchFactor(client_layout, 1)
+        client_card.content_layout.addLayout(client_grid)
+        main_layout.addWidget(client_card, stretch=2)
+
+    def _create_label(self, text: str) -> QLabel:
+        """Creates a styled field label."""
+        label = QLabel(text)
+        label.setStyleSheet(f"""
+            color: {COLORS['text_secondary']};
+            font-size: 12px;
+            font-weight: 500;
+            padding: 0;
+            min-width: 50px;
+        """)
+        return label
 
     def on_changed(self):
         self.dataChanged.emit()
@@ -110,7 +190,7 @@ class HeaderWidget(QWidget):
                 if qdate.isValid():
                     self.date_edit.setDate(qdate)
             except:
-                pass # Keep default or existing if parse fails
+                pass
 
         # Client
         if "name" in client:
