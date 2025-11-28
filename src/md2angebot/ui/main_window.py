@@ -89,6 +89,38 @@ class MainWindow(QMainWindow):
         self.statusbar.showMessage("Modified")
         self.preview_timer.start() # Restart timer
 
+    def _get_safe_context(self, metadata, html_body):
+        """Ensures context has all required fields with defaults to prevent template errors."""
+        defaults = {
+            "quotation": {
+                "number": "DRAFT",
+                "date": "YYYY-MM-DD",
+                "valid_days": 30
+            },
+            "client": {
+                "name": "Client Name",
+                "address": "Client Address",
+                "email": "client@example.com"
+            }
+        }
+
+        context = defaults.copy()
+        
+        # Merge metadata into context (handling nested dicts for known keys)
+        for key in defaults:
+            if key in metadata and isinstance(metadata[key], dict):
+                context[key] = {**defaults[key], **metadata[key]}
+            elif key in metadata:
+                context[key] = metadata[key]
+        
+        # Add remaining metadata
+        for key, value in metadata.items():
+            if key not in defaults:
+                context[key] = value
+
+        context["content"] = html_body
+        return context
+
     def refresh_preview(self):
         """Generates PDF in memory and updates preview."""
         content = self.editor.get_text()
@@ -101,7 +133,7 @@ class MainWindow(QMainWindow):
             metadata, html_body = self.parser.parse_text(content)
             
             # 2. Render HTML
-            context = {**metadata, "content": html_body}
+            context = self._get_safe_context(metadata, html_body)
             template_name = metadata.get("template", "base")
             full_html = self.renderer.render(template_name, context)
             
@@ -174,16 +206,19 @@ class MainWindow(QMainWindow):
             
         path, _ = QFileDialog.getSaveFileName(self, "Export PDF", os.path.join(QDir.homePath(), default_name), "PDF Files (*.pdf)")
         if path:
-            # Force a refresh/generation to ensure latest state
-            content = self.editor.get_text()
-            metadata, html_body = self.parser.parse_text(content)
-            context = {**metadata, "content": html_body}
-            full_html = self.renderer.render(metadata.get("template", "base"), context)
-            
             try:
+                # Force a refresh/generation to ensure latest state
+                content = self.editor.get_text()
+                metadata, html_body = self.parser.parse_text(content)
+                context = self._get_safe_context(metadata, html_body)
+                
+                full_html = self.renderer.render(metadata.get("template", "base"), context)
+                
                 self.pdf_generator.generate(full_html, path)
                 self.statusbar.showMessage(f"Exported to {path}")
                 QMessageBox.information(self, "Success", "PDF Exported successfully!")
             except Exception as e:
+                self.statusbar.showMessage(f"Export error: {str(e)}")
                 QMessageBox.critical(self, "Error", f"Export failed: {e}")
+                print(f"Export Error: {e}")
 
