@@ -203,7 +203,23 @@ class MainWindow(QMainWindow):
         if preset_key:
             self.current_preset = preset_key
             config.set_active_preset(preset_key)
+            
+            # Generate a new quotation number for the selected preset
+            self._generate_new_quotation_number()
+            
             self.refresh_preview()
+    
+    def _generate_new_quotation_number(self):
+        """Generates a new quotation number based on the current preset's format."""
+        quotation_number = config.generate_quotation_number(self.current_preset)
+        
+        if quotation_number:
+            self.header.quote_number_edit.setText(quotation_number)
+            self.statusbar.showMessage(f"New quotation: {quotation_number}")
+        else:
+            # Quotation numbering is disabled for this preset
+            self.header.quote_number_edit.clear()
+            self.header.quote_number_edit.setPlaceholderText("(numbering disabled)")
 
     def on_text_changed(self):
         self.is_modified = True

@@ -457,8 +457,81 @@ class ConfigDialog(QDialog):
         self.defaults_language.addItems(["de", "en", "nl"])
         layout.addWidget(FormRow("Language", self.defaults_language))
         
+        # Quotation Number Settings
+        layout.addWidget(SectionHeader("Quotation Number"))
+        
+        qn_desc = QLabel(
+            "Configure automatic quotation numbering. Use placeholders:\n"
+            "• {YYYY} = Full year (2025)  • {YY} = Short year (25)\n"
+            "• {MM} = Month (01-12)  • {DD} = Day (01-31)\n"
+            "• {N}/{NN}/{NNN}/{NNNN} = Counter with padding\n"
+            "• {PREFIX} = Company abbreviation"
+        )
+        qn_desc.setWordWrap(True)
+        qn_desc.setStyleSheet(f"color: {COLORS['text_muted']}; margin-bottom: {SPACING['sm']}px; font-size: 11px;")
+        layout.addWidget(qn_desc)
+        
+        from PyQt6.QtWidgets import QCheckBox
+        self.qn_enabled = QCheckBox("Enable automatic quotation numbering")
+        self.qn_enabled.setStyleSheet(f"color: {COLORS['text_primary']};")
+        layout.addWidget(self.qn_enabled)
+        
+        self.qn_format = QLineEdit()
+        self.qn_format.setPlaceholderText("{YYYY}-{NNN}")
+        layout.addWidget(FormRow("Number Format", self.qn_format))
+        
+        # Format examples/presets dropdown
+        self.qn_format_presets = QComboBox()
+        self.qn_format_presets.addItem("Custom", "")
+        self.qn_format_presets.addItem("Year-Number: 2025-001", "{YYYY}-{NNN}")
+        self.qn_format_presets.addItem("Invoice Style: INV-2025-0001", "INV-{YYYY}-{NNNN}")
+        self.qn_format_presets.addItem("Monthly Reset: 2025-01-001", "{YYYY}-{MM}-{NNN}")
+        self.qn_format_presets.addItem("Compact: Q25-001", "Q{YY}-{NNN}")
+        self.qn_format_presets.addItem("With Prefix: JDC-2025-01", "{PREFIX}-{YYYY}-{NN}")
+        self.qn_format_presets.currentIndexChanged.connect(self._on_qn_preset_selected)
+        layout.addWidget(FormRow("Format Presets", self.qn_format_presets))
+        
+        # Current counter display (read-only info)
+        self.qn_counter_label = QLabel("Counter: 0")
+        self.qn_counter_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+        layout.addWidget(self.qn_counter_label)
+        
+        # Reset counter button
+        reset_counter_btn = QPushButton("Reset Counter to 0")
+        reset_counter_btn.setFixedWidth(150)
+        reset_counter_btn.clicked.connect(self._reset_qn_counter)
+        layout.addWidget(reset_counter_btn)
+        
         layout.addStretch()
         return scroll
+    
+    def _on_qn_preset_selected(self, index):
+        """Apply selected format preset to the format field."""
+        format_value = self.qn_format_presets.currentData()
+        if format_value:
+            self.qn_format.setText(format_value)
+    
+    def _reset_qn_counter(self):
+        """Reset the counter for the current preset to 0."""
+        reply = QMessageBox.question(
+            self,
+            "Reset Counter",
+            "Are you sure you want to reset the quotation counter to 0?\n"
+            "The next quotation will start from 1.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            # Reset in memory
+            presets = self.config.setdefault('presets', {})
+            preset = presets.setdefault(self.current_preset_key, {})
+            qn = preset.setdefault('quotation_number', {})
+            qn['counter'] = 0
+            qn['last_reset_year'] = None
+            qn['last_reset_month'] = None
+            
+            self.qn_counter_label.setText("Counter: 0")
+            QMessageBox.information(self, "Counter Reset", "Quotation counter has been reset to 0.")
     
     def _create_typography_tab(self) -> QWidget:
         scroll, layout = self._create_scrollable_tab()
@@ -611,6 +684,16 @@ class ConfigDialog(QDialog):
             'language': self.defaults_language.currentText(),
         }
         
+        # Preserve existing counter values when saving
+        existing_qn = preset.get('quotation_number', {})
+        preset['quotation_number'] = {
+            'enabled': self.qn_enabled.isChecked(),
+            'format': self.qn_format.text() or '{YYYY}-{NNN}',
+            'counter': existing_qn.get('counter', 0),
+            'last_reset_year': existing_qn.get('last_reset_year'),
+            'last_reset_month': existing_qn.get('last_reset_month'),
+        }
+        
         preset['typography'] = {
             'heading': self.typo_heading.text(),
             'body': self.typo_body.text(),
@@ -684,6 +767,27 @@ class ConfigDialog(QDialog):
         idx = self.defaults_language.findText(lang)
         if idx >= 0:
             self.defaults_language.setCurrentIndex(idx)
+        
+        # Quotation Number
+        qn = preset.get('quotation_number', {})
+        self.qn_enabled.setChecked(qn.get('enabled', True))
+        self.qn_format.setText(qn.get('format', '{YYYY}-{NNN}'))
+        
+        # Update counter label
+        counter = qn.get('counter', 0)
+        self.qn_counter_label.setText(f"Counter: {counter}")
+        
+        # Set format preset dropdown to "Custom" if format doesn't match a preset
+        current_format = qn.get('format', '{YYYY}-{NNN}')
+        preset_idx = self.qn_format_presets.findData(current_format)
+        if preset_idx >= 0:
+            self.qn_format_presets.blockSignals(True)
+            self.qn_format_presets.setCurrentIndex(preset_idx)
+            self.qn_format_presets.blockSignals(False)
+        else:
+            self.qn_format_presets.blockSignals(True)
+            self.qn_format_presets.setCurrentIndex(0)  # Custom
+            self.qn_format_presets.blockSignals(False)
         
         # Typography
         typography = preset.get('typography', {})

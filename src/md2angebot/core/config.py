@@ -2,6 +2,7 @@ import os
 import yaml
 import shutil
 from pathlib import Path
+from datetime import datetime
 from ..utils import get_app_path
 
 class ConfigLoader:
@@ -91,6 +92,13 @@ class ConfigLoader:
                 'payment_days': 14,
                 'language': 'en'
             },
+            'quotation_number': {
+                'enabled': True,
+                'format': '{YYYY}-{NNN}',  # Default format: 2025-001
+                'counter': 0,
+                'last_reset_year': None,
+                'last_reset_month': None
+            },
             'typography': {
                 'heading': 'Montserrat',
                 'body': 'Source Sans Pro',
@@ -170,6 +178,142 @@ class ConfigLoader:
     def get_active_preset(self) -> dict:
         """Returns the configuration dict for the active preset."""
         return self.get_preset(self.get_active_preset_name())
+
+    def generate_quotation_number(self, preset_key: str) -> str:
+        """
+        Generates a new quotation number for the given preset based on its format.
+        Increments the counter and persists the change.
+        
+        Format placeholders:
+        - {YYYY}: Full year (2025)
+        - {YY}: Two-digit year (25)
+        - {MM}: Month (01-12)
+        - {DD}: Day (01-31)
+        - {N}, {NN}, {NNN}, {NNNN}: Counter with padding
+        - {PREFIX}: Uses company name abbreviation
+        
+        Returns empty string if quotation numbering is disabled.
+        """
+        preset = self.config.get('presets', {}).get(preset_key, {})
+        qn_config = preset.get('quotation_number', {})
+        
+        if not qn_config.get('enabled', True):
+            return ''
+        
+        format_str = qn_config.get('format', '{YYYY}-{NNN}')
+        counter = qn_config.get('counter', 0)
+        last_reset_year = qn_config.get('last_reset_year')
+        last_reset_month = qn_config.get('last_reset_month')
+        
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+        
+        # Check if we need to reset the counter (yearly or monthly reset)
+        reset_counter = False
+        
+        # Check for yearly reset (if format contains {YYYY} or {YY})
+        if '{YYYY}' in format_str or '{YY}' in format_str:
+            if last_reset_year != current_year:
+                reset_counter = True
+        
+        # Check for monthly reset (if format contains {MM})
+        if '{MM}' in format_str:
+            if last_reset_year != current_year or last_reset_month != current_month:
+                reset_counter = True
+        
+        if reset_counter:
+            counter = 0
+        
+        # Increment counter
+        counter += 1
+        
+        # Build the quotation number
+        result = format_str
+        result = result.replace('{YYYY}', str(current_year))
+        result = result.replace('{YY}', str(current_year)[-2:])
+        result = result.replace('{MM}', f'{current_month:02d}')
+        result = result.replace('{DD}', f'{now.day:02d}')
+        
+        # Handle counter placeholders with different padding
+        result = result.replace('{NNNN}', f'{counter:04d}')
+        result = result.replace('{NNN}', f'{counter:03d}')
+        result = result.replace('{NN}', f'{counter:02d}')
+        result = result.replace('{N}', str(counter))
+        
+        # Optional: PREFIX from company name
+        company_name = preset.get('company', {}).get('name', '')
+        if company_name:
+            # Create abbreviation from first letters of words
+            prefix = ''.join(word[0].upper() for word in company_name.split() if word)[:3]
+        else:
+            prefix = 'QT'
+        result = result.replace('{PREFIX}', prefix)
+        
+        # Update and persist the counter
+        if 'quotation_number' not in self.config['presets'][preset_key]:
+            self.config['presets'][preset_key]['quotation_number'] = {}
+        
+        self.config['presets'][preset_key]['quotation_number']['counter'] = counter
+        self.config['presets'][preset_key]['quotation_number']['last_reset_year'] = current_year
+        self.config['presets'][preset_key]['quotation_number']['last_reset_month'] = current_month
+        
+        # Persist to disk
+        self._save_config()
+        
+        return result
+
+    def get_last_quotation_number(self, preset_key: str) -> str:
+        """
+        Returns the last generated quotation number without incrementing.
+        Useful for displaying current state.
+        """
+        preset = self.config.get('presets', {}).get(preset_key, {})
+        qn_config = preset.get('quotation_number', {})
+        
+        if not qn_config.get('enabled', True):
+            return ''
+        
+        format_str = qn_config.get('format', '{YYYY}-{NNN}')
+        counter = qn_config.get('counter', 0)
+        
+        if counter == 0:
+            return ''  # No quotation generated yet
+        
+        now = datetime.now()
+        last_year = qn_config.get('last_reset_year', now.year)
+        last_month = qn_config.get('last_reset_month', now.month)
+        
+        # Build the quotation number with stored values
+        result = format_str
+        result = result.replace('{YYYY}', str(last_year))
+        result = result.replace('{YY}', str(last_year)[-2:])
+        result = result.replace('{MM}', f'{last_month:02d}')
+        result = result.replace('{DD}', f'{now.day:02d}')
+        
+        result = result.replace('{NNNN}', f'{counter:04d}')
+        result = result.replace('{NNN}', f'{counter:03d}')
+        result = result.replace('{NN}', f'{counter:02d}')
+        result = result.replace('{N}', str(counter))
+        
+        # PREFIX
+        preset = self.config.get('presets', {}).get(preset_key, {})
+        company_name = preset.get('company', {}).get('name', '')
+        if company_name:
+            prefix = ''.join(word[0].upper() for word in company_name.split() if word)[:3]
+        else:
+            prefix = 'QT'
+        result = result.replace('{PREFIX}', prefix)
+        
+        return result
+
+    def _save_config(self):
+        """Saves the current configuration to disk."""
+        try:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(self.config, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+        except Exception as e:
+            print(f"Error saving config: {e}")
 
     def resolve_path(self, path_str: str) -> Path:
         """Resolves a path string to an absolute Path object."""
