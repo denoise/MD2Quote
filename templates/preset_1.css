@@ -101,6 +101,10 @@ header {
     border-left: 4px solid var(--primary);
 }
 
+.client-info h3 {
+    margin-top: 0;
+}
+
 .client-info p {
     margin: 2px 0;
 }
