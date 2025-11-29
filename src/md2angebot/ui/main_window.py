@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox,
                              QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog,
                              QVBoxLayout, QHBoxLayout, QToolButton, QFrame, QSizePolicy)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
-from PyQt6.QtCore import Qt, QTimer, QDir
+from PyQt6.QtCore import Qt, QTimer, QDir, QSettings
 
 from .editor import EditorWidget
 from .preview import PreviewWidget
@@ -28,6 +28,9 @@ class MainWindow(QMainWindow):
         
         # Apply modern styling
         self.setStyleSheet(get_stylesheet())
+
+        # Settings for remembering user preferences
+        self.settings = QSettings("MD2Angebot", "MD2Angebot")
 
         # Core components
         self.parser = MarkdownParser()
@@ -348,14 +351,25 @@ class MainWindow(QMainWindow):
             self.statusbar.showMessage(f"Preview error: {str(e)}")
             print(f"Preview Error: {e}")
 
+    def _get_last_folder(self) -> str:
+        """Returns the last opened folder, or home directory if not set."""
+        return self.settings.value("last_folder", QDir.homePath())
+    
+    def _set_last_folder(self, path: str):
+        """Saves the folder of the given file path as the last opened folder."""
+        folder = os.path.dirname(path)
+        if folder:
+            self.settings.setValue("last_folder", folder)
+
     def open_file_dialog(self):
         path, _ = QFileDialog.getOpenFileName(
             self, 
             "Open Markdown", 
-            QDir.homePath(), 
+            self._get_last_folder(), 
             "Markdown Files (*.md)"
         )
         if path:
+            self._set_last_folder(path)
             self.load_file(path)
 
     def load_file(self, path):
@@ -400,11 +414,12 @@ class MainWindow(QMainWindow):
             path, _ = QFileDialog.getSaveFileName(
                 self, 
                 "Save Markdown", 
-                QDir.homePath(), 
+                self._get_last_folder(), 
                 "Markdown Files (*.md)"
             )
             if not path:
                 return
+            self._set_last_folder(path)
             self.current_file = path
 
         try:
@@ -431,10 +446,11 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getSaveFileName(
             self, 
             "Export PDF", 
-            os.path.join(QDir.homePath(), default_name), 
+            os.path.join(self._get_last_folder(), default_name), 
             "PDF Files (*.pdf)"
         )
         if path:
+            self._set_last_folder(path)
             try:
                 content = self.editor.get_text()
                 header_data = self.header.get_data()
