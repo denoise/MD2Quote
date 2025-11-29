@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtPdf import QPdfDocument
 from PyQt6.QtPdfWidgets import QPdfView
-from PyQt6.QtCore import QBuffer, QIODevice
+from PyQt6.QtCore import QBuffer, QIODevice, QTimer
 from .styles import COLORS, SPACING
 
 
@@ -49,10 +49,38 @@ class PreviewWidget(QWidget):
         """)
         
         layout.addWidget(self.pdf_view)
+        
+        # Store pending scroll position for restoration
+        self._pending_scroll_position = None
 
     def update_preview(self, pdf_bytes: bytes):
-        """Updates the preview with new PDF content."""
+        """Updates the preview with new PDF content, preserving scroll position."""
+        # Save current scroll position before loading new content
+        scrollbar = self.pdf_view.verticalScrollBar()
+        saved_scroll_value = scrollbar.value()
+        saved_scroll_max = scrollbar.maximum()
+        
+        # Calculate relative scroll position (0.0 to 1.0) to handle document size changes
+        if saved_scroll_max > 0:
+            self._pending_scroll_position = saved_scroll_value / saved_scroll_max
+        else:
+            self._pending_scroll_position = 0.0
+        
+        # Load the new PDF
         self.buffer = QBuffer()
         self.buffer.setData(pdf_bytes)
         self.buffer.open(QIODevice.OpenModeFlag.ReadOnly)
         self.pdf_document.load(self.buffer)
+        
+        # Restore scroll position after a short delay to allow the view to render
+        QTimer.singleShot(50, self._restore_scroll_position)
+    
+    def _restore_scroll_position(self):
+        """Restores the scroll position after document load."""
+        if self._pending_scroll_position is not None:
+            scrollbar = self.pdf_view.verticalScrollBar()
+            new_max = scrollbar.maximum()
+            if new_max > 0:
+                # Restore to the same relative position in the document
+                scrollbar.setValue(int(self._pending_scroll_position * new_max))
+            self._pending_scroll_position = None
