@@ -475,7 +475,7 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         """Opens the configuration dialog."""
-        dialog = ConfigDialog(config, self)
+        dialog = ConfigDialog(config, initial_preset_key=self.current_preset, parent=self)
         dialog.configSaved.connect(self.on_config_saved)
         dialog.exec()
 

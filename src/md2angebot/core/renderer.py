@@ -60,7 +60,8 @@ class TemplateRenderer:
         # Clear Jinja2 cache to pick up any file changes
         # This ensures template edits are immediately visible
         if self._clear_cache_on_render:
-            self.env.cache.clear()
+            if self.env.cache is not None:
+                self.env.cache.clear()
             if hasattr(self.env, 'bytecode_cache') and self.env.bytecode_cache:
                 self.env.bytecode_cache.clear()
         

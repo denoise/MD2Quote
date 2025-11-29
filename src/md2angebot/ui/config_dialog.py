@@ -764,14 +764,17 @@ class ConfigDialog(QDialog):
     
     configSaved = pyqtSignal()
     
-    def __init__(self, config_loader, parent=None):
+    def __init__(self, config_loader, initial_preset_key=None, parent=None):
         super().__init__(parent)
         self.config_loader = config_loader
         # Deep copy config so we can modify freely
         self.config = copy.deepcopy(config_loader.config)
         
         # Track which preset we are currently editing
-        self.current_preset_key = self.config.get('active_preset', 'preset_1')
+        if initial_preset_key:
+            self.current_preset_key = initial_preset_key
+        else:
+            self.current_preset_key = self.config.get('active_preset', 'preset_1')
         
         self.setWindowTitle("Configuration Assistant")
         self.setMinimumSize(1000, 620)
@@ -806,8 +809,9 @@ class ConfigDialog(QDialog):
             }}
             QTabBar::tab:selected {{
                 background-color: {COLORS['bg_dark']};
-                color: {COLORS['text_primary']};
+                color: {COLORS['accent']};
                 border-bottom: 1px solid {COLORS['bg_dark']};
+                border-top: 2px solid {COLORS['accent']};
             }}
             QTabBar::tab:hover:!selected {{
                 background-color: {COLORS['bg_hover']};
@@ -838,6 +842,25 @@ class ConfigDialog(QDialog):
             }}
             QCheckBox::indicator:hover {{
                 border-color: {COLORS['accent']};
+            }}
+            /* Preset Buttons (Checkable) */
+            QPushButton[checkable="true"] {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                color: {COLORS['text_secondary']};
+                padding: 0 8px;
+                border-radius: 0;
+                font-weight: 500;
+                font-size: 12px;
+            }}
+            QPushButton[checkable="true"]:checked {{
+                background-color: {COLORS['accent']};
+                color: white;
+                border: 1px solid {COLORS['accent']};
+            }}
+            QPushButton[checkable="true"]:hover:!checked {{
+                background-color: {COLORS['bg_hover']};
+                color: {COLORS['text_primary']};
             }}
         """)
     
@@ -957,28 +980,6 @@ class ConfigDialog(QDialog):
         btn_layout.addWidget(save_btn)
         
         layout.addLayout(btn_layout)
-        
-        # Style for preset buttons
-        self.setStyleSheet(self.styleSheet() + f"""
-            QPushButton[checkable="true"] {{
-                background-color: {COLORS['bg_elevated']};
-                border: 1px solid {COLORS['border']};
-                color: {COLORS['text_secondary']};
-                padding: 0 8px;
-                border-radius: 0;
-                font-weight: 500;
-                font-size: 12px;
-            }}
-            QPushButton[checkable="true"]:checked {{
-                background-color: {COLORS['accent']};
-                color: white;
-                border: 1px solid {COLORS['accent']};
-            }}
-            QPushButton[checkable="true"]:hover:!checked {{
-                background-color: {COLORS['bg_hover']};
-                color: {COLORS['text_primary']};
-            }}
-        """)
     
     def _create_scrollable_tab(self) -> tuple[QScrollArea, QVBoxLayout]:
         """Creates a scrollable container for tab content."""
