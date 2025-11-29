@@ -60,6 +60,18 @@ class ModernPlainTextEdit(QPlainTextEdit):
         cr = self.contentsRect()
         self.line_number_area.setGeometry(QRect(cr.left(), cr.top(), self.line_number_area_width(), cr.height()))
 
+    def mousePressEvent(self, event):
+        """Clear multi-cursor on mouse click (like VS Code)."""
+        if self.extra_cursors:
+            self.clear_extra_cursors()
+        super().mousePressEvent(event)
+
+    def focusOutEvent(self, event):
+        """Clear multi-cursor when focus is lost."""
+        if self.extra_cursors:
+            self.clear_extra_cursors()
+        super().focusOutEvent(event)
+
     def line_number_area_paint_event(self, event):
         painter = QPainter(self.line_number_area)
         painter.fillRect(event.rect(), QColor(COLORS['bg_base']))
