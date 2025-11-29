@@ -77,6 +77,7 @@ class MainWindow(QMainWindow):
         # Header Widget (Top)
         self.header = HeaderWidget()
         self.header.setObjectName("header-widget")
+        self.header.generateQuotationRequested.connect(self._generate_new_quotation_number)
         main_layout.addWidget(self.header)
 
         # Content Area (Editor + Preview)
@@ -230,6 +231,14 @@ class MainWindow(QMainWindow):
                 self.preset_combo.setCurrentIndex(0)
                 self.current_preset = self.preset_combo.currentData()
         
+        # Populate quotation number field with the last used value for this preset
+        last_number = config.get_last_quotation_number(self.current_preset)
+        if last_number:
+            self.header.quote_number_edit.setText(last_number)
+        else:
+            self.header.quote_number_edit.clear()
+            self.header.quote_number_edit.setPlaceholderText("e.g. 2025-001")
+
         self.refresh_preview()
 
     def on_preset_changed(self, text):
@@ -238,8 +247,13 @@ class MainWindow(QMainWindow):
             self.current_preset = preset_key
             config.set_active_preset(preset_key)
             
-            # Generate a new quotation number for the selected preset
-            self._generate_new_quotation_number()
+            # Show the last used quotation number for this preset
+            last_number = config.get_last_quotation_number(self.current_preset)
+            if last_number:
+                self.header.quote_number_edit.setText(last_number)
+            else:
+                self.header.quote_number_edit.clear()
+                self.header.quote_number_edit.setPlaceholderText("e.g. 2025-001")
             
             self.refresh_preview()
     
