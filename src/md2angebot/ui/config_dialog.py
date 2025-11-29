@@ -22,6 +22,129 @@ from PyQt6.QtSvg import QSvgRenderer
 
 from .styles import COLORS, SPACING, RADIUS
 from .icons import icon, icon_font, icon_char
+from ..utils import get_templates_path
+
+
+class TemplateEditorDialog(QDialog):
+    """Dialog for editing raw HTML templates."""
+    
+    def __init__(self, template_name: str, config_loader, parent=None):
+        super().__init__(parent)
+        self.template_name = template_name
+        self.config_loader = config_loader
+        self.file_path = self._find_template_path()
+        
+        self.setWindowTitle(f"Edit Template: {template_name}.html")
+        self.resize(900, 700)
+        
+        self._setup_ui()
+        self._load_content()
+        
+    def _find_template_path(self) -> Path:
+        """Find the template file path, prioritizing user config then app templates."""
+        filename = f"{self.template_name}.html"
+        
+        # 1. Check user config templates dir
+        user_path = self.config_loader.templates_dir / filename
+        if user_path.exists():
+            return user_path
+            
+        # 2. Check app templates dir
+        app_path = get_templates_path() / filename
+        if app_path.exists():
+            return app_path
+            
+        return None
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(SPACING['md'])
+        
+        # Header
+        header = QHBoxLayout()
+        
+        path_label = QLabel(f"Editing: {self.file_path}")
+        path_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; font-family: monospace;")
+        header.addWidget(path_label)
+        
+        layout.addLayout(header)
+        
+        # Editor
+        self.editor = QPlainTextEdit()
+        self.editor.setStyleSheet(f"""
+            QPlainTextEdit {{
+                font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+                font-size: 13px;
+                background-color: {COLORS['bg_dark']};
+                color: {COLORS['text_primary']};
+                border: 1px solid {COLORS['border']};
+            }}
+        """)
+        layout.addWidget(self.editor)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addWidget(cancel_btn)
+        
+        save_btn = QPushButton("Save Changes")
+        save_btn.setDefault(True)
+        save_btn.clicked.connect(self._save_changes)
+        save_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['accent']};
+                color: white;
+                font-weight: 600;
+                padding: 6px 16px;
+                border: none;
+            }}
+            QPushButton:hover {{
+                background-color: #d63650;
+            }}
+        """)
+        btn_layout.addWidget(save_btn)
+        
+        layout.addLayout(btn_layout)
+
+    def _load_content(self):
+        if not self.file_path:
+            QMessageBox.warning(self, "Error", f"Template file '{self.template_name}.html' not found.")
+            self.reject()
+            return
+            
+        try:
+            content = self.file_path.read_text(encoding='utf-8')
+            self.editor.setPlainText(content)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not load template:\n{e}")
+            self.reject()
+
+    def _save_changes(self):
+        if not self.file_path:
+            return
+            
+        try:
+            content = self.editor.toPlainText()
+            
+            # Confirmation
+            reply = QMessageBox.question(
+                self,
+                "Confirm Save",
+                f"Are you sure you want to overwrite the template file?\n{self.file_path}",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                self.file_path.write_text(content, encoding='utf-8')
+                QMessageBox.information(self, "Success", "Template saved successfully.")
+                self.accept()
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not save template:\n{e}")
 
 
 # Fixed mapping between presets and layout templates
@@ -1038,6 +1161,11 @@ class ConfigDialog(QDialog):
         template_card.addWidget(info_label)
         
         # Read-only display of the current template
+        template_container = QWidget()
+        template_layout = QHBoxLayout(template_container)
+        template_layout.setContentsMargins(0, 0, 0, 0)
+        template_layout.setSpacing(SPACING['sm'])
+
         self.template_display = QLabel()
         self.template_display.setStyleSheet(f"""
             color: {COLORS['text_primary']};
@@ -1047,7 +1175,14 @@ class ConfigDialog(QDialog):
             background-color: {COLORS['bg_dark']};
             border: 1px solid {COLORS['border']};
         """)
-        template_card.addWidget(FormRow("Template", self.template_display))
+        template_layout.addWidget(self.template_display, 1)
+        
+        edit_btn = QPushButton("Edit HTML")
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(self._edit_template)
+        template_layout.addWidget(edit_btn)
+
+        template_card.addWidget(FormRow("Template", template_container))
         
         layout.addWidget(template_card)
         
@@ -1655,6 +1790,13 @@ class ConfigDialog(QDialog):
         self.color_muted.setColor(colors.get('muted', '#6c757d'))
         self.color_border.setColor(colors.get('border', '#dee2e6'))
         self.color_table_alt.setColor(colors.get('table_alt', '#f8f9fa'))
+
+    def _edit_template(self):
+        """Open the template editor for the current preset's template."""
+        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('modern-split', 'Modern Split'))
+        
+        dialog = TemplateEditorDialog(template_id, self.config_loader, self)
+        dialog.exec()
 
     def _save_config(self):
         """Save the configuration to the YAML file."""
