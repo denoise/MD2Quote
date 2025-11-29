@@ -4,7 +4,7 @@ import re
 import yaml
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox, 
                              QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog,
-                             QVBoxLayout, QHBoxLayout, QToolButton, QFrame, QSizePolicy)
+                             QVBoxLayout, QHBoxLayout, QToolButton, QFrame, QSizePolicy, QListView)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtCore import Qt, QTimer, QDir, QSettings
 
@@ -151,6 +151,7 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(type_label)
         
         self.preset_combo = QComboBox()
+        self.preset_combo.setView(QListView())
         self.preset_combo.setMinimumWidth(200)
         self.update_preset_selector()
         self.preset_combo.currentTextChanged.connect(self.on_preset_changed)

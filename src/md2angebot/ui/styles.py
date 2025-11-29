@@ -129,32 +129,40 @@ def get_stylesheet():
         border: 1px solid {COLORS['border']};
         border-radius: 0;
         color: {COLORS['text_primary']};
-        padding: {SPACING['xs']}px {SPACING['sm']}px;
-        padding-right: 24px;
-        min-width: 120px;
-        min-height: 24px;
+        padding: 4px 10px;
+        padding-right: 30px;
+        min-width: 140px;
+        min-height: 26px;
+        font-weight: 500;
+        combobox-popup: 0;
     }}
     
     QComboBox:hover {{
+        background-color: {COLORS['bg_hover']};
         border-color: {COLORS['text_muted']};
     }}
     
     QComboBox:focus {{
         border-color: {COLORS['accent']};
+        background-color: {COLORS['bg_base']};
     }}
     
     QComboBox::drop-down {{
         border: none;
-        width: 24px;
-        padding-right: 8px;
+        width: 30px;
+        background-color: transparent;
     }}
     
     QComboBox::down-arrow {{
         image: none;
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
-        border-top: 6px solid {COLORS['text_secondary']};
-        margin-right: 8px;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid {COLORS['text_muted']};
+        margin-right: 4px;
+    }}
+
+    QComboBox::down-arrow:hover {{
+        border-top-color: {COLORS['text_primary']};
     }}
     
     QComboBox QAbstractItemView {{
@@ -162,19 +170,28 @@ def get_stylesheet():
         border: 1px solid {COLORS['border']};
         border-radius: 0;
         outline: none;
-        selection-background-color: {COLORS['bg_hover']};
-        selection-color: {COLORS['text_primary']};
-        padding: {SPACING['xs']}px;
+        selection-background-color: {COLORS['accent']};
+        selection-color: {COLORS['bg_dark']};
+        padding: 4px;
+        margin-top: 30px;
     }}
     
     QComboBox QAbstractItemView::item {{
-        padding: {SPACING['xs']}px {SPACING['sm']}px;
-        min-height: 22px;
+        padding: 8px 15px;
+        min-height: 32px;
         border-radius: 0;
+        color: {COLORS['text_primary']};
+        margin: 0px;
     }}
     
     QComboBox QAbstractItemView::item:hover {{
-        background-color: {COLORS['bg_hover']};
+        background-color: {COLORS['accent']};
+        color: {COLORS['bg_dark']};
+    }}
+    
+    QComboBox QAbstractItemView::item:selected {{
+        background-color: {COLORS['accent']};
+        color: {COLORS['bg_dark']};
     }}
     
     /* ========================================
