@@ -94,7 +94,7 @@
         <div class="bank-details">
             <h4>{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
             <p>{{ bank.bank_name }} | IBAN: {{ bank.iban }} | BIC: {{ bank.bic }}</p>
-            <p>{% if defaults.language == 'de' %}Inhaber{% else %}Holder{% endif %}: {{ bank.holder }}</p>
+            <p>{{ bank.holder }}</p>
         </div>
         <div class="company-footer">
             <p>{{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}, {{ contact.country }}</p>

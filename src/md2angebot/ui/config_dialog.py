@@ -1143,11 +1143,6 @@ class ConfigDialog(QDialog):
         self.legal_tax_id.setMinimumHeight(24)
         legal_card.addWidget(FormRow("Tax ID", self.legal_tax_id))
         
-        self.legal_kvk = QLineEdit()
-        self.legal_kvk.setPlaceholderText("Chamber of Commerce Number")
-        self.legal_kvk.setMinimumHeight(24)
-        legal_card.addWidget(FormRow("CoC Number", self.legal_kvk))
-        
         right_col.addWidget(legal_card)
         
         # Bank Card (with enable checkbox)
@@ -1654,7 +1649,6 @@ class ConfigDialog(QDialog):
         preset['legal'] = {
             'enabled': self.legal_enabled_checkbox.isChecked(),
             'tax_id': self.legal_tax_id.text(),
-            'chamber_of_commerce': self.legal_kvk.text(),
         }
         
         # Template is fixed per preset - use the mapping
@@ -1758,7 +1752,6 @@ class ConfigDialog(QDialog):
         legal = preset.get('legal', {})
         self.legal_enabled_checkbox.setChecked(legal.get('enabled', True))
         self.legal_tax_id.setText(legal.get('tax_id', ''))
-        self.legal_kvk.setText(legal.get('chamber_of_commerce', ''))
         
         layout_config = preset.get('layout', {})
         margins = layout_config.get('page_margins', [20, 20, 20, 20])
