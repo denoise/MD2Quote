@@ -1,188 +1,249 @@
+/* Agency Minimal Sidebar CSS */
+
 @page {
     size: A4;
-    margin-top: {{ layout.page_margins[0] }}mm;
-    margin-right: {{ layout.page_margins[1] }}mm;
-    margin-bottom: {{ layout.page_margins[2] }}mm;
-    margin-left: 70mm; /* Space for sidebar */
-    
+    /* We use a larger left margin to accommodate the sidebar visually, 
+       though the sidebar element itself is fixed/absolute. */
+    margin-top: 15mm;
+    margin-bottom: 15mm;
+    margin-left: 0mm; /* We handle layout with padding/positioning to allow full-height sidebar */
+    margin-right: 0mm;
+
     @bottom-right {
         content: counter(page) " / " counter(pages);
         font-family: var(--font-mono);
         font-size: 8pt;
         color: var(--muted);
+        margin-right: 15mm;
+        margin-bottom: 10mm;
     }
 }
 
 body {
     font-family: var(--font-body);
-    font-size: {{ typography.sizes.body }}pt;
+    font-size: 9pt;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    width: 210mm; /* A4 width */
+    position: relative;
+}
+
+/* --- Sidebar Styling --- */
+aside {
+    position: fixed; /* Fixed is relative to the page box in WeasyPrint */
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 65mm;
+    background-color: var(--bg-sidebar);
+    padding: 15mm 10mm;
+    box-sizing: border-box;
+    border-right: 1px solid transparent; /* Optional: distinct border */
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.logo-container {
+    margin-bottom: 10px;
+}
+
+.logo {
+    max-width: 100%;
+    max-height: 30mm;
+    object-fit: contain;
+}
+
+.company-name-text {
+    font-family: var(--font-heading);
+    font-size: 14pt;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+    line-height: 1.2;
+}
+
+.meta-block {
+    font-size: 8.5pt;
+    color: var(--muted);
+}
+
+.meta-label {
+    font-family: var(--font-mono);
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    margin: 0 0 6px 0;
+    font-weight: 600;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.company-address, .meta-block p {
+    margin: 0;
     color: var(--text);
     line-height: 1.4;
 }
 
-/* Sidebar */
-aside {
-    position: fixed;
-    top: 0;
-    left: -50mm; /* Relative to the flow content's left edge? No, fixed is relative to page box usually, but margin impacts it. */
-    /* In WeasyPrint, fixed elements are positioned relative to the page area (inside margins) unless specified otherwise. 
-       Actually, let's double check. Usually fixed is relative to the page area. 
-       So if margin-left is 70mm, left: 0 is at 70mm. 
-       To put it in the margin, we use negative left. */
-    width: 55mm;
-    height: 100%;
-    border-right: 1px solid var(--border);
-    padding-right: 15px;
-}
-
-/* Company Info in Sidebar */
-.logo {
-    max-width: 100%;
-    margin-bottom: 20px;
-}
-
-.company-name {
-    font-family: var(--font-heading);
-    font-size: {{ typography.sizes.company_name }}pt;
-    color: var(--primary);
-    margin: 0 0 5px;
-    line-height: 1.2;
-}
-
-.tagline {
-    font-size: 9pt;
-    color: var(--muted);
-    margin-bottom: 30px;
-}
-
-.sidebar-section {
-    margin-bottom: 30px;
-}
-
-.sidebar-section h4 {
+.mono-text {
     font-family: var(--font-mono);
     font-size: 8pt;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 2px;
 }
 
-.sidebar-section p {
-    font-size: 9pt;
-    margin: 2px 0;
+.sidebar-footer {
+    position: absolute;
+    bottom: 15mm;
+    left: 10mm;
+    right: 10mm;
+    font-size: 7pt;
     color: var(--muted);
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
 }
 
-.sidebar-section p strong {
-    color: var(--text);
+/* --- Main Content Styling --- */
+main {
+    margin-left: 65mm; /* Offset for sidebar */
+    padding: 15mm 15mm 15mm 10mm;
+    width: 115mm; /* Remaining width approx */
 }
 
-/* Main Content */
-h1 { font-family: var(--font-heading); font-size: {{ typography.sizes.heading1 }}pt; color: var(--primary); margin-top: 0; }
-h2 { font-family: var(--font-heading); font-size: {{ typography.sizes.heading2 }}pt; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 30px; }
-h3 { font-size: 11pt; font-weight: bold; margin-bottom: 5px; }
+.doc-header {
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 20px;
+}
 
-.quotation-title {
-    font-size: 24pt;
-    font-weight: bold;
+.doc-title {
+    font-family: var(--font-heading);
+    font-size: 28pt;
+    font-weight: 300; /* Thin/Light elegant feel */
+    letter-spacing: -0.5px;
     color: var(--text);
-    margin-bottom: 10px;
     line-height: 1;
 }
 
-.client-section {
-    margin-bottom: 40px;
-    padding: 20px;
-    background-color: var(--table-alt);
-    border-left: 2px solid var(--accent);
+.client-info {
+    /* margin-top: 10px; */
 }
 
-.client-section h3 {
-    margin-top: 0;
-    font-family: var(--font-mono);
-    font-size: 9pt;
-    text-transform: uppercase;
-    color: var(--muted);
+.client-name {
+    font-size: 12pt;
+    font-weight: 600;
+    margin-bottom: 2px;
 }
 
-/* Tables */
+.intro-text {
+    font-size: 10pt;
+    margin-bottom: 30px;
+    color: var(--text);
+}
+
+/* --- Typography & Elements --- */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    color: var(--text);
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+h1 { font-size: 18pt; font-weight: 600; }
+h2 { font-size: 14pt; font-weight: 600; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+h3 { font-size: 11pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+p {
+    margin-bottom: 1em;
+}
+
+/* --- Tables (The "Invoice" part) --- */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin: 30px 0;
     font-size: 9pt;
 }
 
 th {
-    background-color: var(--primary);
-    color: white;
-    font-weight: bold;
-    text-align: left;
-    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
     text-transform: uppercase;
-    font-size: 8pt;
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--text); /* Strong divider */
 }
 
 td {
-    padding: 8px 10px;
+    padding: 12px 0;
     border-bottom: 1px solid var(--border);
+    vertical-align: top;
 }
 
-tr:last-child td {
-    border-bottom: 2px solid var(--primary);
-}
-
+/* Align numbers to right */
 th:last-child, td:last-child,
 th:nth-last-child(2), td:nth-last-child(2),
 th:nth-last-child(3), td:nth-last-child(3) {
     text-align: right;
-    font-family: var(--font-mono);
 }
 
-/* Snippets */
-.intro-text {
-    font-size: 10pt;
-    margin-bottom: 20px;
+/* Totals Row styling (usually the last rows in the table body or footer) */
+/* Since the Markdown renderer likely generates a standard table, we assume the last row might be totals, 
+   but Markdown tables are generic. If there's a specific totals table, it might need custom CSS targeting if it has a class.
+   Standard markdown tables don't have classes for rows. We'll style the last row generally or rely on bold text in markdown. */
+
+tr:last-child td {
+    border-bottom: none;
 }
 
-.terms {
-    margin-top: 30px;
+/* --- Terms & Signature --- */
+.terms-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
     font-size: 8pt;
     color: var(--muted);
-    border-top: 1px solid var(--border);
-    padding-top: 10px;
 }
 
-.signature-block {
-    margin-top: 50px;
+.signature-section {
+    margin-top: 60px;
+    page-break-inside: avoid;
+}
+
+.signature-box {
+    display: inline-block;
+    min-width: 200px;
 }
 
 .signature-line {
     border-bottom: 1px solid var(--text);
-    width: 200px;
     height: 40px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
-.signature-label {
-    font-size: 8pt;
+.signature-caption {
     font-family: var(--font-mono);
-}
-
-/* VAT Notice */
-.vat-notice {
-    margin-top: 30px;
-    padding: 10px 15px;
-    font-size: 8pt;
-    border-left: 3px solid var(--muted);
-    background-color: var(--table-alt);
+    font-size: 7pt;
+    text-transform: uppercase;
     color: var(--muted);
 }
 
-.vat-notice.kleinunternehmer {
+.vat-notice {
+    margin-top: 20px;
+    font-size: 8pt;
     font-style: italic;
+    color: var(--muted);
 }
-
-
