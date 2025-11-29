@@ -427,12 +427,8 @@ class MainWindow(QMainWindow):
         try:
             current_text = self.editor.get_text()
             header_data = self.header.get_data()
-            new_text = self._merge_header_to_text(current_text, header_data)
-            
-            self.editor.set_text(new_text)
-            
             with open(self.current_file, 'w', encoding='utf-8') as f:
-                f.write(new_text)
+                f.write(current_text)
             
             self.is_modified = False
             self.setWindowTitle(f"MD2Angebot — {os.path.basename(self.current_file)}")
