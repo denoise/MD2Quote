@@ -34,3 +34,4 @@ def get_examples_path() -> Path:
     """Get the path to the examples directory."""
     return get_app_path() / 'examples'
 
+

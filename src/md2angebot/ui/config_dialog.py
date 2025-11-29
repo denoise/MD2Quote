@@ -185,6 +185,9 @@ class SectionCard(QFrame):
             """)
             self._layout.addWidget(title_label)
         
+        # Add stretch at the end to push content to the top
+        self._layout.addStretch(1)
+        
         self.setStyleSheet(f"""
             QFrame#section-card {{
                 background-color: {COLORS['bg_elevated']};
@@ -194,10 +197,12 @@ class SectionCard(QFrame):
         """)
     
     def addWidget(self, widget):
-        self._layout.addWidget(widget)
+        # Insert before the stretch (which is always the last item)
+        self._layout.insertWidget(self._layout.count() - 1, widget)
     
     def addLayout(self, layout):
-        self._layout.addLayout(layout)
+        # Insert before the stretch (which is always the last item)
+        self._layout.insertLayout(self._layout.count() - 1, layout)
 
 
 class FormField(QWidget):
@@ -424,8 +429,8 @@ class ConfigDialog(QDialog):
         self.current_preset_key = self.config.get('active_preset', 'preset_1')
         
         self.setWindowTitle("Configuration Assistant")
-        self.setMinimumSize(1000, 800)
-        self.resize(1100, 900)
+        self.setMinimumSize(1000, 620)
+        self.resize(1100, 680)
         
         self._setup_ui()
         self._load_preset_values(self.current_preset_key)
@@ -447,11 +452,12 @@ class ConfigDialog(QDialog):
                 border: 1px solid {COLORS['border']};
                 border-bottom: none;
                 border-radius: 0;
-                padding: {SPACING['xs']}px {SPACING['md']}px;
+                padding: {SPACING['sm']}px {SPACING['lg']}px;
                 margin-right: 1px;
                 color: {COLORS['text_secondary']};
                 font-weight: 500;
-                font-size: 12px;
+                font-size: 13px;
+                min-width: 90px;
             }}
             QTabBar::tab:selected {{
                 background-color: {COLORS['bg_dark']};
@@ -720,7 +726,6 @@ class ConfigDialog(QDialog):
         contact_card.addWidget(FormRow("Website", self.contact_website))
         
         left_col.addWidget(contact_card)
-        left_col.addStretch()
         
         columns.addLayout(left_col, 1)
         
@@ -767,12 +772,13 @@ class ConfigDialog(QDialog):
         bank_card.addWidget(FormRow("BIC / SWIFT", self.bank_bic))
         
         right_col.addWidget(bank_card)
-        right_col.addStretch()
+        
+        # Add spacer to right column to align with left column height
+        right_col.addStretch(1)
         
         columns.addLayout(right_col, 1)
         
-        layout.addLayout(columns)
-        layout.addStretch()
+        layout.addLayout(columns, 1)
         return scroll
     
     def _create_document_tab(self) -> QWidget:
@@ -832,7 +838,7 @@ class ConfigDialog(QDialog):
         
         layout.addWidget(snippets_card)
         
-        layout.addStretch()
+        layout.addStretch(1)
         return scroll
     
     def _create_styling_tab(self) -> QWidget:
@@ -900,7 +906,6 @@ class ConfigDialog(QDialog):
         
         sizes_card.addLayout(sizes_grid)
         left_col.addWidget(sizes_card)
-        left_col.addStretch()
         
         columns.addLayout(left_col, 1)
         
@@ -958,12 +963,10 @@ class ConfigDialog(QDialog):
         
         colors_card.addLayout(colors_grid)
         right_col.addWidget(colors_card)
-        right_col.addStretch()
         
         columns.addLayout(right_col, 1)
         
-        layout.addLayout(columns)
-        layout.addStretch()
+        layout.addLayout(columns, 1)
         return scroll
     
     def _create_defaults_tab(self) -> QWidget:
@@ -1043,7 +1046,6 @@ class ConfigDialog(QDialog):
         defaults_card.addLayout(row2)
         
         left_col.addWidget(defaults_card)
-        left_col.addStretch()
         
         columns.addLayout(left_col, 1)
         
@@ -1111,12 +1113,10 @@ class ConfigDialog(QDialog):
         qn_card.addLayout(counter_row)
         
         right_col.addWidget(qn_card)
-        right_col.addStretch()
         
         columns.addLayout(right_col, 1)
         
-        layout.addLayout(columns)
-        layout.addStretch()
+        layout.addLayout(columns, 1)
         return scroll
     
     def _on_qn_preset_selected(self, index):

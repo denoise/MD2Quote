@@ -41,3 +41,4 @@ echo "✅ DMG created: $DMG_PATH"
 echo ""
 echo "Users can drag the app to Applications folder from this DMG."
 
+
