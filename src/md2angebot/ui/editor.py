@@ -18,10 +18,14 @@ class LineNumberArea(QWidget):
 
 
 class ModernPlainTextEdit(QPlainTextEdit):
-    """A styled plain text editor with line numbers."""
+    """A styled plain text editor with line numbers and multi-cursor support."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.line_number_area = LineNumberArea(self)
+        
+        # Multi-cursor state for Cmd+D functionality
+        self.extra_cursors: list[QTextCursor] = []
+        self.multi_select_search_text: str = ""
         
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
@@ -91,6 +95,7 @@ class ModernPlainTextEdit(QPlainTextEdit):
         extra_selections = []
         
         if not self.isReadOnly():
+            # Highlight current line
             selection = QTextEdit.ExtraSelection()
             line_color = QColor(COLORS['bg_elevated'])
             selection.format.setBackground(line_color)
@@ -98,11 +103,35 @@ class ModernPlainTextEdit(QPlainTextEdit):
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
             extra_selections.append(selection)
+            
+            # Highlight extra cursor selections (multi-cursor)
+            for cursor in self.extra_cursors:
+                if cursor.hasSelection():
+                    sel = QTextEdit.ExtraSelection()
+                    sel.format.setBackground(QColor(COLORS['accent_muted']))
+                    sel.format.setForeground(QColor(COLORS['text_primary']))
+                    sel.cursor = cursor
+                    extra_selections.append(sel)
         
         self.setExtraSelections(extra_selections)
 
     def keyPressEvent(self, event):
-        """Handle keyboard shortcuts for formatting."""
+        """Handle keyboard shortcuts for formatting and multi-cursor."""
+        modifiers = event.modifiers()
+        key = event.key()
+        
+        # Escape clears extra cursors
+        if key == Qt.Key.Key_Escape:
+            if self.extra_cursors:
+                self.clear_extra_cursors()
+                return
+        
+        # Cmd+D / Ctrl+D - Add selection to next find match
+        if (key == Qt.Key.Key_D and 
+            (modifiers & Qt.KeyboardModifier.ControlModifier or modifiers & Qt.KeyboardModifier.MetaModifier)):
+            self.handle_cmd_d()
+            return
+        
         # Bold (Cmd+B / Ctrl+B)
         if event.matches(QKeySequence.StandardKey.Bold):
             self.toggle_formatting('**')
@@ -114,14 +143,27 @@ class ModernPlainTextEdit(QPlainTextEdit):
             return
 
         # Link (Cmd+K / Ctrl+K) - No StandardKey for Link, check manual
-        # On Mac Meta is Cmd, on Windows Control is Ctrl
-        modifiers = event.modifiers()
-        
         # Check if K is pressed with either Control or Meta (Command) modifier
-        if (event.key() == Qt.Key.Key_K and 
+        if (key == Qt.Key.Key_K and 
             (modifiers & Qt.KeyboardModifier.ControlModifier or modifiers & Qt.KeyboardModifier.MetaModifier)):
             self.insert_link()
             return
+        
+        # Handle multi-cursor typing
+        if self.extra_cursors:
+            if key == Qt.Key.Key_Backspace:
+                self.handle_multi_cursor_backspace()
+                return
+            elif key == Qt.Key.Key_Delete:
+                self.handle_multi_cursor_delete()
+                return
+            elif event.text() and event.text().isprintable():
+                self.handle_multi_cursor_insert(event.text())
+                return
+            elif key in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down,
+                         Qt.Key.Key_Home, Qt.Key.Key_End):
+                # Clear extra cursors on navigation
+                self.clear_extra_cursors()
 
         super().keyPressEvent(event)
 
@@ -165,6 +207,138 @@ class ModernPlainTextEdit(QPlainTextEdit):
             cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 4) # 'text' is 4 chars
             self.setTextCursor(cursor)
         cursor.endEditBlock()
+
+    def handle_cmd_d(self):
+        """Handle Cmd+D: select word or add next occurrence."""
+        cursor = self.textCursor()
+        
+        # If no selection and no extra cursors, select word at cursor
+        if not cursor.hasSelection() and not self.extra_cursors:
+            self.select_word_at_cursor()
+            return
+        
+        # Get the search text from current selection
+        if cursor.hasSelection():
+            self.multi_select_search_text = cursor.selectedText()
+        
+        if not self.multi_select_search_text:
+            return
+        
+        # Find next occurrence after the last cursor
+        last_cursor = self.extra_cursors[-1] if self.extra_cursors else cursor
+        next_cursor = self.find_next_occurrence(last_cursor)
+        
+        if next_cursor:
+            # Check if we've wrapped around to an existing selection
+            new_start = next_cursor.selectionStart()
+            existing_positions = [cursor.selectionStart()]
+            existing_positions.extend(c.selectionStart() for c in self.extra_cursors)
+            
+            if new_start not in existing_positions:
+                self.extra_cursors.append(next_cursor)
+                self.highlight_current_line()
+
+    def select_word_at_cursor(self):
+        """Select the word under the cursor."""
+        cursor = self.textCursor()
+        cursor.select(QTextCursor.SelectionType.WordUnderCursor)
+        if cursor.hasSelection():
+            self.multi_select_search_text = cursor.selectedText()
+            self.setTextCursor(cursor)
+            self.highlight_current_line()
+
+    def find_next_occurrence(self, from_cursor: QTextCursor) -> QTextCursor | None:
+        """Find the next occurrence of the search text after the given cursor."""
+        if not self.multi_select_search_text:
+            return None
+        
+        doc = self.document()
+        search_text = self.multi_select_search_text
+        
+        # Start searching from the end of the current selection
+        start_pos = from_cursor.selectionEnd()
+        
+        # Search forward from current position
+        search_cursor = doc.find(search_text, start_pos)
+        
+        # If not found, wrap around to the beginning
+        if search_cursor.isNull():
+            search_cursor = doc.find(search_text, 0)
+        
+        if not search_cursor.isNull():
+            return search_cursor
+        
+        return None
+
+    def clear_extra_cursors(self):
+        """Clear all extra cursors and reset multi-select state."""
+        self.extra_cursors.clear()
+        self.multi_select_search_text = ""
+        self.highlight_current_line()
+
+    def handle_multi_cursor_backspace(self):
+        """Handle backspace for all cursors."""
+        # Collect all cursors including the primary one
+        all_cursors = [self.textCursor()] + self.extra_cursors
+        
+        # Sort by position in reverse order to preserve positions during edits
+        all_cursors.sort(key=lambda c: c.selectionStart(), reverse=True)
+        
+        # Begin edit block for undo grouping
+        primary_cursor = self.textCursor()
+        primary_cursor.beginEditBlock()
+        
+        for cursor in all_cursors:
+            if cursor.hasSelection():
+                cursor.removeSelectedText()
+            else:
+                cursor.deletePreviousChar()
+        
+        primary_cursor.endEditBlock()
+        
+        # Update primary cursor and extra cursors
+        self.setTextCursor(all_cursors[-1])  # Last in sorted order = first in document
+        self.extra_cursors = all_cursors[:-1]
+        self.highlight_current_line()
+
+    def handle_multi_cursor_delete(self):
+        """Handle delete key for all cursors."""
+        all_cursors = [self.textCursor()] + self.extra_cursors
+        all_cursors.sort(key=lambda c: c.selectionStart(), reverse=True)
+        
+        primary_cursor = self.textCursor()
+        primary_cursor.beginEditBlock()
+        
+        for cursor in all_cursors:
+            if cursor.hasSelection():
+                cursor.removeSelectedText()
+            else:
+                cursor.deleteChar()
+        
+        primary_cursor.endEditBlock()
+        
+        self.setTextCursor(all_cursors[-1])
+        self.extra_cursors = all_cursors[:-1]
+        self.highlight_current_line()
+
+    def handle_multi_cursor_insert(self, text: str):
+        """Insert text at all cursor positions."""
+        all_cursors = [self.textCursor()] + self.extra_cursors
+        all_cursors.sort(key=lambda c: c.selectionStart(), reverse=True)
+        
+        primary_cursor = self.textCursor()
+        primary_cursor.beginEditBlock()
+        
+        for cursor in all_cursors:
+            cursor.insertText(text)
+        
+        primary_cursor.endEditBlock()
+        
+        # After insertion, update cursor positions
+        # The cursors have already moved due to insertText
+        self.setTextCursor(all_cursors[-1])
+        self.extra_cursors = all_cursors[:-1]
+        self.highlight_current_line()
 
 
 class MarkdownHighlighter(QSyntaxHighlighter):
