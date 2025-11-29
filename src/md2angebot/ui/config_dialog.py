@@ -147,6 +147,121 @@ class TemplateEditorDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Could not save template:\n{e}")
 
 
+class CSSEditorDialog(QDialog):
+    """Dialog for editing raw CSS used by templates."""
+
+    def __init__(self, template_name: str, config_loader, parent=None):
+        super().__init__(parent)
+        self.template_name = template_name
+        self.config_loader = config_loader
+        self.file_path = self._find_css_path()
+
+        self.setWindowTitle(f"Edit Template CSS: {template_name}.css")
+        self.resize(900, 700)
+
+        self._setup_ui()
+        self._load_content()
+
+    def _find_css_path(self) -> Path:
+        """Find the CSS file path, prioritizing user config then app templates."""
+        filename = f"{self.template_name}.css"
+
+        user_path = self.config_loader.templates_dir / filename
+        if user_path.exists():
+            return user_path
+
+        app_path = get_templates_path() / filename
+        if app_path.exists():
+            return app_path
+
+        return None
+
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(SPACING['md'])
+
+        header = QHBoxLayout()
+
+        path_label = QLabel(f"Editing: {self.file_path}")
+        path_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px; font-family: monospace;")
+        header.addWidget(path_label)
+
+        layout.addLayout(header)
+
+        self.editor = QPlainTextEdit()
+        self.editor.setStyleSheet(f"""
+            QPlainTextEdit {{
+                font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+                font-size: 13px;
+                background-color: {COLORS['bg_dark']};
+                color: {COLORS['text_primary']};
+                border: 1px solid {COLORS['border']};
+            }}
+        """)
+        layout.addWidget(self.editor)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addWidget(cancel_btn)
+
+        save_btn = QPushButton("Save Changes")
+        save_btn.setDefault(True)
+        save_btn.clicked.connect(self._save_changes)
+        save_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['accent']};
+                color: white;
+                font-weight: 600;
+                padding: 6px 16px;
+                border: none;
+            }}
+            QPushButton:hover {{
+                background-color: #d63650;
+            }}
+        """)
+        btn_layout.addWidget(save_btn)
+
+        layout.addLayout(btn_layout)
+
+    def _load_content(self):
+        if not self.file_path:
+            QMessageBox.warning(self, "Error", f"CSS file '{self.template_name}.css' not found.")
+            self.reject()
+            return
+
+        try:
+            content = self.file_path.read_text(encoding="utf-8")
+            self.editor.setPlainText(content)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not load CSS:\n{e}")
+            self.reject()
+
+    def _save_changes(self):
+        if not self.file_path:
+            return
+
+        try:
+            content = self.editor.toPlainText()
+
+            reply = QMessageBox.question(
+                self,
+                "Confirm Save",
+                f"Are you sure you want to overwrite the CSS file?\n{self.file_path}",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.file_path.write_text(content, encoding="utf-8")
+                QMessageBox.information(self, "Success", "CSS file saved successfully.")
+                self.accept()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not save CSS:\n{e}")
+
+
 # Fixed mapping between presets and layout templates
 # Each preset is associated with a specific template that cannot be changed
 PRESET_TEMPLATE_MAP = {
@@ -1193,10 +1308,23 @@ class ConfigDialog(QDialog):
         
         # Advanced Card (Template Editing)
         advanced_card = SectionCard("Advanced")
-        edit_btn = QPushButton("Edit Template HTML")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.clicked.connect(self._edit_template)
-        advanced_card.addWidget(edit_btn)
+
+        buttons_row = QHBoxLayout()
+        buttons_row.setSpacing(SPACING['sm'])
+
+        edit_html_btn = QPushButton("Edit Template HTML")
+        edit_html_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_html_btn.clicked.connect(self._edit_template)
+
+        edit_css_btn = QPushButton("Edit Template CSS")
+        edit_css_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_css_btn.clicked.connect(self._edit_css)
+
+        # Place buttons on the same row, each taking 50% width
+        buttons_row.addWidget(edit_html_btn, 1)
+        buttons_row.addWidget(edit_css_btn, 1)
+
+        advanced_card.addLayout(buttons_row)
         layout.addWidget(advanced_card)
         
         # Snippets Card (with enable checkbox)
@@ -1864,6 +1992,13 @@ class ConfigDialog(QDialog):
         template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
         
         dialog = TemplateEditorDialog(template_id, self.config_loader, self)
+        dialog.exec()
+
+    def _edit_css(self):
+        """Open the CSS editor for the current preset's stylesheet."""
+        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
+
+        dialog = CSSEditorDialog(template_id, self.config_loader, self)
         dialog.exec()
 
     def _save_config(self):
