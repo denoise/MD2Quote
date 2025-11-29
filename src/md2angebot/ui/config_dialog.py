@@ -79,7 +79,7 @@ class ColorButton(QPushButton):
     def __init__(self, color: str = "#ffffff", parent=None):
         super().__init__(parent)
         self._color = color
-        self.setFixedSize(60, 36)
+        self.setFixedSize(50, 28)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clicked.connect(self._pick_color)
         self._update_style()
@@ -93,8 +93,8 @@ class ColorButton(QPushButton):
         self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self._color};
-                border: 2px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
                 color: {text_color};
                 font-size: 10px;
                 font-weight: 500;
@@ -166,8 +166,8 @@ class SectionCard(QFrame):
         self.setObjectName("section-card")
         
         self._layout = QVBoxLayout(self)
-        self._layout.setSpacing(SPACING['md'])
-        self._layout.setContentsMargins(SPACING['lg'], SPACING['lg'], SPACING['lg'], SPACING['lg'])
+        self._layout.setSpacing(SPACING['sm'])
+        self._layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
         
         if title:
             title_label = QLabel(title)
@@ -179,8 +179,8 @@ class SectionCard(QFrame):
                     font-weight: 700;
                     text-transform: uppercase;
                     letter-spacing: 1px;
-                    padding-bottom: {SPACING['sm']}px;
-                    margin-bottom: {SPACING['xs']}px;
+                    padding-bottom: {SPACING['xs']}px;
+                    margin-bottom: 0;
                 }}
             """)
             self._layout.addWidget(title_label)
@@ -189,7 +189,7 @@ class SectionCard(QFrame):
             QFrame#section-card {{
                 background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['lg']}px;
+                border-radius: 0;
             }}
         """)
     
@@ -239,11 +239,11 @@ class FormRow(QWidget):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(SPACING['md'])
+        layout.setSpacing(SPACING['sm'])
         
         lbl = QLabel(label)
         self.label_widget = lbl
-        lbl.setFixedWidth(130)
+        lbl.setFixedWidth(100)
         lbl.setStyleSheet(f"""
             color: {COLORS['text_secondary']};
             font-weight: 500;
@@ -259,16 +259,16 @@ class StyledSpinBox(QSpinBox):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumWidth(100)
-        self.setMinimumHeight(36)
+        self.setMinimumWidth(80)
+        self.setMinimumHeight(24)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet(f"""
             QSpinBox {{
                 background-color: {COLORS['bg_dark']};
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
+                border-radius: 0;
                 color: {COLORS['text_primary']};
-                padding: 4px 8px;
+                padding: 2px 4px;
                 font-size: 13px;
                 font-weight: 500;
             }}
@@ -279,16 +279,16 @@ class StyledSpinBox(QSpinBox):
                 border-color: {COLORS['accent']};
             }}
             QSpinBox::up-button, QSpinBox::down-button {{
-                width: 20px;
+                width: 18px;
                 border: none;
                 background-color: {COLORS['bg_hover']};
             }}
             QSpinBox::up-button {{
-                border-top-right-radius: {RADIUS['md']}px;
+                border-radius: 0;
                 subcontrol-position: top right;
             }}
             QSpinBox::down-button {{
-                border-bottom-right-radius: {RADIUS['md']}px;
+                border-radius: 0;
                 subcontrol-position: bottom right;
             }}
             QSpinBox::up-button:hover, QSpinBox::down-button:hover {{
@@ -296,16 +296,16 @@ class StyledSpinBox(QSpinBox):
             }}
             QSpinBox::up-arrow {{
                 image: none;
-                border-left: 4px solid transparent;
-                border-right: 4px solid transparent;
-                border-bottom: 5px solid {COLORS['text_secondary']};
+                border-left: 3px solid transparent;
+                border-right: 3px solid transparent;
+                border-bottom: 4px solid {COLORS['text_secondary']};
                 width: 0; height: 0;
             }}
             QSpinBox::down-arrow {{
                 image: none;
-                border-left: 4px solid transparent;
-                border-right: 4px solid transparent;
-                border-top: 5px solid {COLORS['text_secondary']};
+                border-left: 3px solid transparent;
+                border-right: 3px solid transparent;
+                border-top: 4px solid {COLORS['text_secondary']};
                 width: 0; height: 0;
             }}
         """)
@@ -317,16 +317,16 @@ class StyledComboBox(QComboBox):
     def __init__(self, items: list = None, parent=None):
         super().__init__(parent)
         self.setEditable(True)
-        self.setMinimumHeight(36)
+        self.setMinimumHeight(24)
         if items:
             self.addItems(items)
         self.setStyleSheet(f"""
             QComboBox {{
                 background-color: {COLORS['bg_dark']};
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
+                border-radius: 0;
                 color: {COLORS['text_primary']};
-                padding: 4px 12px;
+                padding: 2px 6px;
                 font-size: 13px;
             }}
             QComboBox:hover {{
@@ -337,18 +337,18 @@ class StyledComboBox(QComboBox):
             }}
             QComboBox::drop-down {{
                 border: none;
-                width: 24px;
+                width: 22px;
             }}
             QComboBox::down-arrow {{
                 image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 6px solid {COLORS['text_secondary']};
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 5px solid {COLORS['text_secondary']};
             }}
             QComboBox QAbstractItemView {{
                 background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
+                border-radius: 0;
                 selection-background-color: {COLORS['bg_hover']};
                 outline: none;
             }}
@@ -438,18 +438,17 @@ class ConfigDialog(QDialog):
             }}
             QTabWidget::pane {{
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['lg']}px;
+                border-radius: 0;
                 background-color: {COLORS['bg_dark']};
-                padding: {SPACING['md']}px;
+                padding: {SPACING['sm']}px;
             }}
             QTabBar::tab {{
                 background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
                 border-bottom: none;
-                border-top-left-radius: {RADIUS['md']}px;
-                border-top-right-radius: {RADIUS['md']}px;
-                padding: {SPACING['sm']}px {SPACING['lg']}px;
-                margin-right: 2px;
+                border-radius: 0;
+                padding: {SPACING['xs']}px {SPACING['md']}px;
+                margin-right: 1px;
                 color: {COLORS['text_secondary']};
                 font-weight: 500;
                 font-size: 12px;
@@ -473,13 +472,13 @@ class ConfigDialog(QDialog):
             QCheckBox {{
                 color: {COLORS['text_primary']};
                 font-size: 13px;
-                spacing: 8px;
+                spacing: 4px;
             }}
             QCheckBox::indicator {{
-                width: 18px;
-                height: 18px;
-                border: 2px solid {COLORS['border']};
-                border-radius: 4px;
+                width: 14px;
+                height: 14px;
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
                 background-color: {COLORS['bg_dark']};
             }}
             QCheckBox::indicator:checked {{
@@ -493,13 +492,13 @@ class ConfigDialog(QDialog):
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(SPACING['lg'])
-        layout.setContentsMargins(SPACING['xl'], SPACING['xl'], SPACING['xl'], SPACING['xl'])
+        layout.setSpacing(SPACING['md'])
+        layout.setContentsMargins(SPACING['lg'], SPACING['lg'], SPACING['lg'], SPACING['lg'])
         
         # Title
         title_container = QHBoxLayout()
         title_col = QVBoxLayout()
-        title_col.setSpacing(4)
+        title_col.setSpacing(2)
         
         title = QLabel("Configuration Assistant")
         title.setStyleSheet(f"""
@@ -526,17 +525,17 @@ class ConfigDialog(QDialog):
             QFrame#section-card {{
                 background-color: {COLORS['bg_dark']};
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['lg']}px;
-                padding: {SPACING['md']}px;
+                border-radius: 0;
+                padding: {SPACING['sm']}px;
             }}
         """)
         
         preset_inner_layout = QVBoxLayout()
-        preset_inner_layout.setSpacing(SPACING['md'])
+        preset_inner_layout.setSpacing(SPACING['sm'])
         
         # Preset buttons row
         preset_btn_layout = QHBoxLayout()
-        preset_btn_layout.setSpacing(SPACING['sm'])
+        preset_btn_layout.setSpacing(SPACING['xs'])
         
         self.preset_group = QButtonGroup(self)
         self.preset_group.setExclusive(True)
@@ -552,8 +551,8 @@ class ConfigDialog(QDialog):
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setProperty("preset_key", key)
-            btn.setFixedHeight(44)
-            btn.setMinimumWidth(140)
+            btn.setFixedHeight(28)
+            btn.setMinimumWidth(100)
             
             if key == self.current_preset_key:
                 btn.setChecked(True)
@@ -565,15 +564,15 @@ class ConfigDialog(QDialog):
         
         # Preset name input row
         name_row = QHBoxLayout()
-        name_row.setSpacing(SPACING['md'])
+        name_row.setSpacing(SPACING['sm'])
         
         name_label = QLabel("Preset Name:")
-        name_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500;")
+        name_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         name_row.addWidget(name_label)
         
         self.preset_name_edit = QLineEdit()
         self.preset_name_edit.setPlaceholderText("e.g. Company A, Freelance, Private")
-        self.preset_name_edit.setMinimumHeight(36)
+        self.preset_name_edit.setMinimumHeight(24)
         self.preset_name_edit.textChanged.connect(self._update_preset_button_text)
         name_row.addWidget(self.preset_name_edit, 1)
         
@@ -592,16 +591,16 @@ class ConfigDialog(QDialog):
         
         # Bottom buttons
         btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(SPACING['md'])
+        btn_layout.setSpacing(SPACING['sm'])
         btn_layout.addStretch()
         
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setMinimumWidth(100)
+        cancel_btn.setMinimumWidth(70)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
         save_btn = QPushButton("Save Configuration")
-        save_btn.setMinimumWidth(160)
+        save_btn.setMinimumWidth(120)
         save_btn.setDefault(True)
         save_btn.clicked.connect(self._save_config)
         btn_layout.addWidget(save_btn)
@@ -614,8 +613,8 @@ class ConfigDialog(QDialog):
                 background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
                 color: {COLORS['text_secondary']};
-                padding: 0 16px;
-                border-radius: {RADIUS['md']}px;
+                padding: 0 8px;
+                border-radius: 0;
                 font-weight: 500;
                 font-size: 12px;
             }}
@@ -638,8 +637,8 @@ class ConfigDialog(QDialog):
         
         content = QWidget()
         content_layout = QVBoxLayout(content)
-        content_layout.setSpacing(SPACING['lg'])
-        content_layout.setContentsMargins(SPACING['sm'], SPACING['sm'], SPACING['sm'], SPACING['sm'])
+        content_layout.setSpacing(SPACING['sm'])
+        content_layout.setContentsMargins(SPACING['xs'], SPACING['xs'], SPACING['xs'], SPACING['xs'])
         
         scroll.setWidget(content)
         return scroll, content_layout
@@ -650,23 +649,23 @@ class ConfigDialog(QDialog):
         
         # Two-column layout for this tab
         columns = QHBoxLayout()
-        columns.setSpacing(SPACING['lg'])
+        columns.setSpacing(SPACING['sm'])
         
         # Left column
         left_col = QVBoxLayout()
-        left_col.setSpacing(SPACING['lg'])
+        left_col.setSpacing(SPACING['sm'])
         
         # Company Card
         company_card = SectionCard("Company")
         
         self.company_name = QLineEdit()
         self.company_name.setPlaceholderText("Your Company Name")
-        self.company_name.setMinimumHeight(36)
+        self.company_name.setMinimumHeight(24)
         company_card.addWidget(FormRow("Name", self.company_name))
         
         self.company_tagline = QLineEdit()
         self.company_tagline.setPlaceholderText("Your tagline or slogan")
-        self.company_tagline.setMinimumHeight(36)
+        self.company_tagline.setMinimumHeight(24)
         company_card.addWidget(FormRow("Tagline", self.company_tagline))
         
         self.company_logo = PathSelector("Images (*.svg *.png *.jpg *.jpeg)")
@@ -679,22 +678,22 @@ class ConfigDialog(QDialog):
         
         self.contact_street = QLineEdit()
         self.contact_street.setPlaceholderText("Street Address")
-        self.contact_street.setMinimumHeight(36)
+        self.contact_street.setMinimumHeight(24)
         contact_card.addWidget(FormRow("Street", self.contact_street))
         
         # City + Postal in one row
         city_row = QHBoxLayout()
-        city_row.setSpacing(SPACING['md'])
+        city_row.setSpacing(SPACING['sm'])
         
         self.contact_postal = QLineEdit()
         self.contact_postal.setPlaceholderText("Postal Code")
-        self.contact_postal.setMinimumHeight(36)
-        self.contact_postal.setMaximumWidth(120)
+        self.contact_postal.setMinimumHeight(24)
+        self.contact_postal.setMaximumWidth(100)
         city_row.addWidget(self.contact_postal)
         
         self.contact_city = QLineEdit()
         self.contact_city.setPlaceholderText("City")
-        self.contact_city.setMinimumHeight(36)
+        self.contact_city.setMinimumHeight(24)
         city_row.addWidget(self.contact_city, 1)
         
         contact_card.addWidget(FormRow("Location", QWidget()))
@@ -702,22 +701,22 @@ class ConfigDialog(QDialog):
         
         self.contact_country = QLineEdit()
         self.contact_country.setPlaceholderText("Country")
-        self.contact_country.setMinimumHeight(36)
+        self.contact_country.setMinimumHeight(24)
         contact_card.addWidget(FormRow("Country", self.contact_country))
         
         self.contact_phone = QLineEdit()
         self.contact_phone.setPlaceholderText("+31 6 1234 5678")
-        self.contact_phone.setMinimumHeight(36)
+        self.contact_phone.setMinimumHeight(24)
         contact_card.addWidget(FormRow("Phone", self.contact_phone))
         
         self.contact_email = QLineEdit()
         self.contact_email.setPlaceholderText("hello@example.com")
-        self.contact_email.setMinimumHeight(36)
+        self.contact_email.setMinimumHeight(24)
         contact_card.addWidget(FormRow("Email", self.contact_email))
         
         self.contact_website = QLineEdit()
         self.contact_website.setPlaceholderText("www.example.com")
-        self.contact_website.setMinimumHeight(36)
+        self.contact_website.setMinimumHeight(24)
         contact_card.addWidget(FormRow("Website", self.contact_website))
         
         left_col.addWidget(contact_card)
@@ -727,19 +726,19 @@ class ConfigDialog(QDialog):
         
         # Right column
         right_col = QVBoxLayout()
-        right_col.setSpacing(SPACING['lg'])
+        right_col.setSpacing(SPACING['sm'])
         
         # Legal Card
         legal_card = SectionCard("Legal Information")
         
         self.legal_tax_id = QLineEdit()
         self.legal_tax_id.setPlaceholderText("VAT / Tax ID")
-        self.legal_tax_id.setMinimumHeight(36)
+        self.legal_tax_id.setMinimumHeight(24)
         legal_card.addWidget(FormRow("Tax ID", self.legal_tax_id))
         
         self.legal_kvk = QLineEdit()
         self.legal_kvk.setPlaceholderText("Chamber of Commerce Number")
-        self.legal_kvk.setMinimumHeight(36)
+        self.legal_kvk.setMinimumHeight(24)
         legal_card.addWidget(FormRow("CoC Number", self.legal_kvk))
         
         right_col.addWidget(legal_card)
@@ -749,22 +748,22 @@ class ConfigDialog(QDialog):
         
         self.bank_holder = QLineEdit()
         self.bank_holder.setPlaceholderText("Account Holder Name")
-        self.bank_holder.setMinimumHeight(36)
+        self.bank_holder.setMinimumHeight(24)
         bank_card.addWidget(FormRow("Holder", self.bank_holder))
         
         self.bank_name = QLineEdit()
         self.bank_name.setPlaceholderText("Bank Name")
-        self.bank_name.setMinimumHeight(36)
+        self.bank_name.setMinimumHeight(24)
         bank_card.addWidget(FormRow("Bank", self.bank_name))
         
         self.bank_iban = QLineEdit()
         self.bank_iban.setPlaceholderText("NL91 ABNA 0417 1643 00")
-        self.bank_iban.setMinimumHeight(36)
+        self.bank_iban.setMinimumHeight(24)
         bank_card.addWidget(FormRow("IBAN", self.bank_iban))
         
         self.bank_bic = QLineEdit()
         self.bank_bic.setPlaceholderText("ABNANL2A")
-        self.bank_bic.setMinimumHeight(36)
+        self.bank_bic.setMinimumHeight(24)
         bank_card.addWidget(FormRow("BIC / SWIFT", self.bank_bic))
         
         right_col.addWidget(bank_card)
@@ -784,7 +783,7 @@ class ConfigDialog(QDialog):
         template_card = SectionCard("Layout Template")
         
         self.layout_template = QComboBox()
-        self.layout_template.setMinimumHeight(40)
+        self.layout_template.setMinimumHeight(24)
         self.layout_template.addItem("🔲 Modern Split (Default)", "modern-split")
         self.layout_template.addItem("📸 Elegant Centered (Photography)", "elegant-centered")
         self.layout_template.addItem("📊 Minimal Sidebar (Consulting)", "minimal-sidebar")
@@ -811,7 +810,7 @@ class ConfigDialog(QDialog):
         
         self.snippet_intro = QPlainTextEdit()
         self.snippet_intro.setPlaceholderText("Introductory text before the line items...")
-        self.snippet_intro.setFixedHeight(80)
+        self.snippet_intro.setFixedHeight(60)
         snippets_card.addWidget(self.snippet_intro)
         
         terms_label = QLabel("Terms & Conditions")
@@ -820,12 +819,12 @@ class ConfigDialog(QDialog):
         
         self.snippet_terms = QPlainTextEdit()
         self.snippet_terms.setPlaceholderText("Payment terms, conditions, validity...")
-        self.snippet_terms.setFixedHeight(80)
+        self.snippet_terms.setFixedHeight(60)
         snippets_card.addWidget(self.snippet_terms)
         
         self.snippet_footer = QLineEdit()
         self.snippet_footer.setPlaceholderText("Extra text for page footer (e.g. page number override)")
-        self.snippet_footer.setMinimumHeight(36)
+        self.snippet_footer.setMinimumHeight(24)
         snippets_card.addWidget(FormRow("Custom Footer", self.snippet_footer))
         
         self.snippet_signature = QCheckBox("Show Signature Block")
@@ -842,11 +841,11 @@ class ConfigDialog(QDialog):
         
         # Two-column layout
         columns = QHBoxLayout()
-        columns.setSpacing(SPACING['lg'])
+        columns.setSpacing(SPACING['sm'])
         
         # Left column - Typography
         left_col = QVBoxLayout()
-        left_col.setSpacing(SPACING['lg'])
+        left_col.setSpacing(SPACING['sm'])
         
         # Font Families Card
         fonts_card = SectionCard("Font Families")
@@ -866,7 +865,7 @@ class ConfigDialog(QDialog):
         sizes_card = SectionCard("Font Sizes (px)")
         
         sizes_grid = QGridLayout()
-        sizes_grid.setSpacing(SPACING['md'])
+        sizes_grid.setSpacing(SPACING['sm'])
         
         self.typo_size_company = StyledSpinBox()
         self.typo_size_company.setRange(8, 72)
@@ -907,18 +906,18 @@ class ConfigDialog(QDialog):
         
         # Right column - Colors
         right_col = QVBoxLayout()
-        right_col.setSpacing(SPACING['lg'])
+        right_col.setSpacing(SPACING['sm'])
         
         colors_card = SectionCard("Document Colors")
         
         hint = QLabel("These colors are used in the PDF output, not the application UI.")
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-bottom: {SPACING['sm']}px;")
+        hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; margin-bottom: {SPACING['xs']}px;")
         colors_card.addWidget(hint)
         
         # Colors grid - 2 columns
         colors_grid = QGridLayout()
-        colors_grid.setSpacing(SPACING['md'])
+        colors_grid.setSpacing(SPACING['sm'])
         colors_grid.setColumnStretch(1, 1)
         colors_grid.setColumnStretch(3, 1)
         
@@ -973,39 +972,39 @@ class ConfigDialog(QDialog):
         
         # Two-column layout
         columns = QHBoxLayout()
-        columns.setSpacing(SPACING['lg'])
+        columns.setSpacing(SPACING['sm'])
         
         # Left column - Defaults
         left_col = QVBoxLayout()
-        left_col.setSpacing(SPACING['lg'])
+        left_col.setSpacing(SPACING['sm'])
         
         defaults_card = SectionCard("Default Values")
         
         # Currency + Language row
         row1 = QHBoxLayout()
-        row1.setSpacing(SPACING['lg'])
+        row1.setSpacing(SPACING['md'])
         
         currency_col = QVBoxLayout()
-        currency_col.setSpacing(4)
+        currency_col.setSpacing(2)
         currency_label = QLabel("Currency")
         currency_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         currency_col.addWidget(currency_label)
         self.defaults_currency = QLineEdit()
         self.defaults_currency.setPlaceholderText("EUR")
-        self.defaults_currency.setMinimumHeight(36)
-        self.defaults_currency.setMaximumWidth(100)
+        self.defaults_currency.setMinimumHeight(24)
+        self.defaults_currency.setMaximumWidth(80)
         currency_col.addWidget(self.defaults_currency)
         row1.addLayout(currency_col)
         
         lang_col = QVBoxLayout()
-        lang_col.setSpacing(4)
+        lang_col.setSpacing(2)
         lang_label = QLabel("Language")
         lang_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         lang_col.addWidget(lang_label)
         self.defaults_language = QComboBox()
         self.defaults_language.addItems(["de", "en", "nl", "fr", "es"])
-        self.defaults_language.setMinimumHeight(36)
-        self.defaults_language.setMinimumWidth(100)
+        self.defaults_language.setMinimumHeight(24)
+        self.defaults_language.setMinimumWidth(80)
         lang_col.addWidget(self.defaults_language)
         row1.addLayout(lang_col)
         
@@ -1014,29 +1013,29 @@ class ConfigDialog(QDialog):
         
         # Tax + Payment row
         row2 = QHBoxLayout()
-        row2.setSpacing(SPACING['lg'])
+        row2.setSpacing(SPACING['md'])
         
         tax_col = QVBoxLayout()
-        tax_col.setSpacing(4)
+        tax_col.setSpacing(2)
         tax_label = QLabel("Tax Rate")
         tax_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         tax_col.addWidget(tax_label)
         self.defaults_tax_rate = StyledSpinBox()
         self.defaults_tax_rate.setRange(0, 100)
         self.defaults_tax_rate.setSuffix(" %")
-        self.defaults_tax_rate.setMinimumWidth(100)
+        self.defaults_tax_rate.setMinimumWidth(80)
         tax_col.addWidget(self.defaults_tax_rate)
         row2.addLayout(tax_col)
         
         payment_col = QVBoxLayout()
-        payment_col.setSpacing(4)
+        payment_col.setSpacing(2)
         payment_label = QLabel("Payment Terms")
         payment_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         payment_col.addWidget(payment_label)
         self.defaults_payment_days = StyledSpinBox()
         self.defaults_payment_days.setRange(1, 365)
         self.defaults_payment_days.setSuffix(" days")
-        self.defaults_payment_days.setMinimumWidth(120)
+        self.defaults_payment_days.setMinimumWidth(100)
         payment_col.addWidget(self.defaults_payment_days)
         row2.addLayout(payment_col)
         
@@ -1050,7 +1049,7 @@ class ConfigDialog(QDialog):
         
         # Right column - Quotation Number
         right_col = QVBoxLayout()
-        right_col.setSpacing(SPACING['lg'])
+        right_col.setSpacing(SPACING['sm'])
         
         qn_card = SectionCard("Quotation Numbering")
         
@@ -1065,7 +1064,7 @@ class ConfigDialog(QDialog):
             "• {PREFIX} = Company abbreviation"
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; line-height: 1.4;")
+        hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; line-height: 1.3;")
         qn_card.addWidget(hint)
         
         # Format presets
@@ -1074,7 +1073,7 @@ class ConfigDialog(QDialog):
         qn_card.addWidget(preset_label)
         
         self.qn_format_presets = QComboBox()
-        self.qn_format_presets.setMinimumHeight(36)
+        self.qn_format_presets.setMinimumHeight(24)
         self.qn_format_presets.addItem("Custom", "")
         self.qn_format_presets.addItem("Year-Number: 2025-001", "{YYYY}-{NNN}")
         self.qn_format_presets.addItem("Invoice Style: INV-2025-0001", "INV-{YYYY}-{NNNN}")
@@ -1091,12 +1090,12 @@ class ConfigDialog(QDialog):
         
         self.qn_format = QLineEdit()
         self.qn_format.setPlaceholderText("{YYYY}-{NNN}")
-        self.qn_format.setMinimumHeight(36)
+        self.qn_format.setMinimumHeight(24)
         qn_card.addWidget(self.qn_format)
         
         # Counter display and reset
         counter_row = QHBoxLayout()
-        counter_row.setSpacing(SPACING['md'])
+        counter_row.setSpacing(SPACING['sm'])
         
         self.qn_counter_label = QLabel("Counter: 0")
         self.qn_counter_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
@@ -1105,7 +1104,7 @@ class ConfigDialog(QDialog):
         counter_row.addStretch()
         
         reset_counter_btn = QPushButton("Reset Counter")
-        reset_counter_btn.setMinimumWidth(120)
+        reset_counter_btn.setMinimumWidth(90)
         reset_counter_btn.clicked.connect(self._reset_qn_counter)
         counter_row.addWidget(reset_counter_btn)
         

@@ -5,8 +5,8 @@ Design System:
 - Dark theme with warm undertones
 - Accent: Soft coral/salmon
 - Typography: Clean, readable
-- Rounded corners, subtle shadows
-- Generous spacing
+- Sharp corners, no border radius
+- Tight spacing, compact UI
 """
 
 # Color palette
@@ -46,21 +46,21 @@ COLORS = {
     'syntax_italic': '#c9cacc',
 }
 
-# Spacing
+# Spacing (tight UI)
 SPACING = {
-    'xs': 4,
-    'sm': 8,
-    'md': 16,
-    'lg': 24,
-    'xl': 32,
-}
-
-# Border radius
-RADIUS = {
+    'xs': 2,
     'sm': 4,
     'md': 8,
     'lg': 12,
     'xl': 16,
+}
+
+# Border radius (none - sharp corners)
+RADIUS = {
+    'sm': 0,
+    'md': 0,
+    'lg': 0,
+    'xl': 0,
 }
 
 
@@ -103,12 +103,12 @@ def get_stylesheet():
     QToolButton {{
         background-color: transparent;
         border: none;
-        border-radius: {RADIUS['md']}px;
+        border-radius: 0;
         color: {COLORS['text_secondary']};
         font-size: 13px;
         font-weight: 500;
-        padding: {SPACING['sm']}px {SPACING['md']}px;
-        min-height: 32px;
+        padding: {SPACING['xs']}px {SPACING['sm']}px;
+        min-height: 24px;
     }}
     
     QToolButton:hover {{
@@ -127,12 +127,12 @@ def get_stylesheet():
     QComboBox {{
         background-color: {COLORS['bg_elevated']};
         border: 1px solid {COLORS['border']};
-        border-radius: {RADIUS['md']}px;
+        border-radius: 0;
         color: {COLORS['text_primary']};
-        padding: {SPACING['sm']}px {SPACING['md']}px;
-        padding-right: 30px;
-        min-width: 150px;
-        min-height: 32px;
+        padding: {SPACING['xs']}px {SPACING['sm']}px;
+        padding-right: 24px;
+        min-width: 120px;
+        min-height: 24px;
     }}
     
     QComboBox:hover {{
@@ -160,7 +160,7 @@ def get_stylesheet():
     QComboBox QAbstractItemView {{
         background-color: {COLORS['bg_elevated']};
         border: 1px solid {COLORS['border']};
-        border-radius: {RADIUS['md']}px;
+        border-radius: 0;
         outline: none;
         selection-background-color: {COLORS['bg_hover']};
         selection-color: {COLORS['text_primary']};
@@ -168,9 +168,9 @@ def get_stylesheet():
     }}
     
     QComboBox QAbstractItemView::item {{
-        padding: {SPACING['sm']}px {SPACING['md']}px;
-        min-height: 32px;
-        border-radius: {RADIUS['sm']}px;
+        padding: {SPACING['xs']}px {SPACING['sm']}px;
+        min-height: 22px;
+        border-radius: 0;
     }}
     
     QComboBox QAbstractItemView::item:hover {{
@@ -184,9 +184,9 @@ def get_stylesheet():
     QLineEdit, QTextEdit, QPlainTextEdit {{
         background-color: {COLORS['bg_elevated']};
         border: 1px solid {COLORS['border']};
-        border-radius: {RADIUS['md']}px;
+        border-radius: 0;
         color: {COLORS['text_primary']};
-        padding: {SPACING['sm']}px {SPACING['md']}px;
+        padding: {SPACING['xs']}px {SPACING['sm']}px;
         selection-background-color: {COLORS['accent_muted']};
         selection-color: {COLORS['text_primary']};
     }}
@@ -210,10 +210,10 @@ def get_stylesheet():
     QDateEdit {{
         background-color: {COLORS['bg_elevated']};
         border: 1px solid {COLORS['border']};
-        border-radius: {RADIUS['md']}px;
+        border-radius: 0;
         color: {COLORS['text_primary']};
-        padding: {SPACING['sm']}px {SPACING['md']}px;
-        min-height: 32px;
+        padding: {SPACING['xs']}px {SPACING['sm']}px;
+        min-height: 24px;
     }}
     
     QDateEdit:hover {{
@@ -243,8 +243,8 @@ def get_stylesheet():
     QCalendarWidget QToolButton {{
         color: {COLORS['text_primary']};
         background-color: transparent;
-        border-radius: {RADIUS['sm']}px;
-        padding: 4px;
+        border-radius: 0;
+        padding: 2px;
     }}
     
     QCalendarWidget QToolButton:hover {{
@@ -317,7 +317,7 @@ def get_stylesheet():
     
     QScrollBar::handle:vertical {{
         background-color: {COLORS['text_muted']};
-        border-radius: 4px;
+        border-radius: 0;
         min-height: 40px;
         margin: 2px;
     }}
@@ -342,7 +342,7 @@ def get_stylesheet():
     
     QScrollBar::handle:horizontal {{
         background-color: {COLORS['text_muted']};
-        border-radius: 4px;
+        border-radius: 0;
         min-width: 40px;
         margin: 2px;
     }}
@@ -386,12 +386,12 @@ def get_stylesheet():
     QPushButton {{
         background-color: {COLORS['bg_elevated']};
         border: 1px solid {COLORS['border']};
-        border-radius: {RADIUS['md']}px;
+        border-radius: 0;
         color: {COLORS['text_primary']};
         font-weight: 500;
-        padding: {SPACING['sm']}px {SPACING['lg']}px;
-        min-height: 32px;
-        min-width: 80px;
+        padding: {SPACING['xs']}px {SPACING['sm']}px;
+        min-height: 24px;
+        min-width: 60px;
     }}
     
     QPushButton:hover {{
@@ -437,8 +437,8 @@ def get_stylesheet():
     
     #header-section {{
         background-color: {COLORS['bg_elevated']};
-        border-radius: {RADIUS['lg']}px;
-        padding: {SPACING['md']}px;
+        border-radius: 0;
+        padding: {SPACING['sm']}px;
     }}
     
     #header-title {{
@@ -474,7 +474,7 @@ def get_stylesheet():
         background-color: {COLORS['bg_dark']};
         border: none;
         border-radius: 0;
-        padding: {SPACING['md']}px;
+        padding: {SPACING['sm']}px;
         font-family: Menlo, Monaco, "Fira Code", "JetBrains Mono", monospace;
         font-size: 13px;
         line-height: 1.6;

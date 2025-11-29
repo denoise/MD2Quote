@@ -204,7 +204,7 @@ class EditorWidget(QWidget):
             ModernPlainTextEdit {{
                 background-color: {COLORS['bg_dark']};
                 border: none;
-                padding: {SPACING['md']}px;
+                padding: {SPACING['sm']}px;
                 selection-background-color: {COLORS['accent_muted']};
                 selection-color: {COLORS['text_primary']};
             }}

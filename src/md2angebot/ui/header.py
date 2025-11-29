@@ -11,8 +11,8 @@ class SectionCard(QFrame):
         self.setObjectName("header-section")
         
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
-        layout.setSpacing(SPACING['sm'])
+        layout.setContentsMargins(SPACING['sm'], SPACING['sm'], SPACING['sm'], SPACING['sm'])
+        layout.setSpacing(SPACING['xs'])
         
         # Section title
         title_label = QLabel(title)
@@ -24,20 +24,20 @@ class SectionCard(QFrame):
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 0;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         """)
         layout.addWidget(title_label)
         
         # Content area
         self.content_layout = QVBoxLayout()
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(SPACING['sm'])
+        self.content_layout.setSpacing(SPACING['xs'])
         layout.addLayout(self.content_layout)
         
         self.setStyleSheet(f"""
             SectionCard {{
                 background-color: {COLORS['bg_elevated']};
-                border-radius: {RADIUS['lg']}px;
+                border-radius: 0;
                 border: 1px solid {COLORS['border']};
             }}
         """)
@@ -48,7 +48,7 @@ class ModernLineEdit(QLineEdit):
     def __init__(self, placeholder="", parent=None):
         super().__init__(parent)
         self.setPlaceholderText(placeholder)
-        self.setMinimumHeight(36)
+        self.setMinimumHeight(24)
 
 
 class ModernTextEdit(QTextEdit):
@@ -56,7 +56,7 @@ class ModernTextEdit(QTextEdit):
     def __init__(self, placeholder="", parent=None):
         super().__init__(parent)
         self.setPlaceholderText(placeholder)
-        self.setMaximumHeight(60)
+        self.setMaximumHeight(48)
         self.setTabChangesFocus(True)
 
 
@@ -72,15 +72,15 @@ class HeaderWidget(QWidget):
     def init_ui(self):
         # Main horizontal layout
         main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
-        main_layout.setSpacing(SPACING['md'])
+        main_layout.setContentsMargins(SPACING['sm'], SPACING['sm'], SPACING['sm'], SPACING['sm'])
+        main_layout.setSpacing(SPACING['sm'])
 
         # === Quotation Section (Left) ===
         quote_card = SectionCard("Quotation")
         quote_grid = QGridLayout()
         quote_grid.setContentsMargins(0, 0, 0, 0)
-        quote_grid.setHorizontalSpacing(SPACING['md'])
-        quote_grid.setVerticalSpacing(SPACING['sm'])
+        quote_grid.setHorizontalSpacing(SPACING['sm'])
+        quote_grid.setVerticalSpacing(SPACING['xs'])
         
         # Number field
         number_label = self._create_label("Number")
@@ -99,8 +99,8 @@ class HeaderWidget(QWidget):
         self.date_edit.setDate(QDate.currentDate())
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDisplayFormat("yyyy-MM-dd")
-        self.date_edit.setMaximumWidth(140)
-        self.date_edit.setMinimumHeight(36)
+        self.date_edit.setMaximumWidth(120)
+        self.date_edit.setMinimumHeight(24)
         self.date_edit.dateChanged.connect(self.on_changed)
         quote_grid.addWidget(self.date_edit, 1, 1)
         
@@ -111,8 +111,8 @@ class HeaderWidget(QWidget):
         client_card = SectionCard("Client")
         client_grid = QGridLayout()
         client_grid.setContentsMargins(0, 0, 0, 0)
-        client_grid.setHorizontalSpacing(SPACING['md'])
-        client_grid.setVerticalSpacing(SPACING['sm'])
+        client_grid.setHorizontalSpacing(SPACING['sm'])
+        client_grid.setVerticalSpacing(SPACING['xs'])
 
         # Row 0: Name and Email
         name_label = self._create_label("Name")
@@ -152,7 +152,7 @@ class HeaderWidget(QWidget):
             font-size: 12px;
             font-weight: 500;
             padding: 0;
-            min-width: 50px;
+            min-width: 40px;
         """)
         return label
 
