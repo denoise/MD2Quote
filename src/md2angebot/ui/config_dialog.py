@@ -13,12 +13,62 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox,
     QPushButton, QFileDialog, QScrollArea, QFrame, QGridLayout,
     QGroupBox, QColorDialog, QMessageBox, QSizePolicy, QListWidget,
-    QListWidgetItem, QInputDialog, QButtonGroup, QPlainTextEdit, QCheckBox
+    QListWidgetItem, QInputDialog, QButtonGroup, QPlainTextEdit, QCheckBox,
+    QSlider
 )
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from .styles import COLORS, SPACING, RADIUS
+
+
+# Common font families for dropdowns
+FONT_FAMILIES = {
+    'heading': [
+        'Montserrat',
+        'Poppins',
+        'Raleway',
+        'Playfair Display',
+        'Merriweather',
+        'Oswald',
+        'Bebas Neue',
+        'Lato',
+        'Roboto',
+        'Open Sans',
+        'Arial',
+        'Helvetica Neue',
+        'Georgia',
+        'Times New Roman',
+    ],
+    'body': [
+        'Source Sans Pro',
+        'Open Sans',
+        'Lato',
+        'Roboto',
+        'Inter',
+        'Nunito',
+        'PT Sans',
+        'Work Sans',
+        'IBM Plex Sans',
+        'Noto Sans',
+        'Arial',
+        'Helvetica',
+        'Georgia',
+        'Times New Roman',
+    ],
+    'mono': [
+        'JetBrains Mono',
+        'Fira Code',
+        'Source Code Pro',
+        'IBM Plex Mono',
+        'Roboto Mono',
+        'SF Mono',
+        'Monaco',
+        'Menlo',
+        'Consolas',
+        'Courier New',
+    ]
+}
 
 
 class ColorButton(QPushButton):
@@ -29,22 +79,32 @@ class ColorButton(QPushButton):
     def __init__(self, color: str = "#ffffff", parent=None):
         super().__init__(parent)
         self._color = color
-        self.setFixedSize(48, 32)
+        self.setFixedSize(60, 36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clicked.connect(self._pick_color)
         self._update_style()
     
     def _update_style(self):
+        # Calculate text color based on background brightness
+        r, g, b = int(self._color[1:3], 16), int(self._color[3:5], 16), int(self._color[5:7], 16)
+        brightness = (r * 299 + g * 587 + b * 114) / 1000
+        text_color = "#000000" if brightness > 128 else "#ffffff"
+        
         self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self._color};
                 border: 2px solid {COLORS['border']};
-                border-radius: {RADIUS['sm']}px;
+                border-radius: {RADIUS['md']}px;
+                color: {text_color};
+                font-size: 10px;
+                font-weight: 500;
             }}
             QPushButton:hover {{
-                border-color: {COLORS['text_secondary']};
+                border-color: {COLORS['accent']};
             }}
         """)
+        # Show hex value on button
+        self.setText(self._color.upper())
     
     def _pick_color(self):
         color = QColorDialog.getColor(QColor(self._color), self, "Select Color")
@@ -98,23 +158,78 @@ class PathSelector(QWidget):
         self.line_edit.setText(path or "")
 
 
-class SectionHeader(QLabel):
-    """A styled section header label."""
+class SectionCard(QFrame):
+    """A card container for grouping related settings."""
     
-    def __init__(self, text: str, parent=None):
-        super().__init__(text, parent)
+    def __init__(self, title: str = "", parent=None):
+        super().__init__(parent)
+        self.setObjectName("section-card")
+        
+        self._layout = QVBoxLayout(self)
+        self._layout.setSpacing(SPACING['md'])
+        self._layout.setContentsMargins(SPACING['lg'], SPACING['lg'], SPACING['lg'], SPACING['lg'])
+        
+        if title:
+            title_label = QLabel(title)
+            title_label.setObjectName("section-title")
+            title_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {COLORS['accent']};
+                    font-size: 12px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    padding-bottom: {SPACING['sm']}px;
+                    margin-bottom: {SPACING['xs']}px;
+                }}
+            """)
+            self._layout.addWidget(title_label)
+        
         self.setStyleSheet(f"""
-            QLabel {{
-                color: {COLORS['accent']};
-                font-size: 11px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                padding: {SPACING['sm']}px 0;
-                border-bottom: 1px solid {COLORS['border']};
-                margin-bottom: {SPACING['md']}px;
+            QFrame#section-card {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: {RADIUS['lg']}px;
             }}
         """)
+    
+    def addWidget(self, widget):
+        self._layout.addWidget(widget)
+    
+    def addLayout(self, layout):
+        self._layout.addLayout(layout)
+
+
+class FormField(QWidget):
+    """A form field with label on top and input below."""
+    
+    def __init__(self, label: str, widget: QWidget, hint: str = "", parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        
+        # Label row
+        label_widget = QLabel(label)
+        label_widget.setStyleSheet(f"""
+            color: {COLORS['text_secondary']};
+            font-weight: 500;
+            font-size: 12px;
+        """)
+        layout.addWidget(label_widget)
+        
+        # Input widget
+        layout.addWidget(widget)
+        
+        # Optional hint
+        if hint:
+            hint_label = QLabel(hint)
+            hint_label.setStyleSheet(f"""
+                color: {COLORS['text_muted']};
+                font-size: 11px;
+            """)
+            hint_label.setWordWrap(True)
+            layout.addWidget(hint_label)
 
 
 class FormRow(QWidget):
@@ -128,14 +243,170 @@ class FormRow(QWidget):
         
         lbl = QLabel(label)
         self.label_widget = lbl
-        lbl.setFixedWidth(140)
+        lbl.setFixedWidth(130)
         lbl.setStyleSheet(f"""
             color: {COLORS['text_secondary']};
             font-weight: 500;
+            font-size: 12px;
         """)
         layout.addWidget(lbl)
         
         layout.addWidget(widget, 1)
+
+
+class StyledSpinBox(QSpinBox):
+    """An improved styled spin box with better visual appearance."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumWidth(100)
+        self.setMinimumHeight(36)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet(f"""
+            QSpinBox {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                border-radius: {RADIUS['md']}px;
+                color: {COLORS['text_primary']};
+                padding: 4px 8px;
+                font-size: 13px;
+                font-weight: 500;
+            }}
+            QSpinBox:hover {{
+                border-color: {COLORS['text_muted']};
+            }}
+            QSpinBox:focus {{
+                border-color: {COLORS['accent']};
+            }}
+            QSpinBox::up-button, QSpinBox::down-button {{
+                width: 20px;
+                border: none;
+                background-color: {COLORS['bg_hover']};
+            }}
+            QSpinBox::up-button {{
+                border-top-right-radius: {RADIUS['md']}px;
+                subcontrol-position: top right;
+            }}
+            QSpinBox::down-button {{
+                border-bottom-right-radius: {RADIUS['md']}px;
+                subcontrol-position: bottom right;
+            }}
+            QSpinBox::up-button:hover, QSpinBox::down-button:hover {{
+                background-color: {COLORS['accent']};
+            }}
+            QSpinBox::up-arrow {{
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-bottom: 5px solid {COLORS['text_secondary']};
+                width: 0; height: 0;
+            }}
+            QSpinBox::down-arrow {{
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 5px solid {COLORS['text_secondary']};
+                width: 0; height: 0;
+            }}
+        """)
+
+
+class StyledComboBox(QComboBox):
+    """An editable combo box for font selection."""
+    
+    def __init__(self, items: list = None, parent=None):
+        super().__init__(parent)
+        self.setEditable(True)
+        self.setMinimumHeight(36)
+        if items:
+            self.addItems(items)
+        self.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                border-radius: {RADIUS['md']}px;
+                color: {COLORS['text_primary']};
+                padding: 4px 12px;
+                font-size: 13px;
+            }}
+            QComboBox:hover {{
+                border-color: {COLORS['text_muted']};
+            }}
+            QComboBox:focus {{
+                border-color: {COLORS['accent']};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 6px solid {COLORS['text_secondary']};
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: {RADIUS['md']}px;
+                selection-background-color: {COLORS['bg_hover']};
+                outline: none;
+            }}
+        """)
+
+
+class MarginControl(QWidget):
+    """A compact margin control with 4 values arranged visually."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QGridLayout(self)
+        layout.setSpacing(SPACING['sm'])
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Create spin boxes
+        self.top = StyledSpinBox()
+        self.right = StyledSpinBox()
+        self.bottom = StyledSpinBox()
+        self.left = StyledSpinBox()
+        
+        for spin in [self.top, self.right, self.bottom, self.left]:
+            spin.setRange(0, 100)
+            spin.setSuffix(" mm")
+            spin.setMinimumWidth(90)
+        
+        # Labels
+        top_lbl = QLabel("↑ Top")
+        right_lbl = QLabel("→ Right")
+        bottom_lbl = QLabel("↓ Bottom")
+        left_lbl = QLabel("← Left")
+        
+        for lbl in [top_lbl, right_lbl, bottom_lbl, left_lbl]:
+            lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+        
+        # Arrange in 2x4 grid
+        layout.addWidget(top_lbl, 0, 0)
+        layout.addWidget(self.top, 0, 1)
+        layout.addWidget(right_lbl, 0, 2)
+        layout.addWidget(self.right, 0, 3)
+        
+        layout.addWidget(left_lbl, 1, 0)
+        layout.addWidget(self.left, 1, 1)
+        layout.addWidget(bottom_lbl, 1, 2)
+        layout.addWidget(self.bottom, 1, 3)
+    
+    def values(self) -> list:
+        return [self.top.value(), self.right.value(), self.bottom.value(), self.left.value()]
+    
+    def setValues(self, margins: list):
+        if len(margins) >= 4:
+            self.top.setValue(margins[0])
+            self.right.setValue(margins[1])
+            self.bottom.setValue(margins[2])
+            self.left.setValue(margins[3])
 
 
 class ConfigDialog(QDialog):
@@ -153,8 +424,8 @@ class ConfigDialog(QDialog):
         self.current_preset_key = self.config.get('active_preset', 'preset_1')
         
         self.setWindowTitle("Configuration Assistant")
-        self.setMinimumSize(800, 700)
-        self.resize(900, 800)
+        self.setMinimumSize(1000, 800)
+        self.resize(1100, 900)
         
         self._setup_ui()
         self._load_preset_values(self.current_preset_key)
@@ -167,12 +438,12 @@ class ConfigDialog(QDialog):
             }}
             QTabWidget::pane {{
                 border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
-                background-color: {COLORS['bg_elevated']};
+                border-radius: {RADIUS['lg']}px;
+                background-color: {COLORS['bg_dark']};
                 padding: {SPACING['md']}px;
             }}
             QTabBar::tab {{
-                background-color: {COLORS['bg_dark']};
+                background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
                 border-bottom: none;
                 border-top-left-radius: {RADIUS['md']}px;
@@ -181,30 +452,16 @@ class ConfigDialog(QDialog):
                 margin-right: 2px;
                 color: {COLORS['text_secondary']};
                 font-weight: 500;
+                font-size: 12px;
             }}
             QTabBar::tab:selected {{
-                background-color: {COLORS['bg_elevated']};
+                background-color: {COLORS['bg_dark']};
                 color: {COLORS['text_primary']};
-                border-bottom: 1px solid {COLORS['bg_elevated']};
+                border-bottom: 1px solid {COLORS['bg_dark']};
             }}
             QTabBar::tab:hover:!selected {{
                 background-color: {COLORS['bg_hover']};
-            }}
-            QGroupBox {{
-                border: 1px solid {COLORS['border']};
-                border-radius: {RADIUS['md']}px;
-                margin-top: 16px;
-                padding: {SPACING['md']}px;
-                padding-top: 24px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 12px;
-                padding: 0 8px;
-                color: {COLORS['accent']};
-                font-weight: 600;
-                font-size: 12px;
+                color: {COLORS['text_primary']};
             }}
             QScrollArea {{
                 border: none;
@@ -213,27 +470,46 @@ class ConfigDialog(QDialog):
             QScrollArea > QWidget > QWidget {{
                 background-color: transparent;
             }}
+            QCheckBox {{
+                color: {COLORS['text_primary']};
+                font-size: 13px;
+                spacing: 8px;
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border: 2px solid {COLORS['border']};
+                border-radius: 4px;
+                background-color: {COLORS['bg_dark']};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {COLORS['accent']};
+                border-color: {COLORS['accent']};
+            }}
+            QCheckBox::indicator:hover {{
+                border-color: {COLORS['accent']};
+            }}
         """)
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(SPACING['md'])
-        layout.setContentsMargins(SPACING['lg'], SPACING['lg'], SPACING['lg'], SPACING['lg'])
+        layout.setSpacing(SPACING['lg'])
+        layout.setContentsMargins(SPACING['xl'], SPACING['xl'], SPACING['xl'], SPACING['xl'])
         
         # Title
         title_container = QHBoxLayout()
         title_col = QVBoxLayout()
+        title_col.setSpacing(4)
         
         title = QLabel("Configuration Assistant")
         title.setStyleSheet(f"""
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 600;
             color: {COLORS['text_primary']};
-            padding-bottom: {SPACING['sm']}px;
         """)
         title_col.addWidget(title)
         
-        subtitle = QLabel("Customize your 5 sender presets")
+        subtitle = QLabel("Manage your sender presets and document settings")
         subtitle.setStyleSheet(f"""
             color: {COLORS['text_muted']};
             font-size: 13px;
@@ -244,9 +520,23 @@ class ConfigDialog(QDialog):
         title_container.addStretch()
         layout.addLayout(title_container)
         
-        # Preset Selector
-        preset_layout = QHBoxLayout()
-        preset_layout.setSpacing(SPACING['sm'])
+        # Preset Selector Bar
+        preset_card = SectionCard()
+        preset_card.setStyleSheet(f"""
+            QFrame#section-card {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                border-radius: {RADIUS['lg']}px;
+                padding: {SPACING['md']}px;
+            }}
+        """)
+        
+        preset_inner_layout = QVBoxLayout()
+        preset_inner_layout.setSpacing(SPACING['md'])
+        
+        # Preset buttons row
+        preset_btn_layout = QHBoxLayout()
+        preset_btn_layout.setSpacing(SPACING['sm'])
         
         self.preset_group = QButtonGroup(self)
         self.preset_group.setExclusive(True)
@@ -262,47 +552,56 @@ class ConfigDialog(QDialog):
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setProperty("preset_key", key)
-            btn.setFixedHeight(40)
+            btn.setFixedHeight(44)
+            btn.setMinimumWidth(140)
             
             if key == self.current_preset_key:
                 btn.setChecked(True)
                 
             self.preset_group.addButton(btn)
-            preset_layout.addWidget(btn)
-            
-        layout.addLayout(preset_layout)
+            preset_btn_layout.addWidget(btn)
         
-        # Current Preset Name Editor
-        name_layout = QHBoxLayout()
-        name_layout.addWidget(QLabel("Preset Name:"))
+        preset_card.addLayout(preset_btn_layout)
+        
+        # Preset name input row
+        name_row = QHBoxLayout()
+        name_row.setSpacing(SPACING['md'])
+        
+        name_label = QLabel("Preset Name:")
+        name_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500;")
+        name_row.addWidget(name_label)
+        
         self.preset_name_edit = QLineEdit()
         self.preset_name_edit.setPlaceholderText("e.g. Company A, Freelance, Private")
+        self.preset_name_edit.setMinimumHeight(36)
         self.preset_name_edit.textChanged.connect(self._update_preset_button_text)
-        name_layout.addWidget(self.preset_name_edit)
-        layout.addLayout(name_layout)
+        name_row.addWidget(self.preset_name_edit, 1)
+        
+        preset_card.addLayout(name_row)
+        layout.addWidget(preset_card)
         
         # Tab widget
         self.tabs = QTabWidget()
-        layout.addWidget(self.tabs)
+        layout.addWidget(self.tabs, 1)
         
         # Create tabs
-        self.tabs.addTab(self._create_company_tab(), "Company")
-        self.tabs.addTab(self._create_contact_tab(), "Contact")
-        self.tabs.addTab(self._create_legal_tab(), "Legal & Bank")
-        self.tabs.addTab(self._create_layout_tab(), "Layout & Snippets")
-        self.tabs.addTab(self._create_defaults_tab(), "Defaults")
-        self.tabs.addTab(self._create_typography_tab(), "Typography")
-        self.tabs.addTab(self._create_colors_tab(), "Colors")
+        self.tabs.addTab(self._create_identity_tab(), "📋 Identity")
+        self.tabs.addTab(self._create_document_tab(), "📄 Document")
+        self.tabs.addTab(self._create_styling_tab(), "🎨 Styling")
+        self.tabs.addTab(self._create_defaults_tab(), "⚙️ Defaults")
         
         # Bottom buttons
         btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(SPACING['md'])
         btn_layout.addStretch()
         
         cancel_btn = QPushButton("Cancel")
+        cancel_btn.setMinimumWidth(100)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
         save_btn = QPushButton("Save Configuration")
+        save_btn.setMinimumWidth(160)
         save_btn.setDefault(True)
         save_btn.clicked.connect(self._save_config)
         btn_layout.addWidget(save_btn)
@@ -312,12 +611,13 @@ class ConfigDialog(QDialog):
         # Style for preset buttons
         self.setStyleSheet(self.styleSheet() + f"""
             QPushButton[checkable="true"] {{
-                background-color: {COLORS['bg_dark']};
+                background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
                 color: {COLORS['text_secondary']};
                 padding: 0 16px;
                 border-radius: {RADIUS['md']}px;
-                text-align: left;
+                font-weight: 500;
+                font-size: 12px;
             }}
             QPushButton[checkable="true"]:checked {{
                 background-color: {COLORS['accent']};
@@ -326,6 +626,7 @@ class ConfigDialog(QDialog):
             }}
             QPushButton[checkable="true"]:hover:!checked {{
                 background-color: {COLORS['bg_hover']};
+                color: {COLORS['text_primary']};
             }}
         """)
     
@@ -337,219 +638,443 @@ class ConfigDialog(QDialog):
         
         content = QWidget()
         content_layout = QVBoxLayout(content)
-        content_layout.setSpacing(SPACING['md'])
+        content_layout.setSpacing(SPACING['lg'])
         content_layout.setContentsMargins(SPACING['sm'], SPACING['sm'], SPACING['sm'], SPACING['sm'])
         
         scroll.setWidget(content)
         return scroll, content_layout
     
-    def _create_company_tab(self) -> QWidget:
+    def _create_identity_tab(self) -> QWidget:
+        """Combined tab for Company, Contact, and Legal/Bank info."""
         scroll, layout = self._create_scrollable_tab()
         
-        # Company Info
-        layout.addWidget(SectionHeader("Company Information"))
+        # Two-column layout for this tab
+        columns = QHBoxLayout()
+        columns.setSpacing(SPACING['lg'])
+        
+        # Left column
+        left_col = QVBoxLayout()
+        left_col.setSpacing(SPACING['lg'])
+        
+        # Company Card
+        company_card = SectionCard("Company")
         
         self.company_name = QLineEdit()
         self.company_name.setPlaceholderText("Your Company Name")
-        layout.addWidget(FormRow("Company Name", self.company_name))
+        self.company_name.setMinimumHeight(36)
+        company_card.addWidget(FormRow("Name", self.company_name))
         
         self.company_tagline = QLineEdit()
         self.company_tagline.setPlaceholderText("Your tagline or slogan")
-        layout.addWidget(FormRow("Tagline", self.company_tagline))
+        self.company_tagline.setMinimumHeight(36)
+        company_card.addWidget(FormRow("Tagline", self.company_tagline))
         
         self.company_logo = PathSelector("Images (*.svg *.png *.jpg *.jpeg)")
-        layout.addWidget(FormRow("Logo", self.company_logo))
+        company_card.addWidget(FormRow("Logo", self.company_logo))
         
-        layout.addStretch()
-        return scroll
-    
-    def _create_contact_tab(self) -> QWidget:
-        scroll, layout = self._create_scrollable_tab()
+        left_col.addWidget(company_card)
         
-        layout.addWidget(SectionHeader("Contact Details"))
+        # Contact Card
+        contact_card = SectionCard("Contact Details")
         
         self.contact_street = QLineEdit()
         self.contact_street.setPlaceholderText("Street Address")
-        layout.addWidget(FormRow("Street", self.contact_street))
+        self.contact_street.setMinimumHeight(36)
+        contact_card.addWidget(FormRow("Street", self.contact_street))
         
-        self.contact_city = QLineEdit()
-        self.contact_city.setPlaceholderText("City")
-        layout.addWidget(FormRow("City", self.contact_city))
+        # City + Postal in one row
+        city_row = QHBoxLayout()
+        city_row.setSpacing(SPACING['md'])
         
         self.contact_postal = QLineEdit()
         self.contact_postal.setPlaceholderText("Postal Code")
-        layout.addWidget(FormRow("Postal Code", self.contact_postal))
+        self.contact_postal.setMinimumHeight(36)
+        self.contact_postal.setMaximumWidth(120)
+        city_row.addWidget(self.contact_postal)
+        
+        self.contact_city = QLineEdit()
+        self.contact_city.setPlaceholderText("City")
+        self.contact_city.setMinimumHeight(36)
+        city_row.addWidget(self.contact_city, 1)
+        
+        contact_card.addWidget(FormRow("Location", QWidget()))
+        contact_card.addLayout(city_row)
         
         self.contact_country = QLineEdit()
         self.contact_country.setPlaceholderText("Country")
-        layout.addWidget(FormRow("Country", self.contact_country))
+        self.contact_country.setMinimumHeight(36)
+        contact_card.addWidget(FormRow("Country", self.contact_country))
         
         self.contact_phone = QLineEdit()
         self.contact_phone.setPlaceholderText("+31 6 1234 5678")
-        layout.addWidget(FormRow("Phone", self.contact_phone))
+        self.contact_phone.setMinimumHeight(36)
+        contact_card.addWidget(FormRow("Phone", self.contact_phone))
         
         self.contact_email = QLineEdit()
         self.contact_email.setPlaceholderText("hello@example.com")
-        layout.addWidget(FormRow("Email", self.contact_email))
+        self.contact_email.setMinimumHeight(36)
+        contact_card.addWidget(FormRow("Email", self.contact_email))
         
         self.contact_website = QLineEdit()
         self.contact_website.setPlaceholderText("www.example.com")
-        layout.addWidget(FormRow("Website", self.contact_website))
+        self.contact_website.setMinimumHeight(36)
+        contact_card.addWidget(FormRow("Website", self.contact_website))
         
-        layout.addStretch()
-        return scroll
-    
-    def _create_legal_tab(self) -> QWidget:
-        scroll, layout = self._create_scrollable_tab()
+        left_col.addWidget(contact_card)
+        left_col.addStretch()
         
-        # Legal
-        layout.addWidget(SectionHeader("Legal Information"))
+        columns.addLayout(left_col, 1)
+        
+        # Right column
+        right_col = QVBoxLayout()
+        right_col.setSpacing(SPACING['lg'])
+        
+        # Legal Card
+        legal_card = SectionCard("Legal Information")
         
         self.legal_tax_id = QLineEdit()
         self.legal_tax_id.setPlaceholderText("VAT / Tax ID")
-        layout.addWidget(FormRow("Tax ID", self.legal_tax_id))
+        self.legal_tax_id.setMinimumHeight(36)
+        legal_card.addWidget(FormRow("Tax ID", self.legal_tax_id))
         
         self.legal_kvk = QLineEdit()
-        self.legal_kvk.setPlaceholderText("Chamber of Commerce / Registration")
-        layout.addWidget(FormRow("CoC Number", self.legal_kvk))
+        self.legal_kvk.setPlaceholderText("Chamber of Commerce Number")
+        self.legal_kvk.setMinimumHeight(36)
+        legal_card.addWidget(FormRow("CoC Number", self.legal_kvk))
         
-        # Bank
-        layout.addWidget(SectionHeader("Banking Details"))
+        right_col.addWidget(legal_card)
+        
+        # Bank Card
+        bank_card = SectionCard("Banking Details")
         
         self.bank_holder = QLineEdit()
         self.bank_holder.setPlaceholderText("Account Holder Name")
-        layout.addWidget(FormRow("Account Holder", self.bank_holder))
-        
-        self.bank_iban = QLineEdit()
-        self.bank_iban.setPlaceholderText("NL91 ABNA 0417 1643 00")
-        layout.addWidget(FormRow("IBAN", self.bank_iban))
-        
-        self.bank_bic = QLineEdit()
-        self.bank_bic.setPlaceholderText("ABNANL2A")
-        layout.addWidget(FormRow("BIC / SWIFT", self.bank_bic))
+        self.bank_holder.setMinimumHeight(36)
+        bank_card.addWidget(FormRow("Holder", self.bank_holder))
         
         self.bank_name = QLineEdit()
         self.bank_name.setPlaceholderText("Bank Name")
-        layout.addWidget(FormRow("Bank Name", self.bank_name))
+        self.bank_name.setMinimumHeight(36)
+        bank_card.addWidget(FormRow("Bank", self.bank_name))
+        
+        self.bank_iban = QLineEdit()
+        self.bank_iban.setPlaceholderText("NL91 ABNA 0417 1643 00")
+        self.bank_iban.setMinimumHeight(36)
+        bank_card.addWidget(FormRow("IBAN", self.bank_iban))
+        
+        self.bank_bic = QLineEdit()
+        self.bank_bic.setPlaceholderText("ABNANL2A")
+        self.bank_bic.setMinimumHeight(36)
+        bank_card.addWidget(FormRow("BIC / SWIFT", self.bank_bic))
+        
+        right_col.addWidget(bank_card)
+        right_col.addStretch()
+        
+        columns.addLayout(right_col, 1)
+        
+        layout.addLayout(columns)
+        layout.addStretch()
+        return scroll
+    
+    def _create_document_tab(self) -> QWidget:
+        """Tab for Layout, Margins, and Content Snippets."""
+        scroll, layout = self._create_scrollable_tab()
+        
+        # Template Selection Card
+        template_card = SectionCard("Layout Template")
+        
+        self.layout_template = QComboBox()
+        self.layout_template.setMinimumHeight(40)
+        self.layout_template.addItem("🔲 Modern Split (Default)", "modern-split")
+        self.layout_template.addItem("📸 Elegant Centered (Photography)", "elegant-centered")
+        self.layout_template.addItem("📊 Minimal Sidebar (Consulting)", "minimal-sidebar")
+        self.layout_template.addItem("🎨 Bold Stamp (Creative)", "bold-stamp")
+        self.layout_template.addItem("📝 Classic Letterhead (Business)", "classic-letterhead")
+        template_card.addWidget(FormRow("Template", self.layout_template))
+        
+        layout.addWidget(template_card)
+        
+        # Page Margins Card
+        margins_card = SectionCard("Page Margins")
+        
+        self.margin_control = MarginControl()
+        margins_card.addWidget(self.margin_control)
+        
+        layout.addWidget(margins_card)
+        
+        # Snippets Card
+        snippets_card = SectionCard("Content Snippets")
+        
+        intro_label = QLabel("Intro Text")
+        intro_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        snippets_card.addWidget(intro_label)
+        
+        self.snippet_intro = QPlainTextEdit()
+        self.snippet_intro.setPlaceholderText("Introductory text before the line items...")
+        self.snippet_intro.setFixedHeight(80)
+        snippets_card.addWidget(self.snippet_intro)
+        
+        terms_label = QLabel("Terms & Conditions")
+        terms_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        snippets_card.addWidget(terms_label)
+        
+        self.snippet_terms = QPlainTextEdit()
+        self.snippet_terms.setPlaceholderText("Payment terms, conditions, validity...")
+        self.snippet_terms.setFixedHeight(80)
+        snippets_card.addWidget(self.snippet_terms)
+        
+        self.snippet_footer = QLineEdit()
+        self.snippet_footer.setPlaceholderText("Extra text for page footer (e.g. page number override)")
+        self.snippet_footer.setMinimumHeight(36)
+        snippets_card.addWidget(FormRow("Custom Footer", self.snippet_footer))
+        
+        self.snippet_signature = QCheckBox("Show Signature Block")
+        snippets_card.addWidget(self.snippet_signature)
+        
+        layout.addWidget(snippets_card)
         
         layout.addStretch()
         return scroll
     
-    def _create_layout_tab(self) -> QWidget:
+    def _create_styling_tab(self) -> QWidget:
+        """Combined tab for Typography and Colors."""
         scroll, layout = self._create_scrollable_tab()
         
-        # Template Selection
-        layout.addWidget(SectionHeader("Layout Template"))
+        # Two-column layout
+        columns = QHBoxLayout()
+        columns.setSpacing(SPACING['lg'])
         
-        self.layout_template = QComboBox()
-        self.layout_template.addItem("Modern Split (Default)", "modern-split")
-        self.layout_template.addItem("Elegant Centered (Photography)", "elegant-centered")
-        self.layout_template.addItem("Minimal Sidebar (Consulting)", "minimal-sidebar")
-        self.layout_template.addItem("Bold Stamp (Creative)", "bold-stamp")
-        self.layout_template.addItem("Classic Letterhead (Business)", "classic-letterhead")
-        layout.addWidget(FormRow("Template", self.layout_template))
+        # Left column - Typography
+        left_col = QVBoxLayout()
+        left_col.setSpacing(SPACING['lg'])
         
-        # Margins
-        layout.addWidget(SectionHeader("Page Margins (mm)"))
+        # Font Families Card
+        fonts_card = SectionCard("Font Families")
         
-        margins_layout = QHBoxLayout()
-        margins_layout.setSpacing(10)
+        self.typo_heading = StyledComboBox(FONT_FAMILIES['heading'])
+        fonts_card.addWidget(FormRow("Headings", self.typo_heading))
         
-        self.margin_top = QSpinBox()
-        self.margin_top.setRange(0, 100)
-        self.margin_top.setPrefix("T: ")
-        margins_layout.addWidget(self.margin_top)
+        self.typo_body = StyledComboBox(FONT_FAMILIES['body'])
+        fonts_card.addWidget(FormRow("Body Text", self.typo_body))
         
-        self.margin_right = QSpinBox()
-        self.margin_right.setRange(0, 100)
-        self.margin_right.setPrefix("R: ")
-        margins_layout.addWidget(self.margin_right)
+        self.typo_mono = StyledComboBox(FONT_FAMILIES['mono'])
+        fonts_card.addWidget(FormRow("Monospace", self.typo_mono))
         
-        self.margin_bottom = QSpinBox()
-        self.margin_bottom.setRange(0, 100)
-        self.margin_bottom.setPrefix("B: ")
-        margins_layout.addWidget(self.margin_bottom)
+        left_col.addWidget(fonts_card)
         
-        self.margin_left = QSpinBox()
-        self.margin_left.setRange(0, 100)
-        self.margin_left.setPrefix("L: ")
-        margins_layout.addWidget(self.margin_left)
+        # Font Sizes Card
+        sizes_card = SectionCard("Font Sizes (px)")
         
-        layout.addLayout(margins_layout)
+        sizes_grid = QGridLayout()
+        sizes_grid.setSpacing(SPACING['md'])
         
-        # Snippets
-        layout.addWidget(SectionHeader("Content Snippets"))
+        self.typo_size_company = StyledSpinBox()
+        self.typo_size_company.setRange(8, 72)
+        sizes_grid.addWidget(QLabel("Company Name"), 0, 0)
+        sizes_grid.addWidget(self.typo_size_company, 0, 1)
         
-        self.snippet_intro = QPlainTextEdit()
-        self.snippet_intro.setPlaceholderText("Introductory text before the line items...")
-        self.snippet_intro.setFixedHeight(60)
-        layout.addWidget(QLabel("Intro Text"))
-        layout.addWidget(self.snippet_intro)
+        self.typo_size_h1 = StyledSpinBox()
+        self.typo_size_h1.setRange(8, 72)
+        sizes_grid.addWidget(QLabel("Heading 1"), 0, 2)
+        sizes_grid.addWidget(self.typo_size_h1, 0, 3)
         
-        self.snippet_terms = QPlainTextEdit()
-        self.snippet_terms.setPlaceholderText("Payment terms, conditions, validity...")
-        self.snippet_terms.setFixedHeight(60)
-        layout.addWidget(QLabel("Terms & Conditions"))
-        layout.addWidget(self.snippet_terms)
+        self.typo_size_h2 = StyledSpinBox()
+        self.typo_size_h2.setRange(8, 72)
+        sizes_grid.addWidget(QLabel("Heading 2"), 1, 0)
+        sizes_grid.addWidget(self.typo_size_h2, 1, 1)
         
-        self.snippet_footer = QLineEdit()
-        self.snippet_footer.setPlaceholderText("Extra text for page footer (e.g. page number override or small print)")
-        layout.addWidget(FormRow("Custom Footer", self.snippet_footer))
+        self.typo_size_body = StyledSpinBox()
+        self.typo_size_body.setRange(8, 72)
+        sizes_grid.addWidget(QLabel("Body"), 1, 2)
+        sizes_grid.addWidget(self.typo_size_body, 1, 3)
         
-        self.snippet_signature = QCheckBox("Show Signature Block")
-        layout.addWidget(self.snippet_signature)
+        self.typo_size_small = StyledSpinBox()
+        self.typo_size_small.setRange(6, 72)
+        sizes_grid.addWidget(QLabel("Small Text"), 2, 0)
+        sizes_grid.addWidget(self.typo_size_small, 2, 1)
         
+        # Style labels
+        for i in range(sizes_grid.count()):
+            widget = sizes_grid.itemAt(i).widget()
+            if isinstance(widget, QLabel):
+                widget.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
+        
+        sizes_card.addLayout(sizes_grid)
+        left_col.addWidget(sizes_card)
+        left_col.addStretch()
+        
+        columns.addLayout(left_col, 1)
+        
+        # Right column - Colors
+        right_col = QVBoxLayout()
+        right_col.setSpacing(SPACING['lg'])
+        
+        colors_card = SectionCard("Document Colors")
+        
+        hint = QLabel("These colors are used in the PDF output, not the application UI.")
+        hint.setWordWrap(True)
+        hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-bottom: {SPACING['sm']}px;")
+        colors_card.addWidget(hint)
+        
+        # Colors grid - 2 columns
+        colors_grid = QGridLayout()
+        colors_grid.setSpacing(SPACING['md'])
+        colors_grid.setColumnStretch(1, 1)
+        colors_grid.setColumnStretch(3, 1)
+        
+        self.color_primary = ColorButton()
+        colors_grid.addWidget(QLabel("Primary"), 0, 0)
+        colors_grid.addWidget(self.color_primary, 0, 1)
+        
+        self.color_accent = ColorButton()
+        colors_grid.addWidget(QLabel("Accent"), 0, 2)
+        colors_grid.addWidget(self.color_accent, 0, 3)
+        
+        self.color_text = ColorButton()
+        colors_grid.addWidget(QLabel("Text"), 1, 0)
+        colors_grid.addWidget(self.color_text, 1, 1)
+        
+        self.color_muted = ColorButton()
+        colors_grid.addWidget(QLabel("Muted"), 1, 2)
+        colors_grid.addWidget(self.color_muted, 1, 3)
+        
+        self.color_background = ColorButton()
+        colors_grid.addWidget(QLabel("Background"), 2, 0)
+        colors_grid.addWidget(self.color_background, 2, 1)
+        
+        self.color_border = ColorButton()
+        colors_grid.addWidget(QLabel("Borders"), 2, 2)
+        colors_grid.addWidget(self.color_border, 2, 3)
+        
+        self.color_table_alt = ColorButton()
+        colors_grid.addWidget(QLabel("Table Alt"), 3, 0)
+        colors_grid.addWidget(self.color_table_alt, 3, 1)
+        
+        # Style color labels
+        for i in range(colors_grid.count()):
+            widget = colors_grid.itemAt(i).widget()
+            if isinstance(widget, QLabel):
+                widget.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
+                widget.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        
+        colors_card.addLayout(colors_grid)
+        right_col.addWidget(colors_card)
+        right_col.addStretch()
+        
+        columns.addLayout(right_col, 1)
+        
+        layout.addLayout(columns)
         layout.addStretch()
         return scroll
-
+    
     def _create_defaults_tab(self) -> QWidget:
+        """Tab for Default Values and Quotation Numbering."""
         scroll, layout = self._create_scrollable_tab()
         
-        layout.addWidget(SectionHeader("Default Values"))
+        # Two-column layout
+        columns = QHBoxLayout()
+        columns.setSpacing(SPACING['lg'])
         
+        # Left column - Defaults
+        left_col = QVBoxLayout()
+        left_col.setSpacing(SPACING['lg'])
+        
+        defaults_card = SectionCard("Default Values")
+        
+        # Currency + Language row
+        row1 = QHBoxLayout()
+        row1.setSpacing(SPACING['lg'])
+        
+        currency_col = QVBoxLayout()
+        currency_col.setSpacing(4)
+        currency_label = QLabel("Currency")
+        currency_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        currency_col.addWidget(currency_label)
         self.defaults_currency = QLineEdit()
-        self.defaults_currency.setPlaceholderText("EUR, USD, etc.")
-        layout.addWidget(FormRow("Currency", self.defaults_currency))
+        self.defaults_currency.setPlaceholderText("EUR")
+        self.defaults_currency.setMinimumHeight(36)
+        self.defaults_currency.setMaximumWidth(100)
+        currency_col.addWidget(self.defaults_currency)
+        row1.addLayout(currency_col)
         
-        self.defaults_tax_rate = QSpinBox()
+        lang_col = QVBoxLayout()
+        lang_col.setSpacing(4)
+        lang_label = QLabel("Language")
+        lang_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        lang_col.addWidget(lang_label)
+        self.defaults_language = QComboBox()
+        self.defaults_language.addItems(["de", "en", "nl", "fr", "es"])
+        self.defaults_language.setMinimumHeight(36)
+        self.defaults_language.setMinimumWidth(100)
+        lang_col.addWidget(self.defaults_language)
+        row1.addLayout(lang_col)
+        
+        row1.addStretch()
+        defaults_card.addLayout(row1)
+        
+        # Tax + Payment row
+        row2 = QHBoxLayout()
+        row2.setSpacing(SPACING['lg'])
+        
+        tax_col = QVBoxLayout()
+        tax_col.setSpacing(4)
+        tax_label = QLabel("Tax Rate")
+        tax_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        tax_col.addWidget(tax_label)
+        self.defaults_tax_rate = StyledSpinBox()
         self.defaults_tax_rate.setRange(0, 100)
         self.defaults_tax_rate.setSuffix(" %")
-        layout.addWidget(FormRow("Tax Rate", self.defaults_tax_rate))
+        self.defaults_tax_rate.setMinimumWidth(100)
+        tax_col.addWidget(self.defaults_tax_rate)
+        row2.addLayout(tax_col)
         
-        self.defaults_payment_days = QSpinBox()
+        payment_col = QVBoxLayout()
+        payment_col.setSpacing(4)
+        payment_label = QLabel("Payment Terms")
+        payment_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        payment_col.addWidget(payment_label)
+        self.defaults_payment_days = StyledSpinBox()
         self.defaults_payment_days.setRange(1, 365)
         self.defaults_payment_days.setSuffix(" days")
-        layout.addWidget(FormRow("Payment Terms", self.defaults_payment_days))
+        self.defaults_payment_days.setMinimumWidth(120)
+        payment_col.addWidget(self.defaults_payment_days)
+        row2.addLayout(payment_col)
         
-        self.defaults_language = QComboBox()
-        self.defaults_language.addItems(["de", "en", "nl"])
-        layout.addWidget(FormRow("Language", self.defaults_language))
+        row2.addStretch()
+        defaults_card.addLayout(row2)
         
-        # Quotation Number Settings
-        layout.addWidget(SectionHeader("Quotation Number"))
+        left_col.addWidget(defaults_card)
+        left_col.addStretch()
         
-        qn_desc = QLabel(
-            "Configure automatic quotation numbering. Use placeholders:\n"
+        columns.addLayout(left_col, 1)
+        
+        # Right column - Quotation Number
+        right_col = QVBoxLayout()
+        right_col.setSpacing(SPACING['lg'])
+        
+        qn_card = SectionCard("Quotation Numbering")
+        
+        self.qn_enabled = QCheckBox("Enable automatic quotation numbering")
+        qn_card.addWidget(self.qn_enabled)
+        
+        hint = QLabel(
+            "Use placeholders:\n"
             "• {YYYY} = Full year (2025)  • {YY} = Short year (25)\n"
             "• {MM} = Month (01-12)  • {DD} = Day (01-31)\n"
             "• {N}/{NN}/{NNN}/{NNNN} = Counter with padding\n"
             "• {PREFIX} = Company abbreviation"
         )
-        qn_desc.setWordWrap(True)
-        qn_desc.setStyleSheet(f"color: {COLORS['text_muted']}; margin-bottom: {SPACING['sm']}px; font-size: 11px;")
-        layout.addWidget(qn_desc)
+        hint.setWordWrap(True)
+        hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; line-height: 1.4;")
+        qn_card.addWidget(hint)
         
-        from PyQt6.QtWidgets import QCheckBox
-        self.qn_enabled = QCheckBox("Enable automatic quotation numbering")
-        self.qn_enabled.setStyleSheet(f"color: {COLORS['text_primary']};")
-        layout.addWidget(self.qn_enabled)
+        # Format presets
+        preset_label = QLabel("Format Presets")
+        preset_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        qn_card.addWidget(preset_label)
         
-        self.qn_format = QLineEdit()
-        self.qn_format.setPlaceholderText("{YYYY}-{NNN}")
-        layout.addWidget(FormRow("Number Format", self.qn_format))
-        
-        # Format examples/presets dropdown
         self.qn_format_presets = QComboBox()
+        self.qn_format_presets.setMinimumHeight(36)
         self.qn_format_presets.addItem("Custom", "")
         self.qn_format_presets.addItem("Year-Number: 2025-001", "{YYYY}-{NNN}")
         self.qn_format_presets.addItem("Invoice Style: INV-2025-0001", "INV-{YYYY}-{NNNN}")
@@ -557,19 +1082,41 @@ class ConfigDialog(QDialog):
         self.qn_format_presets.addItem("Compact: Q25-001", "Q{YY}-{NNN}")
         self.qn_format_presets.addItem("With Prefix: JDC-2025-01", "{PREFIX}-{YYYY}-{NN}")
         self.qn_format_presets.currentIndexChanged.connect(self._on_qn_preset_selected)
-        layout.addWidget(FormRow("Format Presets", self.qn_format_presets))
+        qn_card.addWidget(self.qn_format_presets)
         
-        # Current counter display (read-only info)
+        # Custom format input
+        format_label = QLabel("Custom Format")
+        format_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        qn_card.addWidget(format_label)
+        
+        self.qn_format = QLineEdit()
+        self.qn_format.setPlaceholderText("{YYYY}-{NNN}")
+        self.qn_format.setMinimumHeight(36)
+        qn_card.addWidget(self.qn_format)
+        
+        # Counter display and reset
+        counter_row = QHBoxLayout()
+        counter_row.setSpacing(SPACING['md'])
+        
         self.qn_counter_label = QLabel("Counter: 0")
-        self.qn_counter_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
-        layout.addWidget(self.qn_counter_label)
+        self.qn_counter_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
+        counter_row.addWidget(self.qn_counter_label)
         
-        # Reset counter button
-        reset_counter_btn = QPushButton("Reset Counter to 0")
-        reset_counter_btn.setFixedWidth(150)
+        counter_row.addStretch()
+        
+        reset_counter_btn = QPushButton("Reset Counter")
+        reset_counter_btn.setMinimumWidth(120)
         reset_counter_btn.clicked.connect(self._reset_qn_counter)
-        layout.addWidget(reset_counter_btn)
+        counter_row.addWidget(reset_counter_btn)
         
+        qn_card.addLayout(counter_row)
+        
+        right_col.addWidget(qn_card)
+        right_col.addStretch()
+        
+        columns.addLayout(right_col, 1)
+        
+        layout.addLayout(columns)
         layout.addStretch()
         return scroll
     
@@ -600,82 +1147,6 @@ class ConfigDialog(QDialog):
             
             self.qn_counter_label.setText("Counter: 0")
             QMessageBox.information(self, "Counter Reset", "Quotation counter has been reset to 0.")
-    
-    def _create_typography_tab(self) -> QWidget:
-        scroll, layout = self._create_scrollable_tab()
-        
-        layout.addWidget(SectionHeader("Font Families"))
-        
-        self.typo_heading = QLineEdit()
-        self.typo_heading.setPlaceholderText("Montserrat, Arial, etc.")
-        layout.addWidget(FormRow("Headings", self.typo_heading))
-        
-        self.typo_body = QLineEdit()
-        self.typo_body.setPlaceholderText("Source Sans Pro, Helvetica, etc.")
-        layout.addWidget(FormRow("Body Text", self.typo_body))
-        
-        self.typo_mono = QLineEdit()
-        self.typo_mono.setPlaceholderText("JetBrains Mono, Menlo, etc.")
-        layout.addWidget(FormRow("Monospace", self.typo_mono))
-        
-        layout.addWidget(SectionHeader("Font Sizes (px)"))
-        
-        self.typo_size_company = QSpinBox()
-        self.typo_size_company.setRange(8, 72)
-        layout.addWidget(FormRow("Company Name", self.typo_size_company))
-        
-        self.typo_size_h1 = QSpinBox()
-        self.typo_size_h1.setRange(8, 72)
-        layout.addWidget(FormRow("Heading 1", self.typo_size_h1))
-        
-        self.typo_size_h2 = QSpinBox()
-        self.typo_size_h2.setRange(8, 72)
-        layout.addWidget(FormRow("Heading 2", self.typo_size_h2))
-        
-        self.typo_size_body = QSpinBox()
-        self.typo_size_body.setRange(8, 72)
-        layout.addWidget(FormRow("Body", self.typo_size_body))
-        
-        self.typo_size_small = QSpinBox()
-        self.typo_size_small.setRange(6, 72)
-        layout.addWidget(FormRow("Small Text", self.typo_size_small))
-        
-        layout.addStretch()
-        return scroll
-    
-    def _create_colors_tab(self) -> QWidget:
-        scroll, layout = self._create_scrollable_tab()
-        
-        layout.addWidget(SectionHeader("Document Color Scheme"))
-        
-        desc = QLabel("These colors are used in the PDF output, not the application UI.")
-        desc.setWordWrap(True)
-        desc.setStyleSheet(f"color: {COLORS['text_muted']}; margin-bottom: {SPACING['md']}px;")
-        layout.addWidget(desc)
-        
-        self.color_primary = ColorButton()
-        layout.addWidget(FormRow("Primary", self.color_primary))
-        
-        self.color_accent = ColorButton()
-        layout.addWidget(FormRow("Accent", self.color_accent))
-        
-        self.color_background = ColorButton()
-        layout.addWidget(FormRow("Background", self.color_background))
-        
-        self.color_text = ColorButton()
-        layout.addWidget(FormRow("Text", self.color_text))
-        
-        self.color_muted = ColorButton()
-        layout.addWidget(FormRow("Muted Text", self.color_muted))
-        
-        self.color_border = ColorButton()
-        layout.addWidget(FormRow("Borders", self.color_border))
-        
-        self.color_table_alt = ColorButton()
-        layout.addWidget(FormRow("Table Alt Row", self.color_table_alt))
-        
-        layout.addStretch()
-        return scroll
     
     def _on_preset_changed(self, button):
         """Handle preset switching. Save current form to memory, load new preset."""
@@ -740,12 +1211,7 @@ class ConfigDialog(QDialog):
         
         preset['layout'] = {
             'template': self.layout_template.currentData(),
-            'page_margins': [
-                self.margin_top.value(),
-                self.margin_right.value(),
-                self.margin_bottom.value(),
-                self.margin_left.value()
-            ]
+            'page_margins': self.margin_control.values()
         }
         
         preset['snippets'] = {
@@ -780,9 +1246,9 @@ class ConfigDialog(QDialog):
         }
         
         preset['typography'] = {
-            'heading': self.typo_heading.text(),
-            'body': self.typo_body.text(),
-            'mono': self.typo_mono.text(),
+            'heading': self.typo_heading.currentText(),
+            'body': self.typo_body.currentText(),
+            'mono': self.typo_mono.currentText(),
             'sizes': {
                 'company_name': self.typo_size_company.value(),
                 'heading1': self.typo_size_h1.value(),
@@ -805,9 +1271,6 @@ class ConfigDialog(QDialog):
     def _load_preset_values(self, preset_key: str):
         """Load configuration values for the given preset into the UI."""
         presets = self.config.get('presets', {})
-        # Get preset or defaults from empty preset in loader logic, but we are working on a dict here
-        # So if missing, we should probably use the helper from loader or just empty dicts.
-        # To be safe, let's get it from self.config
         preset = presets.get(preset_key, {})
         
         # Name
@@ -844,11 +1307,7 @@ class ConfigDialog(QDialog):
             self.layout_template.setCurrentIndex(idx)
         
         margins = layout_config.get('page_margins', [20, 20, 20, 20])
-        if len(margins) == 4:
-            self.margin_top.setValue(margins[0])
-            self.margin_right.setValue(margins[1])
-            self.margin_bottom.setValue(margins[2])
-            self.margin_left.setValue(margins[3])
+        self.margin_control.setValues(margins)
             
         # Snippets
         snippets = preset.get('snippets', {})
@@ -897,9 +1356,28 @@ class ConfigDialog(QDialog):
         
         # Typography
         typography = preset.get('typography', {})
-        self.typo_heading.setText(typography.get('heading', 'Montserrat'))
-        self.typo_body.setText(typography.get('body', 'Source Sans Pro'))
-        self.typo_mono.setText(typography.get('mono', 'JetBrains Mono'))
+        
+        # Set font dropdowns (handle both existing values and new ones)
+        heading_font = typography.get('heading', 'Montserrat')
+        idx = self.typo_heading.findText(heading_font)
+        if idx >= 0:
+            self.typo_heading.setCurrentIndex(idx)
+        else:
+            self.typo_heading.setCurrentText(heading_font)
+        
+        body_font = typography.get('body', 'Source Sans Pro')
+        idx = self.typo_body.findText(body_font)
+        if idx >= 0:
+            self.typo_body.setCurrentIndex(idx)
+        else:
+            self.typo_body.setCurrentText(body_font)
+        
+        mono_font = typography.get('mono', 'JetBrains Mono')
+        idx = self.typo_mono.findText(mono_font)
+        if idx >= 0:
+            self.typo_mono.setCurrentIndex(idx)
+        else:
+            self.typo_mono.setCurrentText(mono_font)
         
         sizes = typography.get('sizes', {})
         self.typo_size_company.setValue(sizes.get('company_name', 24))
@@ -923,7 +1401,7 @@ class ConfigDialog(QDialog):
         # Ensure the currently edited preset is saved to the config dict
         self._save_current_preset_to_memory()
         
-        # Also update active preset to current one? Yes, likely what user expects.
+        # Also update active preset to current one
         self.config['active_preset'] = self.current_preset_key
         
         try:
@@ -958,13 +1436,6 @@ class ConfigDialog(QDialog):
         presets = config.get('presets', {})
         for key in sorted(presets.keys()):
             preset = presets[key]
-            # We dump each preset indented
-            preset_yaml = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
-            # Indent is handled by yaml dump if we dump the dict with key, but let's check indentation
-            # yaml.dump({key: preset}) will output "key:\n  value..."
-            # We want it under "presets:" which we already added.
-            # So we can just append indented lines.
-            
             dumped = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
             lines.append(self._indent_text(dumped, 2))
             lines.append("")
