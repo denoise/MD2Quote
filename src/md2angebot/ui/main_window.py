@@ -485,6 +485,9 @@ class MainWindow(QMainWindow):
         config._ensure_config_exists()
         config.config = config._load_config()
         
+        # Re-initialize renderer to pick up any template changes
+        self.renderer = TemplateRenderer()
+        
         # Update preset selector
         self.update_preset_selector()
         self.sync_preset_ui()

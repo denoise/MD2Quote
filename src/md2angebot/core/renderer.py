@@ -13,7 +13,9 @@ class TemplateRenderer:
         
         self.env = Environment(
             loader=FileSystemLoader(template_dirs),
-            autoescape=select_autoescape(['html', 'xml'])
+            autoescape=select_autoescape(['html', 'xml']),
+            cache_size=0,  # Disable caching to ensure updates are seen
+            auto_reload=True
         )
         
         # Add custom filters if needed

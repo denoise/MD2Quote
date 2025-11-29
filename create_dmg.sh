@@ -42,3 +42,4 @@ echo ""
 echo "Users can drag the app to Applications folder from this DMG."
 
 
+

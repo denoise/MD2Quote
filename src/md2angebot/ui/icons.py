@@ -289,3 +289,4 @@ def icon_font(size: int = 20) -> QFont:
     """Get a QFont configured for Material Symbols at the given size."""
     return get_icons().get_font(size)
 
+
