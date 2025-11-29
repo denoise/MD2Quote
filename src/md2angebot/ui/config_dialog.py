@@ -24,6 +24,17 @@ from .styles import COLORS, SPACING, RADIUS
 from .icons import icon, icon_font, icon_char
 
 
+# Fixed mapping between presets and layout templates
+# Each preset is associated with a specific template that cannot be changed
+PRESET_TEMPLATE_MAP = {
+    'preset_1': ('modern-split', 'Modern Split'),
+    'preset_2': ('elegant-centered', 'Elegant Centered'),
+    'preset_3': ('minimal-sidebar', 'Minimal Sidebar'),
+    'preset_4': ('bold-stamp', 'Bold Stamp'),
+    'preset_5': ('classic-letterhead', 'Classic Letterhead'),
+}
+
+
 # Common font families for dropdowns
 FONT_FAMILIES = {
     'heading': [
@@ -1017,17 +1028,26 @@ class ConfigDialog(QDialog):
         """Tab for Layout, Margins, and Content Snippets."""
         scroll, layout = self._create_scrollable_tab()
         
-        # Template Selection Card
+        # Template Info Card (read-only - template is fixed per preset)
         template_card = SectionCard("Layout Template")
         
-        self.layout_template = QComboBox()
-        self.layout_template.setMinimumHeight(24)
-        self.layout_template.addItem("Modern Split (Default)", "modern-split")
-        self.layout_template.addItem("Elegant Centered (Photography)", "elegant-centered")
-        self.layout_template.addItem("Minimal Sidebar (Consulting)", "minimal-sidebar")
-        self.layout_template.addItem("Bold Stamp (Creative)", "bold-stamp")
-        self.layout_template.addItem("Classic Letterhead (Business)", "classic-letterhead")
-        template_card.addWidget(FormRow("Template", self.layout_template))
+        # Info label explaining the fixed association
+        info_label = QLabel("Each profile has a fixed layout template that defines the document structure.")
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-bottom: {SPACING['xs']}px;")
+        template_card.addWidget(info_label)
+        
+        # Read-only display of the current template
+        self.template_display = QLabel()
+        self.template_display.setStyleSheet(f"""
+            color: {COLORS['text_primary']};
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 12px;
+            background-color: {COLORS['bg_dark']};
+            border: 1px solid {COLORS['border']};
+        """)
+        template_card.addWidget(FormRow("Template", self.template_display))
         
         layout.addWidget(template_card)
         
@@ -1441,8 +1461,10 @@ class ConfigDialog(QDialog):
             'chamber_of_commerce': self.legal_kvk.text(),
         }
         
+        # Template is fixed per preset - use the mapping
+        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('modern-split', 'Modern Split'))
         preset['layout'] = {
-            'template': self.layout_template.currentData(),
+            'template': template_id,
             'page_margins': self.margin_control.values()
         }
         
@@ -1537,13 +1559,11 @@ class ConfigDialog(QDialog):
         self.legal_tax_id.setText(legal.get('tax_id', ''))
         self.legal_kvk.setText(legal.get('chamber_of_commerce', ''))
         
-        # Layout
-        layout_config = preset.get('layout', {})
-        template = layout_config.get('template', 'modern-split')
-        idx = self.layout_template.findData(template)
-        if idx >= 0:
-            self.layout_template.setCurrentIndex(idx)
+        # Layout - template is fixed per preset, just display it
+        _, template_name = PRESET_TEMPLATE_MAP.get(preset_key, ('modern-split', 'Modern Split'))
+        self.template_display.setText(template_name)
         
+        layout_config = preset.get('layout', {})
         margins = layout_config.get('page_margins', [20, 20, 20, 20])
         self.margin_control.setValues(margins)
             

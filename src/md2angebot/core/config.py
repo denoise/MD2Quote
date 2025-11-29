@@ -5,6 +5,17 @@ from pathlib import Path
 from datetime import datetime
 from ..utils import get_app_path
 
+
+# Fixed mapping between presets and layout templates
+# Each preset is associated with a specific template that cannot be changed
+PRESET_TEMPLATE_MAP = {
+    'preset_1': 'modern-split',
+    'preset_2': 'elegant-centered',
+    'preset_3': 'minimal-sidebar',
+    'preset_4': 'bold-stamp',
+    'preset_5': 'classic-letterhead',
+}
+
 class ConfigLoader:
     APP_NAME = "md2angebot"
     
@@ -91,7 +102,7 @@ class ConfigLoader:
         presets = {}
         for i in range(1, 6):
             key = f"preset_{i}"
-            presets[key] = self._get_empty_preset(f"Preset {i}")
+            presets[key] = self._get_empty_preset(f"Preset {i}", key)
             
         # Set some defaults for preset 1
         presets['preset_1']['name'] = 'Default Profile'
@@ -101,8 +112,10 @@ class ConfigLoader:
             'active_preset': 'preset_1'
         }
 
-    def _get_empty_preset(self, name: str) -> dict:
-        """Returns an empty preset structure."""
+    def _get_empty_preset(self, name: str, preset_key: str = 'preset_1') -> dict:
+        """Returns an empty preset structure with the fixed template for this preset."""
+        # Each preset has a fixed template that cannot be changed by the user
+        template = PRESET_TEMPLATE_MAP.get(preset_key, 'modern-split')
         return {
             'name': name,
             'company': {},
@@ -116,7 +129,7 @@ class ConfigLoader:
                 'enabled': True
             },
             'layout': {
-                'template': 'modern-split',
+                'template': template,
                 'page_margins': [20, 20, 20, 20]
             },
             'snippets': {
@@ -220,7 +233,7 @@ class ConfigLoader:
 
     def get_preset(self, preset_key: str) -> dict:
         """Returns the configuration dict for a specific preset."""
-        return self.config.get('presets', {}).get(preset_key, self._get_empty_preset("Unknown"))
+        return self.config.get('presets', {}).get(preset_key, self._get_empty_preset("Unknown", preset_key))
 
     def get_active_preset(self) -> dict:
         """Returns the configuration dict for the active preset."""
