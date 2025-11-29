@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Quotation {{ quotation.number }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family={{ typography.heading|replace(' ', '+') }}:wght@600&family={{ typography.body|replace(' ', '+') }}:wght@400&family={{ typography.mono|replace(' ', '+') }}&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: {{ colors.primary }};
@@ -12,129 +12,100 @@
             --muted: {{ colors.muted }};
             --border: {{ colors.border }};
             --table-alt: {{ colors.table_alt }};
-            --font-heading: 'Outfit', sans-serif;
-            --font-body: 'DM Sans', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
+            --font-heading: '{{ typography.heading }}', sans-serif;
+            --font-body: '{{ typography.body }}', sans-serif;
+            --font-mono: '{{ typography.mono }}', monospace;
         }
         {% include 'minimal-sidebar.css' %}
     </style>
 </head>
 <body>
     <aside>
-        <div class="sidebar-inner">
-            <div class="sidebar-header">
-                {% if company.logo %}
-                <img src="{{ company.logo }}" alt="Logo" class="logo">
-                {% endif %}
-                <h1 class="company-name">{{ company.name }}</h1>
-                {% if company.tagline %}
-                <p class="tagline">{{ company.tagline }}</p>
-                {% endif %}
-            </div>
+        {% if company.logo %}
+        <img src="{{ company.logo }}" alt="Logo" class="logo">
+        {% endif %}
+        <h1 class="company-name">{{ company.name }}</h1>
+        <p class="tagline">{{ company.tagline }}</p>
 
-            <nav class="sidebar-nav">
-                <div class="sidebar-block">
-                    <span class="block-label">{% if defaults.language == 'de' %}Kontakt{% else %}Contact{% endif %}</span>
-                    <div class="block-content">
-                        <p>{{ contact.street }}</p>
-                        <p>{{ contact.postal_code }} {{ contact.city }}</p>
-                        <p>{{ contact.country }}</p>
-                        <p class="contact-link">{{ contact.phone }}</p>
-                        <p class="contact-link">{{ contact.email }}</p>
-                        <p class="contact-link">{{ contact.website }}</p>
-                    </div>
-                </div>
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Kontakt{% else %}Contact{% endif %}</h4>
+            <p>{{ contact.street }}</p>
+            <p>{{ contact.postal_code }} {{ contact.city }}</p>
+            <p>{{ contact.country }}</p>
+            <p>{{ contact.phone }}</p>
+            <p>{{ contact.email }}</p>
+            <p>{{ contact.website }}</p>
+        </div>
 
-                <div class="sidebar-block">
-                    <span class="block-label">{% if defaults.language == 'de' %}Dokument{% else %}Document{% endif %}</span>
-                    <div class="block-content meta-grid">
-                        <span class="meta-key">{% if defaults.language == 'de' %}Nr.{% else %}No.{% endif %}</span>
-                        <span class="meta-value">{{ quotation.number }}</span>
-                        <span class="meta-key">{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</span>
-                        <span class="meta-value">{{ quotation.date }}</span>
-                        <span class="meta-key">{% if defaults.language == 'de' %}Gültig{% else %}Valid{% endif %}</span>
-                        <span class="meta-value">{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</span>
-                    </div>
-                </div>
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Info{% else %}Info{% endif %}</h4>
+            <p>{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}: <strong>{{ quotation.date }}</strong></p>
+            <p>{% if defaults.language == 'de' %}Gültig{% else %}Valid{% endif %}: <strong>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</strong></p>
+            <p>{% if defaults.language == 'de' %}Nr.{% else %}No.{% endif %}: <strong>{{ quotation.number }}</strong></p>
+        </div>
 
-                <div class="sidebar-block">
-                    <span class="block-label">{% if defaults.language == 'de' %}Bankverbindung{% else %}Banking{% endif %}</span>
-                    <div class="block-content">
-                        <p>{{ bank.bank_name }}</p>
-                        <p class="iban">{{ bank.iban }}</p>
-                        <p>{{ bank.bic }}</p>
-                    </div>
-                </div>
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Bank{% else %}Bank{% endif %}</h4>
+            <p>{{ bank.bank_name }}</p>
+            <p style="font-size: 8pt">{{ bank.iban }}</p>
+            <p>{{ bank.bic }}</p>
+        </div>
 
-                {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
-                <div class="sidebar-block">
-                    <span class="block-label">{% if defaults.language == 'de' %}Rechtliches{% else %}Legal{% endif %}</span>
-                    <div class="block-content">
-                        <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT{% endif %}: {{ legal.tax_id }}</p>
-                        {% if legal.chamber_of_commerce %}
-                        <p>KvK: {{ legal.chamber_of_commerce }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-            </nav>
-
-            {% if snippets.custom_footer %}
-            <div class="sidebar-footer">
-                <p>{{ snippets.custom_footer }}</p>
-            </div>
+        {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Rechtliches{% else %}Legal{% endif %}</h4>
+            <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT{% endif %}: {{ legal.tax_id }}</p>
+            {% if legal.chamber_of_commerce %}
+            <p>KvK: {{ legal.chamber_of_commerce }}</p>
             {% endif %}
         </div>
+        {% endif %}
+        
+        {% if snippets.custom_footer %}
+        <div class="sidebar-section" style="margin-top: auto;">
+            <p>{{ snippets.custom_footer }}</p>
+        </div>
+        {% endif %}
     </aside>
 
     <main>
-        <header class="document-header">
-            <div class="doc-type">
-                <span class="doc-type-label">{% if defaults.language == 'de' %}Angebot{% else %}Quotation{% endif %}</span>
-                <span class="doc-number">#{{ quotation.number }}</span>
-            </div>
-        </header>
+        <div class="quotation-title">
+            {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
+        </div>
 
-        <section class="recipient-card">
-            <div class="recipient-label">{% if defaults.language == 'de' %}Empfänger{% else %}Prepared For{% endif %}</div>
-            <div class="recipient-details">
-                <p class="recipient-name">{{ client.name }}</p>
-                <p class="recipient-address">{{ client.address }}</p>
-                <p class="recipient-email">{{ client.email }}</p>
-            </div>
-        </section>
+        <div class="client-section">
+            <h3>{% if defaults.language == 'de' %}Empfänger{% else %}Prepared For{% endif %}</h3>
+            <p><strong>{{ client.name }}</strong></p>
+            <p>{{ client.address }}</p>
+            <p>{{ client.email }}</p>
+        </div>
 
         {% if snippets.intro_text %}
-        <section class="intro-section">
-            <p>{{ snippets.intro_text }}</p>
-        </section>
+        <div class="intro-text">{{ snippets.intro_text }}</div>
         {% endif %}
 
-        <section class="content-section">
-            {{ content | safe }}
-        </section>
+        {{ content | safe }}
         
         {% if snippets.terms %}
-        <section class="terms-section">
-            <div class="terms-label">{% if defaults.language == 'de' %}Bedingungen{% else %}Terms{% endif %}</div>
-            <p>{{ snippets.terms }}</p>
-        </section>
+        <div class="terms">
+            {{ snippets.terms }}
+        </div>
         {% endif %}
         
         {% if snippets.signature_block %}
-        <section class="signature-section">
-            <div class="signature-box">
-                <div class="signature-area"></div>
-                <span class="signature-name">{{ company.name }}</span>
-            </div>
-        </section>
+        <div class="signature-block">
+            <div class="signature-line"></div>
+            <div class="signature-label">{{ company.name }}</div>
+        </div>
         {% endif %}
 
         {% if defaults.vat_type == 'kleinunternehmer' %}
-        <aside class="vat-notice">
+        <div class="vat-notice kleinunternehmer">
             <p>Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG.</p>
-        </aside>
+        </div>
         {% endif %}
     </main>
 </body>
 </html>
+
+

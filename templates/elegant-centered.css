@@ -1,132 +1,296 @@
+/* ============================================
+   ELEGANT CENTERED TEMPLATE
+   A sophisticated, refined quotation design
+   ============================================ */
+
 @page {
     size: A4;
     margin: {{ layout.page_margins[0] }}mm {{ layout.page_margins[1] }}mm {{ layout.page_margins[2] }}mm {{ layout.page_margins[3] }}mm;
     @bottom-center {
-        content: "- " counter(page) " -";
+        content: "— " counter(page) " —";
         font-family: var(--font-heading);
-        font-size: 10pt;
+        font-size: 9pt;
         color: var(--muted);
+        letter-spacing: 2px;
     }
     {% if snippets.custom_footer %}
     @bottom-left {
         content: "{{ snippets.custom_footer }}";
         font-family: var(--font-body);
-        font-size: 8pt;
+        font-size: 7pt;
         color: var(--muted);
+        font-style: italic;
     }
     {% endif %}
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
 }
 
 body {
     font-family: var(--font-body);
     font-size: {{ typography.sizes.body }}pt;
     color: var(--text);
-    line-height: 1.6;
+    line-height: 1.7;
+    background: linear-gradient(180deg, rgba(0,0,0,0.01) 0%, transparent 100%);
 }
 
+.page-container {
+    position: relative;
+    min-height: 100%;
+}
+
+/* Typography */
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    text-align: center;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin-top: 0;
 }
 
-h1 { font-size: {{ typography.sizes.heading1 }}pt; margin: 1em 0 0.5em; }
-h2 { font-size: {{ typography.sizes.heading2 }}pt; border-bottom: none; }
-h3 { font-size: 12pt; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+h2 {
+    font-size: {{ typography.sizes.heading2 }}pt;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+}
+
+h3 {
+    font-size: 11pt;
+    color: var(--accent);
+    text-align: left;
+    margin-bottom: 0.5em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Decorative Top */
+.decorative-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 35px;
+    gap: 15px;
+}
+
+.deco-line {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.deco-diamond {
+    font-size: 10pt;
+    color: var(--accent);
+    opacity: 0.7;
+}
 
 /* Header */
 header {
     text-align: center;
-    margin-bottom: 60px;
-    position: relative;
+    margin-bottom: 40px;
+}
+
+.logo-wrapper {
+    margin-bottom: 20px;
 }
 
 .logo {
-    height: 80px;
-    margin-bottom: 15px;
+    height: 70px;
+    max-width: 200px;
+    object-fit: contain;
+    opacity: 0.95;
 }
 
 .company-name {
     font-size: {{ typography.sizes.company_name }}pt;
-    font-family: var(--font-heading);
-    color: var(--primary);
+    font-weight: 300;
     margin: 0;
-    letter-spacing: 3px;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
 }
 
 .tagline {
     font-family: var(--font-body);
     font-style: italic;
-    color: var(--accent);
-    margin-top: 5px;
+    font-weight: 300;
+    color: var(--muted);
+    margin: 8px 0 0;
     font-size: {{ typography.sizes.small }}pt;
+    letter-spacing: 0.03em;
 }
 
-.meta-corner {
-    position: absolute;
-    top: 0;
-    right: 0;
-    text-align: right;
-    font-size: 9pt;
-    color: var(--muted);
+/* Document Title */
+.document-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 25px;
 }
 
-.meta-corner span {
+.document-title h2 {
+    margin: 0;
+    color: var(--accent);
+    font-weight: 500;
+    font-size: {{ typography.sizes.heading1 }}pt;
+}
+
+.title-line {
+    width: 60px;
+    height: 1px;
+    background: var(--border);
+}
+
+/* Meta Row */
+.meta-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
+    padding: 15px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.meta-item {
+    text-align: center;
+}
+
+.meta-label {
     display: block;
-}
-
-.meta-corner .number {
-    font-family: var(--font-mono);
-    color: var(--text);
-    font-weight: bold;
-}
-
-/* Client Info */
-.client-info {
-    margin: 0 auto 50px;
-    width: 80%;
-    text-align: center;
-}
-
-.client-info h3 {
-    text-align: center;
-    border: none;
-    font-size: 10pt;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
     color: var(--muted);
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
-.client-info p {
-    margin: 2px 0;
+.meta-value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10pt;
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* Client Section */
+.client-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.section-icon {
+    color: var(--accent);
+    font-size: 8pt;
+}
+
+.section-title {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.client-card {
+    display: inline-block;
+    padding: 20px 40px;
+    background: var(--table-alt);
+    border-radius: 3px;
+    border-left: 3px solid var(--accent);
+    text-align: left;
+}
+
+.client-name {
+    font-family: var(--font-heading);
     font-size: 12pt;
+    font-weight: 500;
+    color: var(--primary);
+    margin: 0 0 8px;
 }
 
-/* Content */
+.client-detail {
+    margin: 3px 0;
+    font-size: 10pt;
+    color: var(--text);
+}
+
+/* Main Content */
+main {
+    margin-bottom: 60px;
+}
+
+.intro-text {
+    text-align: center;
+    margin: 0 auto 35px;
+    max-width: 85%;
+    padding: 0 20px;
+}
+
+.intro-text p {
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.8;
+    margin: 0;
+    font-size: 10pt;
+}
+
+.content-wrapper {
+    margin-bottom: 30px;
+}
+
+/* Tables */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 40px 0;
+    margin: 25px 0;
+}
+
+thead {
+    border-bottom: 2px solid var(--primary);
 }
 
 th {
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-family: var(--font-heading);
+    font-weight: 500;
     font-size: 8pt;
-    color: var(--muted);
-    border-bottom: 1px solid var(--primary);
-    padding: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    padding: 12px 10px;
     text-align: left;
-    font-weight: normal;
+    background: transparent;
 }
 
 td {
-    padding: 15px 10px;
+    padding: 14px 10px;
     border-bottom: 1px solid var(--border);
     vertical-align: top;
+    font-size: {{ typography.sizes.body }}pt;
 }
 
+/* Zebra striping */
+tbody tr:nth-child(even) {
+    background: var(--table-alt);
+}
+
+/* Hover effect for screen viewing */
+tbody tr:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+/* Numeric columns alignment */
 th:last-child, td:last-child,
 th:nth-last-child(2), td:nth-last-child(2),
 th:nth-last-child(3), td:nth-last-child(3) {
@@ -134,61 +298,231 @@ th:nth-last-child(3), td:nth-last-child(3) {
     font-family: var(--font-mono);
 }
 
-/* Snippets */
-.intro-text {
-    text-align: center;
-    margin: 0 auto 30px;
-    width: 80%;
-    font-style: italic;
-    color: var(--text);
+/* Total row styling */
+tbody tr:last-child td {
+    border-bottom: 2px solid var(--primary);
+    font-weight: 500;
 }
 
-.terms {
-    margin-top: 40px;
+tfoot td {
+    padding: 12px 10px;
+    font-weight: 600;
+    border-top: 2px solid var(--accent);
+    background: transparent;
+}
+
+/* Terms Section */
+.terms-section {
+    margin-top: 35px;
     text-align: center;
-    font-size: 9pt;
+    padding: 20px;
+    background: var(--table-alt);
+    border-radius: 3px;
+}
+
+.terms-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     color: var(--muted);
+    font-weight: 500;
 }
 
-.signature-block {
-    margin-top: 60px;
+.terms-icon {
+    font-size: 10pt;
+    color: var(--accent);
+}
+
+.terms-section p {
+    margin: 0;
+    font-size: 9pt;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* Signature Section */
+.signature-section {
+    margin-top: 50px;
     display: flex;
     justify-content: center;
 }
 
-.signature-line {
-    width: 250px;
-    border-top: 1px solid var(--muted);
+.signature-box {
     text-align: center;
-    padding-top: 10px;
-    font-size: 9pt;
-    font-style: italic;
+    padding: 20px 40px;
+}
+
+.signature-line {
+    width: 200px;
+    height: 1px;
+    background: var(--text);
+    margin: 0 auto 10px;
+}
+
+.signature-name {
+    font-family: var(--font-heading);
+    font-size: 10pt;
+    font-weight: 500;
+    color: var(--primary);
+    margin: 0 0 4px;
+}
+
+.signature-date {
+    font-size: 8pt;
+    color: var(--muted);
+    margin: 0;
 }
 
 /* VAT Notice */
 .vat-notice {
     margin-top: 30px;
-    padding: 10px 15px;
-    font-size: 9pt;
     text-align: center;
+    font-size: 9pt;
+    font-style: italic;
     color: var(--muted);
+    padding: 12px 20px;
+    border: 1px dashed var(--border);
+    border-radius: 3px;
 }
 
-.vat-notice.kleinunternehmer {
-    font-style: italic;
+.vat-notice p {
+    margin: 0;
 }
 
 /* Footer */
 footer {
     position: absolute;
     bottom: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 8pt;
-    color: var(--muted);
-    line-height: 1.8;
-    border-top: 1px solid var(--border);
-    padding-top: 20px;
+    left: 0;
+    right: 0;
 }
 
+.footer-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
 
+.footer-line {
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+.footer-ornament {
+    font-size: 8pt;
+    color: var(--accent);
+    opacity: 0.6;
+}
+
+.footer-content {
+    text-align: center;
+}
+
+.footer-row {
+    margin: 4px 0;
+    font-size: 8pt;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.footer-dot {
+    margin: 0 8px;
+    opacity: 0.5;
+}
+
+.footer-sep {
+    margin: 0 10px;
+    opacity: 0.3;
+}
+
+.contact-row {
+    font-size: 9pt;
+    color: var(--text);
+}
+
+.address-row {
+    font-size: 8pt;
+}
+
+.bank-row {
+    font-family: var(--font-mono);
+    font-size: 7pt;
+    letter-spacing: 0.02em;
+}
+
+.legal-row {
+    font-size: 7pt;
+    margin-top: 6px;
+}
+
+/* Utility - for content sections */
+.content-wrapper h2 {
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.content-wrapper h3 {
+    text-align: left;
+    margin-top: 25px;
+}
+
+.content-wrapper p {
+    text-align: left;
+    margin: 0.8em 0;
+}
+
+.content-wrapper ul,
+.content-wrapper ol {
+    text-align: left;
+    padding-left: 1.5em;
+    margin: 0.8em 0;
+}
+
+.content-wrapper li {
+    margin: 0.4em 0;
+}
+
+/* Strong & emphasis */
+strong {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+em {
+    font-style: italic;
+}
+
+/* Code in content */
+code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--table-alt);
+    padding: 2px 6px;
+    border-radius: 2px;
+}
+
+/* Print optimizations */
+@media print {
+    body {
+        background: white;
+    }
+    
+    tbody tr:hover {
+        background: inherit;
+    }
+    
+    .client-card,
+    .terms-section {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

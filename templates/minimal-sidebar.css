@@ -1,299 +1,113 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   MINIMAL SIDEBAR — Modern Quotation Template
-   A clean, sophisticated layout with a bold accent sidebar
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 @page {
     size: A4;
-    margin: {{ layout.page_margins[0] }}mm {{ layout.page_margins[1] }}mm {{ layout.page_margins[2] }}mm 72mm;
+    margin-top: {{ layout.page_margins[0] }}mm;
+    margin-right: {{ layout.page_margins[1] }}mm;
+    margin-bottom: {{ layout.page_margins[2] }}mm;
+    margin-left: 70mm; /* Space for sidebar */
     
     @bottom-right {
         content: counter(page) " / " counter(pages);
         font-family: var(--font-mono);
-        font-size: 7.5pt;
-        color: #94a3b8;
+        font-size: 8pt;
+        color: var(--muted);
     }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Base Styles
-   ───────────────────────────────────────────────────────────────────────────── */
-
-* {
-    box-sizing: border-box;
 }
 
 body {
     font-family: var(--font-body);
     font-size: {{ typography.sizes.body }}pt;
     color: var(--text);
-    line-height: 1.55;
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
+    line-height: 1.4;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Sidebar — The Visual Anchor
-   ───────────────────────────────────────────────────────────────────────────── */
-
+/* Sidebar */
 aside {
     position: fixed;
     top: 0;
-    left: -52mm;
-    width: 52mm;
+    left: -50mm; /* Relative to the flow content's left edge? No, fixed is relative to page box usually, but margin impacts it. */
+    /* In WeasyPrint, fixed elements are positioned relative to the page area (inside margins) unless specified otherwise. 
+       Actually, let's double check. Usually fixed is relative to the page area. 
+       So if margin-left is 70mm, left: 0 is at 70mm. 
+       To put it in the margin, we use negative left. */
+    width: 55mm;
     height: 100%;
-    background: linear-gradient(165deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 85%, #000) 100%);
-    color: #ffffff;
-    padding: 0;
-    overflow: hidden;
+    border-right: 1px solid var(--border);
+    padding-right: 15px;
 }
 
-.sidebar-inner {
-    padding: 25px 18px 20px 15px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Sidebar Header */
-.sidebar-header {
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
+/* Company Info in Sidebar */
 .logo {
-    max-width: 85%;
-    max-height: 50px;
-    margin-bottom: 14px;
-    filter: brightness(0) invert(1);
+    max-width: 100%;
+    margin-bottom: 20px;
 }
 
 .company-name {
     font-family: var(--font-heading);
     font-size: {{ typography.sizes.company_name }}pt;
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0 0 4px 0;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-}
-
-.tagline {
-    font-size: 8pt;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-}
-
-/* Sidebar Navigation Blocks */
-.sidebar-nav {
-    flex: 1;
-}
-
-.sidebar-block {
-    margin-bottom: 22px;
-}
-
-.block-label {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 6.5pt;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--accent);
-    margin-bottom: 8px;
-    font-weight: 400;
-}
-
-.block-content {
-    font-size: 8pt;
-    line-height: 1.5;
-}
-
-.block-content p {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.contact-link {
-    color: rgba(255, 255, 255, 0.95) !important;
-}
-
-.iban {
-    font-family: var(--font-mono);
-    font-size: 6.5pt;
-    letter-spacing: 0.03em;
-    word-break: break-all;
-}
-
-/* Meta Grid (Document Info) */
-.meta-grid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 3px 10px;
-}
-
-.meta-key {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 7.5pt;
-}
-
-.meta-value {
-    color: #ffffff;
-    font-family: var(--font-mono);
-    font-size: 8pt;
-    font-weight: 400;
-}
-
-/* Sidebar Footer */
-.sidebar-footer {
-    margin-top: auto;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-footer p {
-    margin: 0;
-    font-size: 7pt;
-    color: rgba(255, 255, 255, 0.5);
-    line-height: 1.4;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Main Content Area
-   ───────────────────────────────────────────────────────────────────────────── */
-
-main {
-    min-height: 100%;
-}
-
-/* Document Header */
-.document-header {
-    margin-bottom: 35px;
-}
-
-.doc-type {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-}
-
-.doc-type-label {
-    font-family: var(--font-heading);
-    font-size: 28pt;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.03em;
-    line-height: 1;
-}
-
-.doc-number {
-    font-family: var(--font-mono);
-    font-size: 11pt;
-    color: var(--muted);
-    font-weight: 400;
-}
-
-/* Recipient Card */
-.recipient-card {
-    margin-bottom: 30px;
-    padding: 18px 22px;
-    background: linear-gradient(135deg, var(--table-alt) 0%, color-mix(in srgb, var(--table-alt) 50%, #ffffff) 100%);
-    border-radius: 6px;
-    border-left: 3px solid var(--accent);
-}
-
-.recipient-label {
-    font-family: var(--font-mono);
-    font-size: 7pt;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 10px;
-}
-
-.recipient-details p {
-    margin: 0;
-}
-
-.recipient-name {
-    font-family: var(--font-heading);
-    font-size: 12pt;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 4px !important;
-}
-
-.recipient-address {
-    font-size: 9.5pt;
-    color: var(--text);
-    line-height: 1.5;
-}
-
-.recipient-email {
-    font-size: 9pt;
-    color: var(--muted);
-    margin-top: 4px !important;
-}
-
-/* Intro Section */
-.intro-section {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-}
-
-.intro-section p {
-    margin: 0;
-    font-size: 10pt;
-    color: var(--text);
-    line-height: 1.6;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Content Area — Headings
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.content-section h1 {
-    font-family: var(--font-heading);
-    font-size: {{ typography.sizes.heading1 }}pt;
-    font-weight: 700;
     color: var(--primary);
-    margin: 0 0 15px 0;
-    letter-spacing: -0.02em;
+    margin: 0 0 5px;
     line-height: 1.2;
 }
 
-.content-section h2 {
-    font-family: var(--font-heading);
-    font-size: {{ typography.sizes.heading2 }}pt;
-    font-weight: 500;
-    color: var(--primary);
-    margin: 35px 0 12px 0;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--accent);
-    letter-spacing: -0.01em;
+.tagline {
+    font-size: 9pt;
+    color: var(--muted);
+    margin-bottom: 30px;
 }
 
-.content-section h3 {
-    font-family: var(--font-heading);
-    font-size: 11pt;
-    font-weight: 500;
+.sidebar-section {
+    margin-bottom: 30px;
+}
+
+.sidebar-section h4 {
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+}
+
+.sidebar-section p {
+    font-size: 9pt;
+    margin: 2px 0;
+    color: var(--muted);
+}
+
+.sidebar-section p strong {
     color: var(--text);
-    margin: 25px 0 8px 0;
 }
 
-.content-section p {
-    margin: 0 0 10px 0;
+/* Main Content */
+h1 { font-family: var(--font-heading); font-size: {{ typography.sizes.heading1 }}pt; color: var(--primary); margin-top: 0; }
+h2 { font-family: var(--font-heading); font-size: {{ typography.sizes.heading2 }}pt; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 30px; }
+h3 { font-size: 11pt; font-weight: bold; margin-bottom: 5px; }
+
+.quotation-title {
+    font-size: 24pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Tables — Clean & Scannable
-   ───────────────────────────────────────────────────────────────────────────── */
+.client-section {
+    margin-bottom: 40px;
+    padding: 20px;
+    background-color: var(--table-alt);
+    border-left: 2px solid var(--accent);
+}
 
+.client-section h3 {
+    margin-top: 0;
+    font-family: var(--font-mono);
+    font-size: 9pt;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+/* Tables */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -301,159 +115,74 @@ table {
     font-size: 9pt;
 }
 
-thead {
-    background: var(--primary);
-}
-
 th {
-    font-family: var(--font-heading);
-    font-weight: 500;
-    font-size: 7.5pt;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #ffffff;
+    background-color: var(--primary);
+    color: white;
+    font-weight: bold;
     text-align: left;
-    padding: 10px 12px;
+    padding: 6px 10px;
+    text-transform: uppercase;
+    font-size: 8pt;
 }
 
 td {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--border);
-    vertical-align: top;
 }
 
-tbody tr:nth-child(even) {
-    background: var(--table-alt);
-}
-
-tbody tr:last-child td {
+tr:last-child td {
     border-bottom: 2px solid var(--primary);
 }
 
-/* Right-align numeric columns */
 th:last-child, td:last-child,
 th:nth-last-child(2), td:nth-last-child(2),
 th:nth-last-child(3), td:nth-last-child(3) {
     text-align: right;
     font-family: var(--font-mono);
-    font-size: 8.5pt;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Terms Section
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.terms-section {
-    margin-top: 35px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border);
+/* Snippets */
+.intro-text {
+    font-size: 10pt;
+    margin-bottom: 20px;
 }
 
-.terms-label {
-    font-family: var(--font-mono);
-    font-size: 7pt;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 8px;
-}
-
-.terms-section p {
-    margin: 0;
+.terms {
+    margin-top: 30px;
     font-size: 8pt;
     color: var(--muted);
-    line-height: 1.55;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Signature Section
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.signature-section {
-    margin-top: 45px;
+.signature-block {
+    margin-top: 50px;
 }
 
-.signature-box {
-    display: inline-block;
-}
-
-.signature-area {
-    width: 180px;
-    height: 45px;
+.signature-line {
     border-bottom: 1px solid var(--text);
-    margin-bottom: 6px;
+    width: 200px;
+    height: 40px;
+    margin-bottom: 5px;
 }
 
-.signature-name {
+.signature-label {
+    font-size: 8pt;
     font-family: var(--font-mono);
-    font-size: 7.5pt;
-    color: var(--muted);
-    letter-spacing: 0.02em;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   VAT Notice
-   ───────────────────────────────────────────────────────────────────────────── */
-
+/* VAT Notice */
 .vat-notice {
     margin-top: 30px;
-    padding: 12px 16px;
-    background: var(--table-alt);
-    border-radius: 4px;
-    border-left: 3px solid var(--muted);
-}
-
-.vat-notice p {
-    margin: 0;
+    padding: 10px 15px;
     font-size: 8pt;
-    font-style: italic;
+    border-left: 3px solid var(--muted);
+    background-color: var(--table-alt);
     color: var(--muted);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Lists
-   ───────────────────────────────────────────────────────────────────────────── */
-
-ul, ol {
-    margin: 10px 0;
-    padding-left: 20px;
-}
-
-li {
-    margin-bottom: 4px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Code & Preformatted
-   ───────────────────────────────────────────────────────────────────────────── */
-
-code {
-    font-family: var(--font-mono);
-    font-size: 8.5pt;
-    background: var(--table-alt);
-    padding: 1px 5px;
-    border-radius: 3px;
-}
-
-pre {
-    font-family: var(--font-mono);
-    font-size: 8pt;
-    background: var(--table-alt);
-    padding: 12px 15px;
-    border-radius: 4px;
-    overflow-x: auto;
-    line-height: 1.5;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Strong & Emphasis
-   ───────────────────────────────────────────────────────────────────────────── */
-
-strong {
-    font-weight: 500;
-    color: var(--text);
-}
-
-em {
+.vat-notice.kleinunternehmer {
     font-style: italic;
 }
+
+
