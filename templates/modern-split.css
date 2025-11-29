@@ -190,4 +190,18 @@ footer {
     font-size: {{ typography.sizes.small }}pt;
 }
 
+/* VAT Notice */
+.vat-notice {
+    margin-top: 20px;
+    padding: 10px 15px;
+    font-size: {{ typography.sizes.small }}pt;
+    border-left: 3px solid var(--muted);
+    background-color: var(--table-alt);
+    color: var(--muted);
+}
+
+.vat-notice.kleinunternehmer {
+    font-style: italic;
+}
+
 

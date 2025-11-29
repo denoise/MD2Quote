@@ -1402,21 +1402,43 @@ class ConfigDialog(QDialog):
         row1.addStretch()
         defaults_card.addLayout(row1)
         
-        # Tax + Payment row
+        # VAT Type row
         row2 = QHBoxLayout()
         row2.setSpacing(SPACING['md'])
         
+        vat_type_col = QVBoxLayout()
+        vat_type_col.setSpacing(2)
+        vat_type_label = QLabel("VAT / Steuer Type")
+        vat_type_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        vat_type_col.addWidget(vat_type_label)
+        self.defaults_vat_type = QComboBox()
+        self.defaults_vat_type.addItem("No VAT / Keine Steuer", "none")
+        self.defaults_vat_type.addItem("Kleinunternehmer (§19 UStG)", "kleinunternehmer")
+        self.defaults_vat_type.addItem("German VAT / Deutsche USt", "german_vat")
+        self.defaults_vat_type.setMinimumHeight(24)
+        self.defaults_vat_type.setMinimumWidth(200)
+        self.defaults_vat_type.currentIndexChanged.connect(self._on_vat_type_changed)
+        vat_type_col.addWidget(self.defaults_vat_type)
+        row2.addLayout(vat_type_col)
+        
+        row2.addStretch()
+        defaults_card.addLayout(row2)
+        
+        # Tax Rate + Payment row
+        row3 = QHBoxLayout()
+        row3.setSpacing(SPACING['md'])
+        
         tax_col = QVBoxLayout()
         tax_col.setSpacing(2)
-        tax_label = QLabel("Tax Rate")
-        tax_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
-        tax_col.addWidget(tax_label)
+        self.tax_rate_label = QLabel("Tax Rate")
+        self.tax_rate_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        tax_col.addWidget(self.tax_rate_label)
         self.defaults_tax_rate = StyledSpinBox()
         self.defaults_tax_rate.setRange(0, 100)
         self.defaults_tax_rate.setSuffix(" %")
         self.defaults_tax_rate.setMinimumWidth(80)
         tax_col.addWidget(self.defaults_tax_rate)
-        row2.addLayout(tax_col)
+        row3.addLayout(tax_col)
         
         payment_col = QVBoxLayout()
         payment_col.setSpacing(2)
@@ -1428,10 +1450,17 @@ class ConfigDialog(QDialog):
         self.defaults_payment_days.setSuffix(" days")
         self.defaults_payment_days.setMinimumWidth(100)
         payment_col.addWidget(self.defaults_payment_days)
-        row2.addLayout(payment_col)
+        row3.addLayout(payment_col)
         
-        row2.addStretch()
-        defaults_card.addLayout(row2)
+        row3.addStretch()
+        defaults_card.addLayout(row3)
+        
+        # VAT Type info hint
+        self.vat_hint_label = QLabel()
+        self.vat_hint_label.setWordWrap(True)
+        self.vat_hint_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; padding: 4px 0;")
+        defaults_card.addWidget(self.vat_hint_label)
+        self._update_vat_hint()
         
         left_col.addWidget(defaults_card)
         
@@ -1504,6 +1533,25 @@ class ConfigDialog(QDialog):
         
         layout.addLayout(columns, 1)
         return scroll
+    
+    def _on_vat_type_changed(self, index):
+        """Handle VAT type selection changes."""
+        vat_type = self.defaults_vat_type.currentData()
+        # Enable/disable tax rate based on VAT type
+        tax_enabled = (vat_type == 'german_vat')
+        self.defaults_tax_rate.setEnabled(tax_enabled)
+        self.tax_rate_label.setEnabled(tax_enabled)
+        self._update_vat_hint()
+    
+    def _update_vat_hint(self):
+        """Update the VAT hint label based on current selection."""
+        vat_type = self.defaults_vat_type.currentData()
+        hints = {
+            'none': 'No VAT will be shown on the quotation.',
+            'kleinunternehmer': 'Quotation will include: "Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG."',
+            'german_vat': f'VAT at {self.defaults_tax_rate.value()}% will be shown on the quotation.'
+        }
+        self.vat_hint_label.setText(hints.get(vat_type, ''))
     
     def _on_qn_preset_selected(self, index):
         """Apply selected format preset to the format field."""
@@ -1621,6 +1669,7 @@ class ConfigDialog(QDialog):
         
         preset['defaults'] = {
             'currency': self.defaults_currency.text(),
+            'vat_type': self.defaults_vat_type.currentData() or 'german_vat',
             'tax_rate': self.defaults_tax_rate.value(),
             'payment_days': self.defaults_payment_days.value(),
             'language': self.defaults_language.currentText(),
@@ -1721,12 +1770,25 @@ class ConfigDialog(QDialog):
         # Defaults
         defaults = preset.get('defaults', {})
         self.defaults_currency.setText(defaults.get('currency', 'EUR'))
+        
+        # VAT Type
+        vat_type = defaults.get('vat_type', 'german_vat')
+        vat_idx = self.defaults_vat_type.findData(vat_type)
+        if vat_idx >= 0:
+            self.defaults_vat_type.setCurrentIndex(vat_idx)
+        else:
+            # Default to german_vat if unknown value
+            self.defaults_vat_type.setCurrentIndex(2)
+        
         self.defaults_tax_rate.setValue(defaults.get('tax_rate', 19))
         self.defaults_payment_days.setValue(defaults.get('payment_days', 14))
         lang = defaults.get('language', 'de')
         idx = self.defaults_language.findText(lang)
         if idx >= 0:
             self.defaults_language.setCurrentIndex(idx)
+        
+        # Update VAT controls state based on loaded type
+        self._on_vat_type_changed(0)
         
         # Quotation Number
         qn = preset.get('quotation_number', {})

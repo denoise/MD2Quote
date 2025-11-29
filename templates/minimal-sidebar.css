@@ -171,4 +171,18 @@ th:nth-last-child(3), td:nth-last-child(3) {
     font-family: var(--font-mono);
 }
 
+/* VAT Notice */
+.vat-notice {
+    margin-top: 30px;
+    padding: 10px 15px;
+    font-size: 8pt;
+    border-left: 3px solid var(--muted);
+    background-color: var(--table-alt);
+    color: var(--muted);
+}
+
+.vat-notice.kleinunternehmer {
+    font-style: italic;
+}
+
 

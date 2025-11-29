@@ -64,6 +64,7 @@ presets:
     # ==========================================
     defaults:
       currency: "EUR"      # Currency symbol or code
+      vat_type: "german_vat"  # Options: "none", "kleinunternehmer", "german_vat"
       tax_rate: 21         # Default VAT percentage (Netherlands)
       payment_days: 14     # Default payment term in days
       language: "de"       # Interface and output language (de, en)
@@ -149,6 +150,7 @@ presets:
 
     defaults:
       currency: "EUR"
+      vat_type: "german_vat"  # Standard German VAT
       tax_rate: 19
       payment_days: 7
       language: "de"
@@ -222,6 +224,7 @@ presets:
 
     defaults:
       currency: "GBP"
+      vat_type: "none"  # No VAT shown for UK company
       tax_rate: 20
       payment_days: 30
       language: "en"
@@ -295,6 +298,7 @@ presets:
 
     defaults:
       currency: "EUR"
+      vat_type: "kleinunternehmer"  # Small business exemption
       tax_rate: 21
       payment_days: 14
       language: "nl"
@@ -368,6 +372,7 @@ presets:
 
     defaults:
       currency: "EUR"
+      vat_type: "german_vat"  # Standard VAT
       tax_rate: 21
       payment_days: 21
       language: "en"

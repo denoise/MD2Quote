@@ -50,6 +50,16 @@
             <p style="font-size: 8pt">{{ bank.iban }}</p>
             <p>{{ bank.bic }}</p>
         </div>
+
+        {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
+        <div class="sidebar-section">
+            <h4>{% if defaults.language == 'de' %}Rechtliches{% else %}Legal{% endif %}</h4>
+            <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT{% endif %}: {{ legal.tax_id }}</p>
+            {% if legal.chamber_of_commerce %}
+            <p>KvK: {{ legal.chamber_of_commerce }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
         
         {% if snippets.custom_footer %}
         <div class="sidebar-section" style="margin-top: auto;">
@@ -86,6 +96,12 @@
         <div class="signature-block">
             <div class="signature-line"></div>
             <div class="signature-label">{{ company.name }}</div>
+        </div>
+        {% endif %}
+
+        {% if defaults.vat_type == 'kleinunternehmer' %}
+        <div class="vat-notice kleinunternehmer">
+            <p>Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG.</p>
         </div>
         {% endif %}
     </main>

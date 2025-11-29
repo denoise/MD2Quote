@@ -61,6 +61,12 @@
             </div>
         </div>
         {% endif %}
+
+        {% if defaults.vat_type == 'kleinunternehmer' %}
+        <div class="vat-notice kleinunternehmer">
+            <p>Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG.</p>
+        </div>
+        {% endif %}
     </main>
 
     <footer>
@@ -69,8 +75,10 @@
             {{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}
         </p>
         <p>
-            {{ bank.bank_name }} &bull; IBAN: {{ bank.iban }} &bull; BIC: {{ bank.bic }}<br>
+            {{ bank.bank_name }} &bull; IBAN: {{ bank.iban }} &bull; BIC: {{ bank.bic }}
+            {% if defaults.vat_type == 'german_vat' and legal.tax_id %}<br>
             {% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT{% endif %}: {{ legal.tax_id }}
+            {% endif %}
         </p>
     </footer>
 </body>

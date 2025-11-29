@@ -69,7 +69,7 @@ class ConfigLoader:
             if 'presets' not in data:
                  return self._create_default_structure()
                  
-            # Backfill missing keys (like layout/snippets) in existing presets
+            # Backfill missing keys (like layout/snippets/vat_type) in existing presets
             updated = False
             presets = data.get('presets', {})
             for key, preset in presets.items():
@@ -81,6 +81,11 @@ class ConfigLoader:
                     
                 if 'snippets' not in preset:
                     preset['snippets'] = empty['snippets']
+                    updated = True
+                
+                # Backfill vat_type in defaults if missing
+                if 'defaults' in preset and 'vat_type' not in preset['defaults']:
+                    preset['defaults']['vat_type'] = 'german_vat'
                     updated = True
                     
             if updated:
@@ -141,6 +146,7 @@ class ConfigLoader:
             },
             'defaults': {
                 'currency': 'EUR',
+                'vat_type': 'german_vat',  # Options: 'none', 'kleinunternehmer', 'german_vat'
                 'tax_rate': 19,
                 'payment_days': 14,
                 'language': 'de'
