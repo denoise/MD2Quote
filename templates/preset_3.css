@@ -2,20 +2,38 @@
 
 @page {
     size: A4;
-    /* We use a larger left margin to accommodate the sidebar visually, 
-       though the sidebar element itself is fixed/absolute. */
     margin-top: 15mm;
     margin-bottom: 15mm;
-    margin-left: 0mm; /* We handle layout with padding/positioning to allow full-height sidebar */
-    margin-right: 0mm;
+    margin-left: 15mm; /* Default left margin for content on all pages */
+    margin-right: 15mm;
 
     @bottom-right {
         content: counter(page) " / " counter(pages);
         font-family: var(--font-mono);
         font-size: 8pt;
         color: var(--muted);
-        margin-right: 15mm;
-        margin-bottom: 10mm;
+        margin-right: 0mm; /* Position relative to the page box's bottom-right */
+        margin-bottom: 0mm;
+    }
+}
+
+@page :first {
+    margin-left: 80mm; /* Default 15mm + 65mm for sidebar = 80mm */
+
+    @left-top {
+        content: element(sidebar-left);
+        height: 100%;
+        width: 65mm;
+    }
+
+    /* Adjust page number footer for the first page to account for the sidebar's position */
+    @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font-family: var(--font-mono);
+        font-size: 8pt;
+        color: var(--muted);
+        margin-right: 0mm; /* Position relative to the page box's bottom-right */
+        margin-bottom: 0mm;
     }
 }
 
@@ -26,21 +44,19 @@ body {
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    width: 210mm; /* A4 width */
+    width: auto; /* Let body adjust to page margins */
     position: relative;
 }
 
 /* --- Sidebar Styling --- */
 aside {
-    position: fixed; /* Fixed is relative to the page box in WeasyPrint */
-    top: 0;
-    left: 0;
-    bottom: 0;
+    position: running(sidebar-left); /* Declare as a running element */
     width: 65mm;
     background-color: var(--bg-sidebar);
     padding: 15mm 10mm;
     box-sizing: border-box;
     border-right: 1px solid transparent; /* Optional: distinct border */
+    /* All other styling remains, it will be applied when the element is placed by @left-top */
 }
 
 .sidebar-content {
@@ -100,7 +116,7 @@ aside {
 }
 
 .sidebar-footer {
-    position: absolute;
+    position: absolute; /* Relative to the aside element now */
     bottom: 15mm;
     left: 10mm;
     right: 10mm;
@@ -112,9 +128,9 @@ aside {
 
 /* --- Main Content Styling --- */
 main {
-    margin-left: 65mm; /* Offset for sidebar */
-    padding: 15mm 15mm 15mm 10mm;
-    width: 115mm; /* Remaining width approx */
+    margin-left: 0; /* No explicit margin-left, it's controlled by @page margins */
+    padding: 15mm 15mm 15mm 15mm; /* Apply consistent padding within the content area */
+    width: auto; /* Let it fill the available content width */
 }
 
 .doc-header {
@@ -201,7 +217,7 @@ th:nth-last-child(3), td:nth-last-child(3) {
 }
 
 /* Totals Row styling (usually the last rows in the table body or footer) */
-/* Since the Markdown renderer likely generates a standard table, we assume the last row might be totals, 
+/* Since the Markdown renderer likely generates a standard table, we assume the last row might be totals,
    but Markdown tables are generic. If there's a specific totals table, it might need custom CSS targeting if it has a class.
    Standard markdown tables don't have classes for rows. We'll style the last row generally or rely on bold text in markdown. */
 
