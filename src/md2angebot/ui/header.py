@@ -408,8 +408,7 @@ class HeaderWidget(QWidget):
         self.quote_number_edit.textChanged.connect(self.on_changed)
         number_layout.addWidget(self.quote_number_edit)
 
-        self.generate_quote_button = QPushButton()
-        self.generate_quote_button.setIcon(icon('numbers', 16, COLORS['text_secondary']))
+        self.generate_quote_button = QPushButton("++")
         self.generate_quote_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.generate_quote_button.setToolTip("Generate new quotation number")
         self.generate_quote_button.clicked.connect(self._on_generate_quotation_clicked)
@@ -417,16 +416,19 @@ class HeaderWidget(QWidget):
             QPushButton {{
                 background-color: {COLORS['bg_elevated']};
                 border: 1px solid {COLORS['border']};
+                border-left: none;
                 border-radius: 0;
-                padding: 4px 6px;
-                min-height: 24px;
-                min-width: 24px;
+                padding: {SPACING['xs']}px {SPACING['sm']}px;
+                min-height: 0;
+                min-width: 28px;
             }}
             QPushButton:hover {{
                 border-color: {COLORS['text_muted']};
                 background-color: {COLORS['bg_hover']};
             }}
         """)
+        # Slightly taller than the line edit for better visual alignment
+        self.generate_quote_button.setFixedHeight(self.quote_number_edit.sizeHint().height() + 2)
         number_layout.addWidget(self.generate_quote_button)
 
         quote_grid.addWidget(number_container, 0, 1)
