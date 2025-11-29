@@ -201,3 +201,13 @@ class HeaderWidget(QWidget):
             self.receiver_address.setPlainText(str(client["address"]))
 
         self.blockSignals(False)
+
+    def clear_data(self):
+        """Clears all input fields."""
+        self.blockSignals(True)
+        self.quote_number_edit.clear()
+        self.date_edit.setDate(QDate.currentDate())
+        self.receiver_name.clear()
+        self.receiver_email.clear()
+        self.receiver_address.clear()
+        self.blockSignals(False)

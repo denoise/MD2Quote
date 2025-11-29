@@ -115,6 +115,13 @@ class MainWindow(QMainWindow):
         toolbar.setIconSize(toolbar.iconSize().__class__(20, 20))
         self.addToolBar(toolbar)
 
+        # New
+        new_action = QAction(icon('add_circle', 20, COLORS['text_secondary']), "New", self)
+        new_action.setShortcut(QKeySequence.StandardKey.New)
+        new_action.setToolTip("New Quotation (⌘N)")
+        new_action.triggered.connect(self.new_file)
+        toolbar.addAction(new_action)
+
         # Open
         open_action = QAction(icon('folder_open', 20, COLORS['text_secondary']), "Open", self)
         open_action.setShortcut(QKeySequence.StandardKey.Open)
@@ -169,6 +176,26 @@ class MainWindow(QMainWindow):
         settings_action.setToolTip("Open Configuration (⌘,)")
         settings_action.triggered.connect(self.open_settings)
         toolbar.addAction(settings_action)
+
+        # --- Invisible Global Actions ---
+        
+        # Save As
+        save_as_action = QAction("Save As", self)
+        save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
+        save_as_action.triggered.connect(self.save_file_as)
+        self.addAction(save_as_action)
+
+        # Print (Alias to Export)
+        print_action = QAction("Print", self)
+        print_action.setShortcut(QKeySequence.StandardKey.Print)
+        print_action.triggered.connect(self.export_pdf_dialog)
+        self.addAction(print_action)
+
+        # Refresh
+        refresh_action = QAction("Refresh", self)
+        refresh_action.setShortcut(QKeySequence.StandardKey.Refresh)
+        refresh_action.triggered.connect(self.refresh_preview)
+        self.addAction(refresh_action)
 
     def update_preset_selector(self):
         """Updates the preset combo box from config."""
@@ -470,6 +497,31 @@ class MainWindow(QMainWindow):
                 self.statusbar.showMessage(f"Export error: {str(e)}")
                 QMessageBox.critical(self, "Error", f"Export failed: {e}")
                 print(f"Export Error: {e}")
+
+    def new_file(self):
+        if self.is_modified:
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "You have unsaved changes. Create new file anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return
+        
+        self.editor.set_text("")
+        if hasattr(self.header, 'clear_data'):
+            self.header.clear_data()
+        self.current_file = None
+        self.setWindowTitle("MD2Angebot")
+        self.is_modified = False
+        self.statusbar.showMessage("New file created")
+
+    def save_file_as(self):
+        old_file = self.current_file
+        self.current_file = None # Force dialog
+        self.save_file()
+        if not self.current_file: # User cancelled
+            self.current_file = old_file
 
     def open_settings(self):
         """Opens the configuration dialog."""

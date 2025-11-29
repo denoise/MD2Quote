@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QPlainTextEdit, QWidget, QVBoxLayout, QLabel, QFrame, QTextEdit
-from PyQt6.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QColor, QFontDatabase, QPainter, QTextFormat, QTextCursor
+from PyQt6.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QColor, QFontDatabase, QPainter, QTextFormat, QTextCursor, QKeySequence
 from PyQt6.QtCore import Qt, QRegularExpression, QRect, QSize
 from .styles import COLORS, SPACING, SYNTAX_COLORS
 
@@ -100,6 +100,71 @@ class ModernPlainTextEdit(QPlainTextEdit):
             extra_selections.append(selection)
         
         self.setExtraSelections(extra_selections)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts for formatting."""
+        # Bold (Cmd+B / Ctrl+B)
+        if event.matches(QKeySequence.StandardKey.Bold):
+            self.toggle_formatting('**')
+            return
+
+        # Italic (Cmd+I / Ctrl+I)
+        if event.matches(QKeySequence.StandardKey.Italic):
+            self.toggle_formatting('*')
+            return
+
+        # Link (Cmd+K / Ctrl+K) - No StandardKey for Link, check manual
+        # On Mac Meta is Cmd, on Windows Control is Ctrl
+        modifiers = event.modifiers()
+        
+        # Check if K is pressed with either Control or Meta (Command) modifier
+        if (event.key() == Qt.Key.Key_K and 
+            (modifiers & Qt.KeyboardModifier.ControlModifier or modifiers & Qt.KeyboardModifier.MetaModifier)):
+            self.insert_link()
+            return
+
+        super().keyPressEvent(event)
+
+    def toggle_formatting(self, symbol):
+        """Wraps selected text in symbol, or inserts symbol if empty."""
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            text = cursor.selectedText()
+            # Check if already wrapped (naive check)
+            if text.startswith(symbol) and text.endswith(symbol) and len(text) >= 2 * len(symbol):
+                # Unwrap
+                new_text = text[len(symbol):-len(symbol)]
+            else:
+                # Wrap
+                new_text = f"{symbol}{text}{symbol}"
+            
+            cursor.beginEditBlock()
+            cursor.insertText(new_text)
+            cursor.endEditBlock()
+        else:
+            # Insert empty wrapper and move cursor inside
+            cursor.beginEditBlock()
+            cursor.insertText(f"{symbol}{symbol}")
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, len(symbol))
+            cursor.endEditBlock()
+            self.setTextCursor(cursor)
+
+    def insert_link(self):
+        """Inserts Markdown link syntax."""
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        if cursor.hasSelection():
+            text = cursor.selectedText()
+            cursor.insertText(f"[{text}](url)")
+            # Optional: Select 'url' to let user type immediately? 
+            # Keeping it simple for now.
+        else:
+            cursor.insertText("[text](url)")
+            # Select 'text'
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, 6) # '](url)' is 6 chars
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 4) # 'text' is 4 chars
+            self.setTextCursor(cursor)
+        cursor.endEditBlock()
 
 
 class MarkdownHighlighter(QSyntaxHighlighter):
