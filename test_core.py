@@ -32,7 +32,8 @@ def test_pipeline():
         
     # Test Logo Path Resolution
     print("Testing Logo Path Resolution:")
-    code_logo = config.get_logo_path('code')
+    # code_logo = config.get_logo_path('code') # Old method
+    code_logo = config.resolve_path('assets/images/logo_code.svg')
     print(f"Code Logo: {code_logo}")
     
     # Verify it resolves to something absolute or at least non-empty

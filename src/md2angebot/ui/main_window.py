@@ -348,6 +348,8 @@ class MainWindow(QMainWindow):
             self.statusbar.showMessage(f"Preview updated — {preset_name}")
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.statusbar.showMessage(f"Preview error: {str(e)}")
             print(f"Preview Error: {e}")
 
