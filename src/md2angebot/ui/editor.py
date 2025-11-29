@@ -277,6 +277,18 @@ class EditorWidget(QWidget):
         
         layout.addWidget(self.editor)
 
+        # Add the page break hint
+        page_break_hint = QLabel("+++ -> page break (on its own line)")
+        page_break_hint.setObjectName("page-break-hint")
+        page_break_hint.setStyleSheet(f"""
+            color: {COLORS['text_muted']};
+            font-size: 9px; /* Smaller font */
+            padding: {SPACING['xs']}px {SPACING['md']}px;
+            background-color: {COLORS['bg_base']};
+            border-top: 1px solid {COLORS['border']};
+        """)
+        layout.addWidget(page_break_hint)
+
     def set_text(self, text):
         self.editor.setPlainText(text)
 
