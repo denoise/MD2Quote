@@ -1,15 +1,37 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
+import sys
 from .config import config
 from ..utils import get_templates_path
 
 class TemplateRenderer:
     def __init__(self):
-        # Load templates from user config dir first, then app package
-        template_dirs = [
-            config.templates_dir,
-            get_templates_path()  # Works both in development and bundled app
-        ]
+        """
+        Initialize the template renderer with appropriate template directory priority.
+        
+        Development Mode (running from source):
+            1. Source templates (for live editing)
+            2. User config templates (fallback)
+        
+        Production Mode (bundled app):
+            1. User config templates (user customizations)
+            2. Bundled templates (defaults)
+        """
+        # Detect if running from source or bundled
+        is_bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+        
+        if is_bundled:
+            # Production: User config first, then bundled templates
+            template_dirs = [
+                config.templates_dir,
+                get_templates_path()
+            ]
+        else:
+            # Development: Source templates first for live editing
+            template_dirs = [
+                get_templates_path(),  # Source templates (live editing)
+                config.templates_dir,  # User config (fallback)
+            ]
         
         self.env = Environment(
             loader=FileSystemLoader(template_dirs),
@@ -17,6 +39,10 @@ class TemplateRenderer:
             cache_size=0,  # Disable caching to ensure updates are seen
             auto_reload=True
         )
+        
+        # Clear cache before each render to pick up file changes
+        # This is fast and ensures template changes are always detected
+        self._clear_cache_on_render = True
         
         # Add custom filters if needed
         self.env.filters['currency'] = self._format_currency
@@ -31,6 +57,13 @@ class TemplateRenderer:
             context: Data context for rendering
             preset_config: Optional preset configuration to merge
         """
+        # Clear Jinja2 cache to pick up any file changes
+        # This ensures template edits are immediately visible
+        if self._clear_cache_on_render:
+            self.env.cache.clear()
+            if hasattr(self.env, 'bytecode_cache') and self.env.bytecode_cache:
+                self.env.bytecode_cache.clear()
+        
         # Determine base configuration first to check for template preference
         base_config = {}
         if preset_config:
