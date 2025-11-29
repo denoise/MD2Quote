@@ -21,7 +21,7 @@
 </head>
 <body>
     <div class="stamp-watermark">
-        {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}
+        {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
     </div>
 
     <header>
@@ -30,14 +30,14 @@
             <p>{{ company.tagline }}</p>
         </div>
         <div class="quotation-id">
-            <div class="label">{% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}</div>
+            <div class="label">{% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}</div>
             <div class="number">{{ quotation.number }}</div>
             <div style="margin-top: 5px; font-size: 10pt;">{{ quotation.date }}</div>
         </div>
     </header>
 
     <div class="client-container">
-        <h3>{% if defaults.language == 'de' %}FÜR{% elif defaults.language == 'nl' %}VOOR{% else %}FOR{% endif %}</h3>
+        <h3>{% if defaults.language == 'de' %}FÜR{% else %}FOR{% endif %}</h3>
         <p style="font-size: 16pt; font-weight: bold;">{{ client.name }}</p>
         <p>{{ client.address }}</p>
         <p>{{ client.email }}</p>
@@ -52,7 +52,7 @@
         
         {% if snippets.terms %}
         <div class="terms">
-            <strong>{% if defaults.language == 'de' %}BEDINGUNGEN{% elif defaults.language == 'nl' %}VOORWAARDEN{% else %}TERMS{% endif %}:</strong><br>
+            <strong>{% if defaults.language == 'de' %}BEDINGUNGEN{% else %}TERMS{% endif %}:</strong><br>
             {{ snippets.terms }}
         </div>
         {% endif %}
@@ -68,14 +68,14 @@
 
     <footer>
         <div class="col">
-            <h4>{% if defaults.language == 'de' %}Kontakt{% elif defaults.language == 'nl' %}Contact{% else %}Contact{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Kontakt{% else %}Contact{% endif %}</h4>
             <p>{{ contact.email }}<br>{{ contact.phone }}<br>{{ contact.website }}</p>
             <p>{{ contact.street }}, {{ contact.city }}</p>
         </div>
         <div class="col" style="text-align: right;">
-            <h4>{% if defaults.language == 'de' %}Details{% elif defaults.language == 'nl' %}Details{% else %}Details{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Details{% else %}Details{% endif %}</h4>
             <p>{{ bank.bank_name }} &bull; {{ bank.iban }}</p>
-            <p>{% if defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'nl' %}BTW{% else %}VAT ID{% endif %}: {{ legal.tax_id }}</p>
+            <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }}</p>
         </div>
     </footer>
 </body>

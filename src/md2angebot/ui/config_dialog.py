@@ -1393,7 +1393,7 @@ class ConfigDialog(QDialog):
         lang_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         lang_col.addWidget(lang_label)
         self.defaults_language = QComboBox()
-        self.defaults_language.addItems(["de", "en", "nl", "fr", "es"])
+        self.defaults_language.addItems(["de", "en"])
         self.defaults_language.setMinimumHeight(24)
         self.defaults_language.setMinimumWidth(80)
         lang_col.addWidget(self.defaults_language)

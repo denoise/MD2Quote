@@ -66,7 +66,7 @@ presets:
       currency: "EUR"      # Currency symbol or code
       tax_rate: 21         # Default VAT percentage (Netherlands)
       payment_days: 14     # Default payment term in days
-      language: "en"       # Interface and output language (en, nl, de)
+      language: "de"       # Interface and output language (de, en)
 
     # ==========================================
     # QUOTATION NUMBER FORMAT

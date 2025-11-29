@@ -30,29 +30,29 @@
         </div>
         <div class="quotation-meta">
             <h2>
-                {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}
+                {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
             </h2>
             <table>
                 {% if quotation.number %}
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Nr.{% elif defaults.language == 'nl' %}Nr.{% else %}No.{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Nr.{% else %}No.{% endif %}</td>
                     <td>{{ quotation.number }}</td>
                 </tr>
                 {% endif %}
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'nl' %}Datum{% else %}Date{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</td>
                     <td>{{ quotation.date }}</td>
                 </tr>
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Gültig bis{% elif defaults.language == 'nl' %}Geldig tot{% else %}Valid until{% endif %}</td>
-                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'nl' %}dagen{% else %}days{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Gültig bis{% else %}Valid until{% endif %}</td>
+                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</td>
                 </tr>
             </table>
         </div>
     </header>
 
     <section class="client-info">
-        <h3>{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'nl' %}Aan{% else %}To{% endif %}</h3>
+        <h3>{% if defaults.language == 'de' %}Empfänger{% else %}To{% endif %}</h3>
         <p><strong>{{ client.name }}</strong></p>
         <p>{{ client.address }}</p>
         <p>{{ client.email }}</p>
@@ -67,7 +67,7 @@
         
         {% if snippets.terms %}
         <div class="terms">
-            <strong>{% if defaults.language == 'de' %}Bedingungen{% elif defaults.language == 'nl' %}Voorwaarden{% else %}Terms{% endif %}:</strong> {{ snippets.terms }}
+            <strong>{% if defaults.language == 'de' %}Bedingungen{% else %}Terms{% endif %}:</strong> {{ snippets.terms }}
         </div>
         {% endif %}
         
@@ -82,14 +82,14 @@
 
     <footer>
         <div class="bank-details">
-            <h4>{% if defaults.language == 'de' %}Bankverbindung{% elif defaults.language == 'nl' %}Bankgegevens{% else %}Bank Details{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
             <p>{{ bank.bank_name }} | IBAN: {{ bank.iban }} | BIC: {{ bank.bic }}</p>
-            <p>{% if defaults.language == 'de' %}Inhaber{% elif defaults.language == 'nl' %}Houder{% else %}Holder{% endif %}: {{ bank.holder }}</p>
+            <p>{% if defaults.language == 'de' %}Inhaber{% else %}Holder{% endif %}: {{ bank.holder }}</p>
         </div>
         <div class="company-footer">
             <p>{{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}, {{ contact.country }}</p>
             <p>{{ contact.email }} | {{ contact.website }}</p>
-            <p>{% if defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'nl' %}BTW Nr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }} | KvK: {{ legal.chamber_of_commerce }}</p>
+            <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }} | KvK: {{ legal.chamber_of_commerce }}</p>
         </div>
     </footer>
 </body>

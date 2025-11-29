@@ -28,7 +28,7 @@
         <p class="tagline">{{ company.tagline }}</p>
 
         <div class="sidebar-section">
-            <h4>{% if defaults.language == 'de' %}Kontakt{% elif defaults.language == 'nl' %}Contact{% else %}Contact{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Kontakt{% else %}Contact{% endif %}</h4>
             <p>{{ contact.street }}</p>
             <p>{{ contact.postal_code }} {{ contact.city }}</p>
             <p>{{ contact.country }}</p>
@@ -38,14 +38,14 @@
         </div>
 
         <div class="sidebar-section">
-            <h4>{% if defaults.language == 'de' %}Info{% elif defaults.language == 'nl' %}Info{% else %}Info{% endif %}</h4>
-            <p>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'nl' %}Datum{% else %}Date{% endif %}: <strong>{{ quotation.date }}</strong></p>
-            <p>{% if defaults.language == 'de' %}Gültig{% elif defaults.language == 'nl' %}Geldig{% else %}Valid{% endif %}: <strong>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'nl' %}dagen{% else %}days{% endif %}</strong></p>
-            <p>{% if defaults.language == 'de' %}Nr.{% elif defaults.language == 'nl' %}Nr.{% else %}No.{% endif %}: <strong>{{ quotation.number }}</strong></p>
+            <h4>{% if defaults.language == 'de' %}Info{% else %}Info{% endif %}</h4>
+            <p>{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}: <strong>{{ quotation.date }}</strong></p>
+            <p>{% if defaults.language == 'de' %}Gültig{% else %}Valid{% endif %}: <strong>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</strong></p>
+            <p>{% if defaults.language == 'de' %}Nr.{% else %}No.{% endif %}: <strong>{{ quotation.number }}</strong></p>
         </div>
 
         <div class="sidebar-section">
-            <h4>{% if defaults.language == 'de' %}Bank{% elif defaults.language == 'nl' %}Bank{% else %}Bank{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Bank{% else %}Bank{% endif %}</h4>
             <p>{{ bank.bank_name }}</p>
             <p style="font-size: 8pt">{{ bank.iban }}</p>
             <p>{{ bank.bic }}</p>
@@ -60,11 +60,11 @@
 
     <main>
         <div class="quotation-title">
-            {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}
+            {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
         </div>
 
         <div class="client-section">
-            <h3>{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'nl' %}Aan{% else %}Prepared For{% endif %}</h3>
+            <h3>{% if defaults.language == 'de' %}Empfänger{% else %}Prepared For{% endif %}</h3>
             <p><strong>{{ client.name }}</strong></p>
             <p>{{ client.address }}</p>
             <p>{{ client.email }}</p>

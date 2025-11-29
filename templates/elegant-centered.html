@@ -35,7 +35,7 @@
     </header>
 
     <section class="client-info">
-        <h3>{% if defaults.language == 'de' %}FÜR{% elif defaults.language == 'nl' %}VOOR{% else %}PREPARED FOR{% endif %}</h3>
+        <h3>{% if defaults.language == 'de' %}FÜR{% else %}PREPARED FOR{% endif %}</h3>
         <p><strong>{{ client.name }}</strong></p>
         <p>{{ client.address }}</p>
         <p>{{ client.email }}</p>
@@ -70,7 +70,7 @@
         </p>
         <p>
             {{ bank.bank_name }} &bull; IBAN: {{ bank.iban }} &bull; BIC: {{ bank.bic }}<br>
-            {% if defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'nl' %}BTW{% else %}VAT{% endif %}: {{ legal.tax_id }}
+            {% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT{% endif %}: {{ legal.tax_id }}
         </p>
     </footer>
 </body>

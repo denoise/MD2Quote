@@ -143,7 +143,7 @@ class ConfigLoader:
                 'currency': 'EUR',
                 'tax_rate': 19,
                 'payment_days': 14,
-                'language': 'en'
+                'language': 'de'
             },
             'quotation_number': {
                 'enabled': True,

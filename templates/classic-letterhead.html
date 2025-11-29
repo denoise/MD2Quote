@@ -43,13 +43,13 @@
     </header>
 
     <div class="doc-title">
-        <h2>{% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'nl' %}OFFERTE{% else %}QUOTATION{% endif %}</h2>
+        <h2>{% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}</h2>
     </div>
 
     <div class="meta-grid">
         <div class="client-address">
             <p style="font-size: 9pt; color: var(--muted); text-transform: uppercase; margin-bottom: 5px;">
-                {% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'nl' %}Aan{% else %}To{% endif %}
+                {% if defaults.language == 'de' %}Empfänger{% else %}To{% endif %}
             </p>
             <p><strong>{{ client.name }}</strong></p>
             <p>{{ client.address }}</p>
@@ -59,16 +59,16 @@
         <div class="meta-data">
             <table class="meta-table">
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Nummer{% elif defaults.language == 'nl' %}Nummer{% else %}Number{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Nummer{% else %}Number{% endif %}</td>
                     <td>{{ quotation.number }}</td>
                 </tr>
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'nl' %}Datum{% else %}Date{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</td>
                     <td>{{ quotation.date }}</td>
                 </tr>
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Gültig bis{% elif defaults.language == 'nl' %}Geldig tot{% else %}Valid until{% endif %}</td>
-                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'nl' %}dagen{% else %}days{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Gültig bis{% else %}Valid until{% endif %}</td>
+                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</td>
                 </tr>
                 {% if defaults.language == 'de' %}
                 <tr>
@@ -89,7 +89,7 @@
         
         {% if snippets.terms %}
         <div class="terms">
-            <h4>{% if defaults.language == 'de' %}Zahlungsbedingungen{% elif defaults.language == 'nl' %}Betalingsvoorwaarden{% else %}Payment Terms{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Zahlungsbedingungen{% else %}Payment Terms{% endif %}</h4>
             <p>{{ snippets.terms }}</p>
         </div>
         {% endif %}
@@ -99,11 +99,11 @@
             <div class="signature-row">
                 <div class="sig-box">
                     <div class="sig-line"></div>
-                    <div class="sig-label">{% if defaults.language == 'de' %}Unterschrift{% elif defaults.language == 'nl' %}Handtekening{% else %}Signature{% endif %} ({{ company.name }})</div>
+                    <div class="sig-label">{% if defaults.language == 'de' %}Unterschrift{% else %}Signature{% endif %} ({{ company.name }})</div>
                 </div>
                 <div class="sig-box">
                     <div class="sig-line"></div>
-                    <div class="sig-label">{% if defaults.language == 'de' %}Unterschrift{% elif defaults.language == 'nl' %}Handtekening{% else %}Signature{% endif %} ({{ client.name }})</div>
+                    <div class="sig-label">{% if defaults.language == 'de' %}Unterschrift{% else %}Signature{% endif %} ({{ client.name }})</div>
                 </div>
             </div>
         </div>
@@ -116,8 +116,8 @@
             {{ bank.bank_name }} &bull; IBAN: {{ bank.iban }} &bull; BIC: {{ bank.bic }}
         </p>
         <p>
-            {% if defaults.language == 'de' %}Geschäftsführer{% elif defaults.language == 'nl' %}Eigenaar{% else %}Owner{% endif %}: {{ bank.holder }} &bull; 
-            {% if defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'nl' %}BTW{% else %}VAT ID{% endif %}: {{ legal.tax_id }} &bull; 
+            {% if defaults.language == 'de' %}Geschäftsführer{% else %}Owner{% endif %}: {{ bank.holder }} &bull; 
+            {% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }} &bull; 
             KvK: {{ legal.chamber_of_commerce }}
         </p>
     </footer>
