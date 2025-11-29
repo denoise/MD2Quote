@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 import re
 import yaml
@@ -58,6 +59,9 @@ class MainWindow(QMainWindow):
 
         # Connect Header
         self.header.dataChanged.connect(self.on_header_changed)
+
+        # Restore last client info if available
+        self._restore_last_client_data()
         
         # Initial empty state
         self.statusbar.showMessage("Ready — Select a preset to begin")
@@ -277,6 +281,7 @@ class MainWindow(QMainWindow):
     def on_header_changed(self):
         self.is_modified = True
         self.statusbar.showMessage("Modified")
+        self._persist_last_client_data()
         self.preview_timer.start()
 
     def _get_safe_context(self, metadata, html_body):
@@ -405,6 +410,34 @@ class MainWindow(QMainWindow):
         if folder:
             self.settings.setValue("last_folder", folder)
 
+    def _persist_last_client_data(self, client_data=None):
+        """Save last client data so new sessions can reuse it."""
+        if client_data is None:
+            client_data = self.header.get_data().get("client", {})
+        try:
+            self.settings.setValue("last_client", json.dumps(client_data))
+        except TypeError:
+            # Ignore values that cannot be serialized
+            pass
+
+    def _load_last_client_data(self):
+        """Load last client data if present."""
+        raw = self.settings.value("last_client")
+        if not raw:
+            return None
+        if isinstance(raw, dict):
+            return raw
+        try:
+            return json.loads(raw)
+        except Exception:
+            return None
+
+    def _restore_last_client_data(self):
+        """Populate header with last client info if available."""
+        client_data = self._load_last_client_data()
+        if client_data:
+            self.header.set_data({"client": client_data})
+
     def open_file_dialog(self):
         path, _ = QFileDialog.getOpenFileName(
             self, 
@@ -424,6 +457,7 @@ class MainWindow(QMainWindow):
             
             metadata, _ = self.parser.parse_text(text)
             self.header.set_data(metadata)
+            self._persist_last_client_data(metadata.get("client", {}))
 
             self.current_file = path
             self.setWindowTitle(f"MD2Angebot — {os.path.basename(path)}")
@@ -526,6 +560,7 @@ class MainWindow(QMainWindow):
         self.editor.set_text("")
         if hasattr(self.header, 'clear_data'):
             self.header.clear_data()
+            self._restore_last_client_data()
         self.current_file = None
         self.setWindowTitle("MD2Angebot")
         self.is_modified = False
