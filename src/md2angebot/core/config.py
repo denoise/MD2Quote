@@ -106,14 +106,21 @@ class ConfigLoader:
         return {
             'name': name,
             'company': {},
-            'contact': {},
-            'legal': {},
-            'bank': {},
+            'contact': {
+                'enabled': True
+            },
+            'legal': {
+                'enabled': True
+            },
+            'bank': {
+                'enabled': True
+            },
             'layout': {
                 'template': 'modern-split',
                 'page_margins': [20, 20, 20, 20]
             },
             'snippets': {
+                'enabled': True,
                 'intro_text': '',
                 'terms': '',
                 'signature_block': True,

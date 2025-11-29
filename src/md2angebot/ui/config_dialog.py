@@ -303,29 +303,68 @@ class LogoPreview(QFrame):
 class SectionCard(QFrame):
     """A card container for grouping related settings."""
     
-    def __init__(self, title: str = "", parent=None):
+    def __init__(self, title: str = "", with_enable_checkbox: bool = False, parent=None):
         super().__init__(parent)
         self.setObjectName("section-card")
+        self._content_widgets = []  # Track widgets to enable/disable
+        self._enable_checkbox = None
         
         self._layout = QVBoxLayout(self)
         self._layout.setSpacing(SPACING['sm'])
         self._layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
         
         if title:
-            title_label = QLabel(title)
-            title_label.setObjectName("section-title")
-            title_label.setStyleSheet(f"""
-                QLabel {{
-                    color: {COLORS['accent']};
-                    font-size: 12px;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    padding-bottom: {SPACING['xs']}px;
-                    margin-bottom: 0;
-                }}
-            """)
-            self._layout.addWidget(title_label)
+            if with_enable_checkbox:
+                # Create a header row with checkbox
+                header_row = QHBoxLayout()
+                header_row.setSpacing(SPACING['sm'])
+                
+                self._enable_checkbox = QCheckBox(title)
+                self._enable_checkbox.setObjectName("section-enable-checkbox")
+                self._enable_checkbox.setStyleSheet(f"""
+                    QCheckBox {{
+                        color: {COLORS['accent']};
+                        font-size: 12px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }}
+                    QCheckBox::indicator {{
+                        width: 14px;
+                        height: 14px;
+                        border: 1px solid {COLORS['border']};
+                        border-radius: 0;
+                        background-color: {COLORS['bg_dark']};
+                    }}
+                    QCheckBox::indicator:checked {{
+                        background-color: {COLORS['accent']};
+                        border-color: {COLORS['accent']};
+                    }}
+                    QCheckBox::indicator:hover {{
+                        border-color: {COLORS['accent']};
+                    }}
+                """)
+                self._enable_checkbox.setChecked(True)
+                self._enable_checkbox.toggled.connect(self._on_enable_toggled)
+                header_row.addWidget(self._enable_checkbox)
+                header_row.addStretch()
+                
+                self._layout.addLayout(header_row)
+            else:
+                title_label = QLabel(title)
+                title_label.setObjectName("section-title")
+                title_label.setStyleSheet(f"""
+                    QLabel {{
+                        color: {COLORS['accent']};
+                        font-size: 12px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        padding-bottom: {SPACING['xs']}px;
+                        margin-bottom: 0;
+                    }}
+                """)
+                self._layout.addWidget(title_label)
         
         # Add stretch at the end to push content to the top
         self._layout.addStretch(1)
@@ -338,13 +377,43 @@ class SectionCard(QFrame):
             }}
         """)
     
+    def _on_enable_toggled(self, checked: bool):
+        """Enable/disable all content widgets based on checkbox state."""
+        for widget in self._content_widgets:
+            widget.setEnabled(checked)
+    
+    def enableCheckbox(self) -> QCheckBox:
+        """Returns the enable checkbox if one exists."""
+        return self._enable_checkbox
+    
+    def setEnabled_content(self, enabled: bool):
+        """Set enabled state via checkbox if available."""
+        if self._enable_checkbox:
+            self._enable_checkbox.setChecked(enabled)
+    
     def addWidget(self, widget):
         # Insert before the stretch (which is always the last item)
         self._layout.insertWidget(self._layout.count() - 1, widget)
+        # Track widget for enable/disable functionality
+        if self._enable_checkbox:
+            self._content_widgets.append(widget)
     
     def addLayout(self, layout):
         # Insert before the stretch (which is always the last item)
         self._layout.insertLayout(self._layout.count() - 1, layout)
+        # Create a container widget to track for enable/disable
+        if self._enable_checkbox:
+            # We need to track all widgets in the layout
+            self._track_layout_widgets(layout)
+    
+    def _track_layout_widgets(self, layout):
+        """Recursively track all widgets in a layout."""
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item.widget():
+                self._content_widgets.append(item.widget())
+            elif item.layout():
+                self._track_layout_widgets(item.layout())
 
 
 class FormField(QWidget):
@@ -839,8 +908,9 @@ class ConfigDialog(QDialog):
         
         left_col.addWidget(company_card)
         
-        # Contact Card
-        contact_card = SectionCard("Contact Details")
+        # Contact Card (with enable checkbox)
+        contact_card = SectionCard("Contact Details", with_enable_checkbox=True)
+        self.contact_enabled_checkbox = contact_card.enableCheckbox()
         
         self.contact_street = QLineEdit()
         self.contact_street.setPlaceholderText("Street Address")
@@ -893,8 +963,9 @@ class ConfigDialog(QDialog):
         right_col = QVBoxLayout()
         right_col.setSpacing(SPACING['sm'])
         
-        # Legal Card
-        legal_card = SectionCard("Legal Information")
+        # Legal Card (with enable checkbox)
+        legal_card = SectionCard("Legal Information", with_enable_checkbox=True)
+        self.legal_enabled_checkbox = legal_card.enableCheckbox()
         
         self.legal_tax_id = QLineEdit()
         self.legal_tax_id.setPlaceholderText("VAT / Tax ID")
@@ -908,8 +979,9 @@ class ConfigDialog(QDialog):
         
         right_col.addWidget(legal_card)
         
-        # Bank Card
-        bank_card = SectionCard("Banking Details")
+        # Bank Card (with enable checkbox)
+        bank_card = SectionCard("Banking Details", with_enable_checkbox=True)
+        self.bank_enabled_checkbox = bank_card.enableCheckbox()
         
         self.bank_holder = QLineEdit()
         self.bank_holder.setPlaceholderText("Account Holder Name")
@@ -967,8 +1039,9 @@ class ConfigDialog(QDialog):
         
         layout.addWidget(margins_card)
         
-        # Snippets Card
-        snippets_card = SectionCard("Content Snippets")
+        # Snippets Card (with enable checkbox)
+        snippets_card = SectionCard("Content Snippets", with_enable_checkbox=True)
+        self.snippets_enabled_checkbox = snippets_card.enableCheckbox()
         
         intro_label = QLabel("Intro Text")
         intro_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
@@ -1209,14 +1282,12 @@ class ConfigDialog(QDialog):
         
         columns.addLayout(left_col, 1)
         
-        # Right column - Quotation Number
+        # Right column - Quotation Number (with enable checkbox)
         right_col = QVBoxLayout()
         right_col.setSpacing(SPACING['sm'])
         
-        qn_card = SectionCard("Quotation Numbering")
-        
-        self.qn_enabled = QCheckBox("Enable automatic quotation numbering")
-        qn_card.addWidget(self.qn_enabled)
+        qn_card = SectionCard("Quotation Numbering", with_enable_checkbox=True)
+        self.qn_enabled = qn_card.enableCheckbox()
         
         hint = QLabel(
             "Use placeholders:\n"
@@ -1354,6 +1425,7 @@ class ConfigDialog(QDialog):
         }
         
         preset['contact'] = {
+            'enabled': self.contact_enabled_checkbox.isChecked(),
             'street': self.contact_street.text(),
             'city': self.contact_city.text(),
             'postal_code': self.contact_postal.text(),
@@ -1364,6 +1436,7 @@ class ConfigDialog(QDialog):
         }
         
         preset['legal'] = {
+            'enabled': self.legal_enabled_checkbox.isChecked(),
             'tax_id': self.legal_tax_id.text(),
             'chamber_of_commerce': self.legal_kvk.text(),
         }
@@ -1374,6 +1447,7 @@ class ConfigDialog(QDialog):
         }
         
         preset['snippets'] = {
+            'enabled': self.snippets_enabled_checkbox.isChecked(),
             'intro_text': self.snippet_intro.toPlainText(),
             'terms': self.snippet_terms.toPlainText(),
             'custom_footer': self.snippet_footer.text(),
@@ -1381,6 +1455,7 @@ class ConfigDialog(QDialog):
         }
 
         preset['bank'] = {
+            'enabled': self.bank_enabled_checkbox.isChecked(),
             'holder': self.bank_holder.text(),
             'iban': self.bank_iban.text(),
             'bic': self.bank_bic.text(),
@@ -1447,6 +1522,7 @@ class ConfigDialog(QDialog):
         
         # Contact
         contact = preset.get('contact', {})
+        self.contact_enabled_checkbox.setChecked(contact.get('enabled', True))
         self.contact_street.setText(contact.get('street', ''))
         self.contact_city.setText(contact.get('city', ''))
         self.contact_postal.setText(contact.get('postal_code', ''))
@@ -1457,6 +1533,7 @@ class ConfigDialog(QDialog):
         
         # Legal
         legal = preset.get('legal', {})
+        self.legal_enabled_checkbox.setChecked(legal.get('enabled', True))
         self.legal_tax_id.setText(legal.get('tax_id', ''))
         self.legal_kvk.setText(legal.get('chamber_of_commerce', ''))
         
@@ -1472,6 +1549,7 @@ class ConfigDialog(QDialog):
             
         # Snippets
         snippets = preset.get('snippets', {})
+        self.snippets_enabled_checkbox.setChecked(snippets.get('enabled', True))
         self.snippet_intro.setPlainText(snippets.get('intro_text', ''))
         self.snippet_terms.setPlainText(snippets.get('terms', ''))
         self.snippet_footer.setText(snippets.get('custom_footer', ''))
@@ -1479,6 +1557,7 @@ class ConfigDialog(QDialog):
         
         # Bank
         bank = preset.get('bank', {})
+        self.bank_enabled_checkbox.setChecked(bank.get('enabled', True))
         self.bank_holder.setText(bank.get('holder', ''))
         self.bank_iban.setText(bank.get('iban', ''))
         self.bank_bic.setText(bank.get('bic', ''))
