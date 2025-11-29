@@ -86,13 +86,26 @@ class ConfigLoader:
                     preset['snippets'] = empty['snippets']
                     updated = True
                 
+                # Backfill company display flags
+                if 'company' in preset:
+                    company = preset['company']
+                    if 'show_name' not in company:
+                        company['show_name'] = True
+                        updated = True
+                    if 'show_tagline' not in company:
+                        company['show_tagline'] = True
+                        updated = True
+                    if 'show_logo' not in company:
+                        company['show_logo'] = True
+                        updated = True
+                
                 # Backfill vat_type in defaults if missing
                 if 'defaults' in preset and 'vat_type' not in preset['defaults']:
                     preset['defaults']['vat_type'] = 'german_vat'
                     updated = True
                     
             if updated:
-                print("Backfilled missing config keys (layout/snippets)")
+                print("Backfilled missing config keys (layout/snippets/company_flags)")
                 # Save the updated config
                 try:
                      with open(self.config_path, 'w', encoding='utf-8') as f:
@@ -154,7 +167,14 @@ class ConfigLoader:
         template = PRESET_TEMPLATE_MAP.get(preset_key, 'preset_1')
         return {
             'name': name,
-            'company': {},
+            'company': {
+                'name': '',
+                'tagline': '',
+                'logo': '',
+                'show_name': True,
+                'show_tagline': True,
+                'show_logo': True
+            },
             'contact': {
                 'enabled': True
             },

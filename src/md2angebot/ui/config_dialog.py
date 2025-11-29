@@ -1010,18 +1010,54 @@ class ConfigDialog(QDialog):
         # Company Card
         company_card = SectionCard("Company")
         
+        # Name with checkbox
+        name_container = QWidget()
+        name_layout = QHBoxLayout(name_container)
+        name_layout.setContentsMargins(0, 0, 0, 0)
+        name_layout.setSpacing(SPACING['sm'])
+        
         self.company_name = QLineEdit()
         self.company_name.setPlaceholderText("Your Company Name")
         self.company_name.setMinimumHeight(24)
-        company_card.addWidget(FormRow("Name", self.company_name))
+        name_layout.addWidget(self.company_name, 1)
+        
+        self.company_show_name = QCheckBox("Show")
+        self.company_show_name.setToolTip("Show company name in PDF")
+        name_layout.addWidget(self.company_show_name)
+        
+        company_card.addWidget(FormRow("Name", name_container))
+        
+        # Tagline with checkbox
+        tagline_container = QWidget()
+        tagline_layout = QHBoxLayout(tagline_container)
+        tagline_layout.setContentsMargins(0, 0, 0, 0)
+        tagline_layout.setSpacing(SPACING['sm'])
         
         self.company_tagline = QLineEdit()
         self.company_tagline.setPlaceholderText("Your tagline or slogan")
         self.company_tagline.setMinimumHeight(24)
-        company_card.addWidget(FormRow("Tagline", self.company_tagline))
+        tagline_layout.addWidget(self.company_tagline, 1)
+        
+        self.company_show_tagline = QCheckBox("Show")
+        self.company_show_tagline.setToolTip("Show tagline in PDF")
+        tagline_layout.addWidget(self.company_show_tagline)
+        
+        company_card.addWidget(FormRow("Tagline", tagline_container))
+        
+        # Logo with checkbox
+        logo_container = QWidget()
+        logo_layout = QHBoxLayout(logo_container)
+        logo_layout.setContentsMargins(0, 0, 0, 0)
+        logo_layout.setSpacing(SPACING['sm'])
         
         self.company_logo = PathSelector("Images (*.svg *.png *.jpg *.jpeg)")
-        company_card.addWidget(FormRow("Logo", self.company_logo))
+        logo_layout.addWidget(self.company_logo, 1)
+        
+        self.company_show_logo = QCheckBox("Show")
+        self.company_show_logo.setToolTip("Show logo in PDF")
+        logo_layout.addWidget(self.company_show_logo)
+        
+        company_card.addWidget(FormRow("Logo", logo_container))
         
         # Logo preview with label
         logo_preview_row = QHBoxLayout()
@@ -1599,6 +1635,9 @@ class ConfigDialog(QDialog):
             'name': self.company_name.text(),
             'tagline': self.company_tagline.text(),
             'logo': self.company_logo.path(),
+            'show_name': self.company_show_name.isChecked(),
+            'show_tagline': self.company_show_tagline.isChecked(),
+            'show_logo': self.company_show_logo.isChecked(),
         }
         
         preset['contact'] = {
@@ -1699,6 +1738,10 @@ class ConfigDialog(QDialog):
         logo_path = company.get('logo', '')
         self.company_logo.setPath(logo_path)
         self.logo_preview.setPath(logo_path)
+        
+        self.company_show_name.setChecked(company.get('show_name', True))
+        self.company_show_tagline.setChecked(company.get('show_tagline', True))
+        self.company_show_logo.setChecked(company.get('show_logo', True))
         
         # Contact
         contact = preset.get('contact', {})

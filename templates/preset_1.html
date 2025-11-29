@@ -22,11 +22,15 @@
 <body>
     <header>
         <div class="company-info">
-            {% if company.logo %}
+            {% if company.show_logo and company.logo %}
             <img src="{{ company.logo }}" alt="Logo" class="logo">
             {% endif %}
+            {% if company.show_name %}
             <h1>{{ company.name }}</h1>
+            {% endif %}
+            {% if company.show_tagline %}
             <p class="tagline">{{ company.tagline }}</p>
+            {% endif %}
         </div>
         <div class="quotation-meta">
             <h2>

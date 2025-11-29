@@ -30,15 +30,17 @@
 
         <!-- Header -->
         <header>
-            {% if company.logo %}
+            {% if company.show_logo and company.logo %}
             <div class="logo-wrapper">
                 <img src="{{ company.logo }}" alt="Logo" class="logo">
             </div>
             {% endif %}
             
+            {% if company.show_name %}
             <h1 class="company-name">{{ company.name }}</h1>
+            {% endif %}
             
-            {% if company.tagline %}
+            {% if company.show_tagline and company.tagline %}
             <p class="tagline">{{ company.tagline }}</p>
             {% endif %}
         </header>

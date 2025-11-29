@@ -25,14 +25,16 @@
 
     <header>
         <div class="brand-section">
-            {% if company.logo %}
+            {% if company.show_logo and company.logo %}
             <div class="logo-container">
                 <img src="{{ company.logo }}" alt="{{ company.name }}" class="logo">
             </div>
             {% endif %}
             <div class="company-details">
+                {% if company.show_name %}
                 <h1 class="company-name">{{ company.name }}</h1>
-                {% if company.tagline %}
+                {% endif %}
+                {% if company.show_tagline and company.tagline %}
                 <div class="tagline">{{ company.tagline }}</div>
                 {% endif %}
             </div>

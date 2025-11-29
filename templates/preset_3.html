@@ -23,11 +23,11 @@
     <!-- Sidebar: Company & Meta Info -->
     <aside>
         <div class="sidebar-content">
-            {% if company.logo %}
+            {% if company.show_logo and company.logo %}
             <div class="logo-container">
                 <img src="{{ company.logo }}" alt="Logo" class="logo">
             </div>
-            {% else %}
+            {% elif company.show_name %}
             <h1 class="company-name-text">{{ company.name }}</h1>
             {% endif %}
 
