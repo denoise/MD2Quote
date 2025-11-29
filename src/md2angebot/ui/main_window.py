@@ -13,6 +13,7 @@ from .preview import PreviewWidget
 from .header import HeaderWidget
 from .config_dialog import ConfigDialog
 from .styles import get_stylesheet, COLORS
+from .icons import icon, icon_font, icon_char
 from ..core.parser import MarkdownParser
 from ..core.renderer import TemplateRenderer
 from ..core.pdf import PDFGenerator
@@ -107,18 +108,19 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar("Main")
         toolbar.setMovable(False)
         toolbar.setFloatable(False)
-        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        toolbar.setIconSize(toolbar.iconSize().__class__(20, 20))
         self.addToolBar(toolbar)
 
         # Open
-        open_action = QAction("Open", self)
+        open_action = QAction(icon('folder_open', 20, COLORS['text_secondary']), "Open", self)
         open_action.setShortcut(QKeySequence.StandardKey.Open)
         open_action.setToolTip("Open Markdown file (⌘O)")
         open_action.triggered.connect(self.open_file_dialog)
         toolbar.addAction(open_action)
 
         # Save
-        save_action = QAction("Save", self)
+        save_action = QAction(icon('save', 20, COLORS['text_secondary']), "Save", self)
         save_action.setShortcut(QKeySequence.StandardKey.Save)
         save_action.setToolTip("Save file (⌘S)")
         save_action.triggered.connect(self.save_file)
@@ -147,7 +149,7 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
 
         # Export PDF
-        export_action = QAction("Export PDF", self)
+        export_action = QAction(icon('picture_as_pdf', 20, COLORS['text_secondary']), "Export", self)
         export_action.setShortcut("Ctrl+E")
         export_action.setToolTip("Export to PDF (⌘E)")
         export_action.triggered.connect(self.export_pdf_dialog)
@@ -159,7 +161,7 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(spacer)
 
         # Settings
-        settings_action = QAction("⚙ Settings", self)
+        settings_action = QAction(icon('settings', 20, COLORS['text_secondary']), "Settings", self)
         settings_action.setShortcut("Ctrl+,")
         settings_action.setToolTip("Open Configuration (⌘,)")
         settings_action.triggered.connect(self.open_settings)

@@ -20,6 +20,7 @@ from PyQt6.QtGui import QColor, QPalette, QFont, QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from .styles import COLORS, SPACING, RADIUS
+from .icons import icon, icon_font, icon_char
 
 
 # Common font families for dropdowns
@@ -589,11 +590,11 @@ class ConfigDialog(QDialog):
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs, 1)
         
-        # Create tabs
-        self.tabs.addTab(self._create_identity_tab(), "📋 Identity")
-        self.tabs.addTab(self._create_document_tab(), "📄 Document")
-        self.tabs.addTab(self._create_styling_tab(), "🎨 Styling")
-        self.tabs.addTab(self._create_defaults_tab(), "⚙️ Defaults")
+        # Create tabs with Material icons
+        self.tabs.addTab(self._create_identity_tab(), icon('badge', 18, COLORS['text_secondary']), "Identity")
+        self.tabs.addTab(self._create_document_tab(), icon('article', 18, COLORS['text_secondary']), "Document")
+        self.tabs.addTab(self._create_styling_tab(), icon('palette', 18, COLORS['text_secondary']), "Styling")
+        self.tabs.addTab(self._create_defaults_tab(), icon('tune', 18, COLORS['text_secondary']), "Defaults")
         
         # Bottom buttons
         btn_layout = QHBoxLayout()
@@ -790,11 +791,11 @@ class ConfigDialog(QDialog):
         
         self.layout_template = QComboBox()
         self.layout_template.setMinimumHeight(24)
-        self.layout_template.addItem("🔲 Modern Split (Default)", "modern-split")
-        self.layout_template.addItem("📸 Elegant Centered (Photography)", "elegant-centered")
-        self.layout_template.addItem("📊 Minimal Sidebar (Consulting)", "minimal-sidebar")
-        self.layout_template.addItem("🎨 Bold Stamp (Creative)", "bold-stamp")
-        self.layout_template.addItem("📝 Classic Letterhead (Business)", "classic-letterhead")
+        self.layout_template.addItem("Modern Split (Default)", "modern-split")
+        self.layout_template.addItem("Elegant Centered (Photography)", "elegant-centered")
+        self.layout_template.addItem("Minimal Sidebar (Consulting)", "minimal-sidebar")
+        self.layout_template.addItem("Bold Stamp (Creative)", "bold-stamp")
+        self.layout_template.addItem("Classic Letterhead (Business)", "classic-letterhead")
         template_card.addWidget(FormRow("Template", self.layout_template))
         
         layout.addWidget(template_card)

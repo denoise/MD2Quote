@@ -41,6 +41,7 @@ a = Analysis(
         'md2angebot.ui.header',
         'md2angebot.ui.config_dialog',
         'md2angebot.ui.styles',
+        'md2angebot.ui.icons',
         'PyQt6.QtPrintSupport',
         'weasyprint',
         'mistune',
