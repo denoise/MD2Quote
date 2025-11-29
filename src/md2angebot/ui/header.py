@@ -373,6 +373,7 @@ class ModernTextEdit(QTextEdit):
 
 class HeaderWidget(QWidget):
     dataChanged = pyqtSignal()
+    generateQuotationRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -397,10 +398,38 @@ class HeaderWidget(QWidget):
         number_label = self._create_label("Number")
         quote_grid.addWidget(number_label, 0, 0)
         
+        number_container = QWidget()
+        number_layout = QHBoxLayout(number_container)
+        number_layout.setContentsMargins(0, 0, 0, 0)
+        number_layout.setSpacing(0)
+
         self.quote_number_edit = ModernLineEdit("e.g. 2025-001")
         self.quote_number_edit.setMaximumWidth(140)
         self.quote_number_edit.textChanged.connect(self.on_changed)
-        quote_grid.addWidget(self.quote_number_edit, 0, 1)
+        number_layout.addWidget(self.quote_number_edit)
+
+        self.generate_quote_button = QPushButton()
+        self.generate_quote_button.setIcon(icon('numbers', 16, COLORS['text_secondary']))
+        self.generate_quote_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.generate_quote_button.setToolTip("Generate new quotation number")
+        self.generate_quote_button.clicked.connect(self._on_generate_quotation_clicked)
+        self.generate_quote_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                padding: 4px 6px;
+                min-height: 24px;
+                min-width: 24px;
+            }}
+            QPushButton:hover {{
+                border-color: {COLORS['text_muted']};
+                background-color: {COLORS['bg_hover']};
+            }}
+        """)
+        number_layout.addWidget(self.generate_quote_button)
+
+        quote_grid.addWidget(number_container, 0, 1)
 
         # Date field
         date_label = self._create_label("Date")
@@ -466,6 +495,10 @@ class HeaderWidget(QWidget):
 
     def on_changed(self):
         self.dataChanged.emit()
+
+    def _on_generate_quotation_clicked(self):
+        """Emit signal to request a new quotation number."""
+        self.generateQuotationRequested.emit()
 
     def get_data(self):
         """Returns a dictionary with the header data."""
