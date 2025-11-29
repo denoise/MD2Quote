@@ -50,7 +50,7 @@ presets:
     # LAYOUT & SNIPPETS
     # ==========================================
     layout:
-      template: "modern-split"
+      template: "preset_1"
       page_margins: [20, 20, 20, 20]
       
     snippets:
@@ -139,7 +139,7 @@ presets:
       bank_name: "Commerzbank"
 
     layout:
-      template: "elegant-centered"
+      template: "preset_2"
       page_margins: [25, 25, 25, 25]
       
     snippets:
@@ -213,7 +213,7 @@ presets:
       bank_name: "NatWest"
 
     layout:
-      template: "minimal-sidebar"
+      template: "preset_3"
       page_margins: [15, 15, 15, 15]
       
     snippets:
@@ -287,7 +287,7 @@ presets:
       bank_name: "Rabobank"
 
     layout:
-      template: "bold-stamp"
+      template: "preset_4"
       page_margins: [20, 20, 20, 20]
       
     snippets:
@@ -361,7 +361,7 @@ presets:
       bank_name: "KBC Bank"
 
     layout:
-      template: "classic-letterhead"
+      template: "preset_5"
       page_margins: [25, 20, 20, 20]
       
     snippets:

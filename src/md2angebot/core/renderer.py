@@ -57,6 +57,17 @@ class TemplateRenderer:
             context: Data context for rendering
             preset_config: Optional preset configuration to merge
         """
+        # Map legacy template names to new preset names
+        legacy_map = {
+            'modern-split': 'preset_1',
+            'elegant-centered': 'preset_2',
+            'minimal-sidebar': 'preset_3',
+            'bold-stamp': 'preset_4',
+            'classic-letterhead': 'preset_5'
+        }
+        if template_name in legacy_map:
+             template_name = legacy_map[template_name]
+
         # Clear Jinja2 cache to pick up any file changes
         # This ensures template edits are immediately visible
         if self._clear_cache_on_render:
@@ -80,18 +91,21 @@ class TemplateRenderer:
         if template_name == "base" and 'layout' in base_config:
             preset_template = base_config['layout'].get('template')
             if preset_template:
-                template_name = preset_template
+                if preset_template in legacy_map:
+                    template_name = legacy_map[preset_template]
+                else:
+                    template_name = preset_template
 
         try:
             template = self.env.get_template(f"{template_name}.html")
         except Exception as e:
             print(f"Template {template_name}.html not found ({e}), attempting fallback...")
             try:
-                # Try modern-split as the new default
-                template = self.env.get_template("modern-split.html")
+                # Try preset_1 as the new default
+                template = self.env.get_template("preset_1.html")
             except:
                 # Last resort, try base.html if it still exists
-                print("modern-split.html not found, trying base.html")
+                print("preset_1.html not found, trying base.html")
                 template = self.env.get_template("base.html")
             
         # Ensure full_context has layout and snippets to prevent "undefined" errors in template
@@ -100,7 +114,7 @@ class TemplateRenderer:
         # Default fallback for layout if missing
         if 'layout' not in full_context:
             full_context['layout'] = {
-                'template': 'modern-split',
+                'template': 'preset_1',
                 'page_margins': [20, 20, 20, 20]
             }
         

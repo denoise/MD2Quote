@@ -9,11 +9,11 @@ from ..utils import get_app_path
 # Fixed mapping between presets and layout templates
 # Each preset is associated with a specific template that cannot be changed
 PRESET_TEMPLATE_MAP = {
-    'preset_1': 'modern-split',
-    'preset_2': 'elegant-centered',
-    'preset_3': 'minimal-sidebar',
-    'preset_4': 'bold-stamp',
-    'preset_5': 'classic-letterhead',
+    'preset_1': 'preset_1',
+    'preset_2': 'preset_2',
+    'preset_3': 'preset_3',
+    'preset_4': 'preset_4',
+    'preset_5': 'preset_5',
 }
 
 class ConfigLoader:
@@ -68,6 +68,9 @@ class ConfigLoader:
             # Ensure structure is valid even if file exists
             if 'presets' not in data:
                  return self._create_default_structure()
+
+            # Migrate old template names to new preset names
+            data = self._migrate_template_names(data)
                  
             # Backfill missing keys (like layout/snippets/vat_type) in existing presets
             updated = False
@@ -102,6 +105,34 @@ class ConfigLoader:
             print(f"Error loading config: {e}")
             return self._create_default_structure()
 
+    def _migrate_template_names(self, data: dict) -> dict:
+        """Migrates old template names to new preset names."""
+        old_names = {
+            'modern-split': 'preset_1',
+            'elegant-centered': 'preset_2',
+            'minimal-sidebar': 'preset_3',
+            'bold-stamp': 'preset_4',
+            'classic-letterhead': 'preset_5'
+        }
+        updated = False
+        presets = data.get('presets', {})
+        for key, preset in presets.items():
+            layout = preset.get('layout', {})
+            current_template = layout.get('template')
+            if current_template in old_names:
+                layout['template'] = old_names[current_template]
+                updated = True
+        
+        if updated:
+            print("Migrated old template names to new preset names.")
+            try:
+                 with open(self.config_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+            except Exception as e:
+                print(f"Error saving config after template migration: {e}")
+        
+        return data
+
     def _create_default_structure(self) -> dict:
         """Creates the default preset structure."""
         presets = {}
@@ -120,7 +151,7 @@ class ConfigLoader:
     def _get_empty_preset(self, name: str, preset_key: str = 'preset_1') -> dict:
         """Returns an empty preset structure with the fixed template for this preset."""
         # Each preset has a fixed template that cannot be changed by the user
-        template = PRESET_TEMPLATE_MAP.get(preset_key, 'modern-split')
+        template = PRESET_TEMPLATE_MAP.get(preset_key, 'preset_1')
         return {
             'name': name,
             'company': {},

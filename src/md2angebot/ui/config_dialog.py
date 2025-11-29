@@ -150,11 +150,11 @@ class TemplateEditorDialog(QDialog):
 # Fixed mapping between presets and layout templates
 # Each preset is associated with a specific template that cannot be changed
 PRESET_TEMPLATE_MAP = {
-    'preset_1': ('modern-split', 'Modern Split'),
-    'preset_2': ('elegant-centered', 'Elegant Centered'),
-    'preset_3': ('minimal-sidebar', 'Minimal Sidebar'),
-    'preset_4': ('bold-stamp', 'Bold Stamp'),
-    'preset_5': ('classic-letterhead', 'Classic Letterhead'),
+    'preset_1': ('preset_1', 'Preset 1 Template'),
+    'preset_2': ('preset_2', 'Preset 2 Template'),
+    'preset_3': ('preset_3', 'Preset 3 Template'),
+    'preset_4': ('preset_4', 'Preset 4 Template'),
+    'preset_5': ('preset_5', 'Preset 5 Template'),
 }
 
 
@@ -1152,41 +1152,6 @@ class ConfigDialog(QDialog):
         """Tab for Layout, Margins, and Content Snippets."""
         scroll, layout = self._create_scrollable_tab()
         
-        # Template Info Card (read-only - template is fixed per preset)
-        template_card = SectionCard("Layout Template")
-        
-        # Info label explaining the fixed association
-        info_label = QLabel("Each profile has a fixed layout template that defines the document structure.")
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; margin-bottom: {SPACING['xs']}px;")
-        template_card.addWidget(info_label)
-        
-        # Read-only display of the current template
-        template_container = QWidget()
-        template_layout = QHBoxLayout(template_container)
-        template_layout.setContentsMargins(0, 0, 0, 0)
-        template_layout.setSpacing(SPACING['sm'])
-
-        self.template_display = QLabel()
-        self.template_display.setStyleSheet(f"""
-            color: {COLORS['text_primary']};
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 12px;
-            background-color: {COLORS['bg_dark']};
-            border: 1px solid {COLORS['border']};
-        """)
-        template_layout.addWidget(self.template_display, 1)
-        
-        edit_btn = QPushButton("Edit HTML")
-        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        edit_btn.clicked.connect(self._edit_template)
-        template_layout.addWidget(edit_btn)
-
-        template_card.addWidget(FormRow("Template", template_container))
-        
-        layout.addWidget(template_card)
-        
         # Page Margins Card
         margins_card = SectionCard("Page Margins")
         
@@ -1194,6 +1159,14 @@ class ConfigDialog(QDialog):
         margins_card.addWidget(self.margin_control)
         
         layout.addWidget(margins_card)
+        
+        # Advanced Card (Template Editing)
+        advanced_card = SectionCard("Advanced")
+        edit_btn = QPushButton("Edit Template HTML")
+        edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        edit_btn.clicked.connect(self._edit_template)
+        advanced_card.addWidget(edit_btn)
+        layout.addWidget(advanced_card)
         
         # Snippets Card (with enable checkbox)
         snippets_card = SectionCard("Content Snippets", with_enable_checkbox=True)
@@ -1646,7 +1619,7 @@ class ConfigDialog(QDialog):
         }
         
         # Template is fixed per preset - use the mapping
-        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('modern-split', 'Modern Split'))
+        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
         preset['layout'] = {
             'template': template_id,
             'page_margins': self.margin_control.values()
@@ -1743,10 +1716,6 @@ class ConfigDialog(QDialog):
         self.legal_enabled_checkbox.setChecked(legal.get('enabled', True))
         self.legal_tax_id.setText(legal.get('tax_id', ''))
         self.legal_kvk.setText(legal.get('chamber_of_commerce', ''))
-        
-        # Layout - template is fixed per preset, just display it
-        _, template_name = PRESET_TEMPLATE_MAP.get(preset_key, ('modern-split', 'Modern Split'))
-        self.template_display.setText(template_name)
         
         layout_config = preset.get('layout', {})
         margins = layout_config.get('page_margins', [20, 20, 20, 20])
@@ -1856,7 +1825,7 @@ class ConfigDialog(QDialog):
 
     def _edit_template(self):
         """Open the template editor for the current preset's template."""
-        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('modern-split', 'Modern Split'))
+        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
         
         dialog = TemplateEditorDialog(template_id, self.config_loader, self)
         dialog.exec()
