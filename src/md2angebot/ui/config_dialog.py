@@ -1893,7 +1893,6 @@ class ConfigDialog(QDialog):
             self.config_loader.config = self.config
             
             self.configSaved.emit()
-            QMessageBox.information(self, "Success", "Configuration saved successfully!")
             self.accept()
             
         except Exception as e:
