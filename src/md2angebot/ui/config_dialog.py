@@ -16,8 +16,9 @@ from PyQt6.QtWidgets import (
     QListWidgetItem, QInputDialog, QButtonGroup, QPlainTextEdit, QCheckBox,
     QSlider
 )
-from PyQt6.QtGui import QColor, QPalette, QFont, QIcon
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QPalette, QFont, QIcon, QPixmap, QPainter
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtSvg import QSvgRenderer
 
 from .styles import COLORS, SPACING, RADIUS
 from .icons import icon, icon_font, icon_char
@@ -157,6 +158,146 @@ class PathSelector(QWidget):
     
     def setPath(self, path: str):
         self.line_edit.setText(path or "")
+
+
+class LogoPreview(QFrame):
+    """A preview widget for displaying logo images (supports SVG, PNG, JPG)."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._path = ""
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        self.setFixedSize(120, 80)
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: #ffffff;
+                border: 1px dashed {COLORS['border']};
+                border-radius: 0;
+            }}
+        """)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # Image label for the preview
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setStyleSheet("background: transparent; border: none;")
+        layout.addWidget(self.image_label)
+        
+        # Placeholder text
+        self.placeholder_label = QLabel("No logo")
+        self.placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.placeholder_label.setStyleSheet(f"""
+            color: #999999;
+            font-size: 11px;
+            background: transparent;
+            border: none;
+        """)
+        layout.addWidget(self.placeholder_label)
+        
+        # Initially show placeholder
+        self._show_placeholder()
+    
+    def _show_placeholder(self):
+        """Show the placeholder text, hide the image."""
+        self.image_label.hide()
+        self.placeholder_label.show()
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: #ffffff;
+                border: 1px dashed {COLORS['border']};
+                border-radius: 0;
+            }}
+        """)
+    
+    def _show_image(self, pixmap: QPixmap):
+        """Show the image, hide the placeholder."""
+        self.placeholder_label.hide()
+        self.image_label.show()
+        
+        # Scale the pixmap to fit within the preview area
+        max_size = QSize(104, 64)  # Account for margins
+        scaled = pixmap.scaled(
+            max_size, 
+            Qt.AspectRatioMode.KeepAspectRatio, 
+            Qt.TransformationMode.SmoothTransformation
+        )
+        self.image_label.setPixmap(scaled)
+        
+        # Update border style to solid when image is present
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: #ffffff;
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+            }}
+        """)
+    
+    def setPath(self, path: str):
+        """Set the logo path and update the preview."""
+        self._path = path
+        
+        if not path:
+            self._show_placeholder()
+            return
+        
+        # Check if file exists
+        file_path = Path(path)
+        if not file_path.exists():
+            # Try to expand user path
+            file_path = Path(os.path.expanduser(path))
+            if not file_path.exists():
+                self._show_placeholder()
+                return
+        
+        # Load the image based on file type
+        suffix = file_path.suffix.lower()
+        
+        if suffix == '.svg':
+            pixmap = self._load_svg(file_path)
+        else:
+            pixmap = QPixmap(str(file_path))
+        
+        if pixmap and not pixmap.isNull():
+            self._show_image(pixmap)
+        else:
+            self._show_placeholder()
+    
+    def _load_svg(self, file_path: Path) -> QPixmap:
+        """Load an SVG file and convert it to a QPixmap."""
+        renderer = QSvgRenderer(str(file_path))
+        if not renderer.isValid():
+            return QPixmap()
+        
+        # Get the default size and scale it to fit
+        default_size = renderer.defaultSize()
+        if default_size.isEmpty():
+            default_size = QSize(100, 60)
+        
+        # Scale to fit within max preview size while maintaining aspect ratio
+        max_size = QSize(104, 64)
+        scale = min(
+            max_size.width() / default_size.width(),
+            max_size.height() / default_size.height()
+        )
+        target_size = QSize(
+            int(default_size.width() * scale),
+            int(default_size.height() * scale)
+        )
+        
+        # Create a pixmap and render the SVG
+        pixmap = QPixmap(target_size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        
+        return pixmap
 
 
 class SectionCard(QFrame):
@@ -677,6 +818,24 @@ class ConfigDialog(QDialog):
         
         self.company_logo = PathSelector("Images (*.svg *.png *.jpg *.jpeg)")
         company_card.addWidget(FormRow("Logo", self.company_logo))
+        
+        # Logo preview with label
+        logo_preview_row = QHBoxLayout()
+        logo_preview_row.setSpacing(SPACING['sm'])
+        
+        # Empty label to align with form row
+        logo_spacer = QLabel("")
+        logo_spacer.setFixedWidth(100)
+        logo_preview_row.addWidget(logo_spacer)
+        
+        self.logo_preview = LogoPreview()
+        logo_preview_row.addWidget(self.logo_preview)
+        logo_preview_row.addStretch()
+        
+        company_card.addLayout(logo_preview_row)
+        
+        # Connect path changes to update preview
+        self.company_logo.pathChanged.connect(self.logo_preview.setPath)
         
         left_col.addWidget(company_card)
         
@@ -1282,7 +1441,9 @@ class ConfigDialog(QDialog):
         company = preset.get('company', {})
         self.company_name.setText(company.get('name', ''))
         self.company_tagline.setText(company.get('tagline', ''))
-        self.company_logo.setPath(company.get('logo', ''))
+        logo_path = company.get('logo', '')
+        self.company_logo.setPath(logo_path)
+        self.logo_preview.setPath(logo_path)
         
         # Contact
         contact = preset.get('contact', {})
