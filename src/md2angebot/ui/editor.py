@@ -248,6 +248,11 @@ class ModernPlainTextEdit(QPlainTextEdit):
             
             if new_start not in existing_positions:
                 self.extra_cursors.append(next_cursor)
+                # Scroll to make the new selection visible (temporarily set cursor, then restore)
+                original_cursor = self.textCursor()
+                self.setTextCursor(next_cursor)
+                self.ensureCursorVisible()
+                self.setTextCursor(original_cursor)
                 self.highlight_current_line()
 
     def select_word_at_cursor(self):
