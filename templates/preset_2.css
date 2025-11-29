@@ -526,3 +526,13 @@ code {
         print-color-adjust: exact;
     }
 }
+
+/* Utility Classes */
+.page-break {
+    break-after: page;
+    page-break-after: always;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    visibility: hidden;
+}

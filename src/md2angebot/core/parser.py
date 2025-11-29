@@ -5,7 +5,11 @@ from typing import Dict, Any, Tuple
 
 class MarkdownParser:
     def __init__(self):
-        self.markdown = mistune.create_markdown(plugins=['table', 'url', 'strikethrough'])
+        # Enable escape=False to allow raw HTML (e.g. for custom divs)
+        self.markdown = mistune.create_markdown(
+            plugins=['table', 'url', 'strikethrough'],
+            escape=False
+        )
 
     def parse_file(self, file_path: str) -> Tuple[Dict[str, Any], str]:
         """
@@ -23,6 +27,16 @@ class MarkdownParser:
         """
         metadata, markdown_body = self._extract_frontmatter(content)
         html_content = self.markdown(markdown_body)
+        
+        # Post-processing: Convert "+++" on its own line (which becomes <p>+++</p>)
+        # into a page break div.
+        # We use regex to handle potential whitespace around +++
+        html_content = re.sub(
+            r'<p>\s*\+\+\+\s*</p>', 
+            '<div class="page-break"></div>', 
+            html_content
+        )
+        
         return metadata, html_content
 
     def _extract_frontmatter(self, content: str) -> Tuple[Dict[str, Any], str]:
