@@ -1,7 +1,318 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
-                             QLineEdit, QDateEdit, QTextEdit, QSizePolicy, QFrame, QLabel, QGridLayout)
-from PyQt6.QtCore import QDate, pyqtSignal, Qt
-from .styles import COLORS, SPACING, RADIUS
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
+                             QTextEdit, QSizePolicy, QFrame, QLabel, QGridLayout,
+                             QPushButton, QCalendarWidget, QMenu, QWidgetAction)
+from PyQt6.QtCore import QDate, pyqtSignal, Qt, QPoint
+from PyQt6.QtGui import QTextCharFormat, QColor
+from .styles import COLORS, SPACING
+from .icons import icon
+
+
+class ModernDatePicker(QWidget):
+    """A modern, styled date picker that fits the dark theme aesthetic."""
+    
+    dateChanged = pyqtSignal(QDate)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._date = QDate.currentDate()
+        self._setup_ui()
+        
+    def _setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Date display button
+        self.date_button = QPushButton()
+        self.date_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.date_button.clicked.connect(self._show_calendar)
+        self.date_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                color: {COLORS['text_primary']};
+                padding: 4px 8px;
+                min-height: 24px;
+                font-size: 13px;
+                font-weight: 500;
+                text-align: left;
+            }}
+            QPushButton:hover {{
+                border-color: {COLORS['text_muted']};
+                background-color: {COLORS['bg_hover']};
+            }}
+            QPushButton:focus {{
+                border-color: {COLORS['accent']};
+            }}
+        """)
+        layout.addWidget(self.date_button)
+        
+        # Calendar icon button
+        self.cal_icon_btn = QPushButton()
+        self.cal_icon_btn.setIcon(icon('calendar_today', 16, COLORS['text_secondary']))
+        self.cal_icon_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.cal_icon_btn.clicked.connect(self._show_calendar)
+        self.cal_icon_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-left: none;
+                border-radius: 0;
+                padding: 4px 6px;
+                min-height: 24px;
+                min-width: 24px;
+            }}
+            QPushButton:hover {{
+                border-color: {COLORS['text_muted']};
+                background-color: {COLORS['bg_hover']};
+            }}
+        """)
+        layout.addWidget(self.cal_icon_btn)
+        
+        # Create the calendar popup
+        self._create_calendar_popup()
+        self._update_display()
+        
+    def _create_calendar_popup(self):
+        """Create the styled calendar popup menu."""
+        self.calendar_menu = QMenu(self)
+        self.calendar_menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                padding: 0;
+            }}
+        """)
+        
+        # Calendar widget
+        self.calendar = QCalendarWidget()
+        self.calendar.setGridVisible(False)
+        self.calendar.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
+        self.calendar.setHorizontalHeaderFormat(QCalendarWidget.HorizontalHeaderFormat.ShortDayNames)
+        self.calendar.setFirstDayOfWeek(Qt.DayOfWeek.Monday)
+        self.calendar.clicked.connect(self._on_date_selected)
+        self.calendar.activated.connect(self._on_date_selected)
+        
+        # Style the calendar to match the app theme
+        self.calendar.setStyleSheet(f"""
+            QCalendarWidget {{
+                background-color: {COLORS['bg_elevated']};
+                border: none;
+            }}
+            
+            QCalendarWidget QWidget {{
+                alternate-background-color: {COLORS['bg_base']};
+            }}
+            
+            /* Navigation bar */
+            QCalendarWidget QWidget#qt_calendar_navigationbar {{
+                background-color: {COLORS['bg_base']};
+                padding: 4px;
+            }}
+            
+            /* Month/Year buttons */
+            QCalendarWidget QToolButton {{
+                color: {COLORS['text_primary']};
+                background-color: transparent;
+                border: none;
+                border-radius: 0;
+                padding: 4px 8px;
+                font-size: 13px;
+                font-weight: 600;
+            }}
+            
+            QCalendarWidget QToolButton:hover {{
+                background-color: {COLORS['bg_hover']};
+                color: {COLORS['accent']};
+            }}
+            
+            QCalendarWidget QToolButton:pressed {{
+                background-color: {COLORS['bg_base']};
+            }}
+            
+            /* Navigation arrows */
+            QCalendarWidget QToolButton#qt_calendar_prevmonth {{
+                qproperty-icon: none;
+                min-width: 24px;
+            }}
+            
+            QCalendarWidget QToolButton#qt_calendar_nextmonth {{
+                qproperty-icon: none;
+                min-width: 24px;
+            }}
+            
+            QCalendarWidget QToolButton#qt_calendar_prevmonth::after {{
+                content: "◀";
+            }}
+            
+            /* Month/Year dropdown menu */
+            QCalendarWidget QMenu {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                color: {COLORS['text_primary']};
+            }}
+            
+            QCalendarWidget QMenu::item {{
+                padding: 4px 16px;
+            }}
+            
+            QCalendarWidget QMenu::item:selected {{
+                background-color: {COLORS['accent']};
+                color: {COLORS['bg_dark']};
+            }}
+            
+            /* Spinbox for year */
+            QCalendarWidget QSpinBox {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                color: {COLORS['text_primary']};
+                padding: 2px 4px;
+                selection-background-color: {COLORS['accent']};
+            }}
+            
+            QCalendarWidget QSpinBox::up-button,
+            QCalendarWidget QSpinBox::down-button {{
+                width: 16px;
+                background-color: {COLORS['bg_hover']};
+                border: none;
+            }}
+            
+            /* Day names header */
+            QCalendarWidget QWidget#qt_calendar_calendarview {{
+                background-color: {COLORS['bg_elevated']};
+            }}
+            
+            /* Table view for days */
+            QCalendarWidget QTableView {{
+                background-color: {COLORS['bg_elevated']};
+                selection-background-color: {COLORS['accent']};
+                selection-color: {COLORS['bg_dark']};
+                border: none;
+                outline: none;
+            }}
+            
+            QCalendarWidget QTableView::item {{
+                padding: 0;
+            }}
+            
+            QCalendarWidget QTableView::item:hover {{
+                background-color: {COLORS['bg_hover']};
+            }}
+            
+            QCalendarWidget QTableView::item:selected {{
+                background-color: {COLORS['accent']};
+                color: {COLORS['bg_dark']};
+            }}
+            
+            /* Header row (day names) */
+            QCalendarWidget QHeaderView {{
+                background-color: {COLORS['bg_base']};
+            }}
+            
+            QCalendarWidget QHeaderView::section {{
+                background-color: {COLORS['bg_base']};
+                color: {COLORS['text_muted']};
+                font-size: 11px;
+                font-weight: 600;
+                padding: 4px;
+                border: none;
+            }}
+        """)
+        
+        # Style for different day types
+        today_format = QTextCharFormat()
+        today_format.setBackground(QColor(COLORS['accent_muted']))
+        today_format.setForeground(QColor(COLORS['text_primary']))
+        
+        weekday_format = QTextCharFormat()
+        weekday_format.setForeground(QColor(COLORS['text_primary']))
+        
+        weekend_format = QTextCharFormat()
+        weekend_format.setForeground(QColor(COLORS['text_secondary']))
+        
+        self.calendar.setHeaderTextFormat(weekday_format)
+        self.calendar.setWeekdayTextFormat(Qt.DayOfWeek.Saturday, weekend_format)
+        self.calendar.setWeekdayTextFormat(Qt.DayOfWeek.Sunday, weekend_format)
+        
+        # Wrap calendar in a widget action
+        calendar_action = QWidgetAction(self.calendar_menu)
+        calendar_action.setDefaultWidget(self.calendar)
+        self.calendar_menu.addAction(calendar_action)
+        
+        # Add "Today" button
+        today_btn = QPushButton("Today")
+        today_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        today_btn.clicked.connect(self._go_to_today)
+        today_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_base']};
+                border: none;
+                border-top: 1px solid {COLORS['border']};
+                border-radius: 0;
+                color: {COLORS['accent']};
+                padding: 8px;
+                font-size: 12px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+            }}
+        """)
+        
+        today_action = QWidgetAction(self.calendar_menu)
+        today_action.setDefaultWidget(today_btn)
+        self.calendar_menu.addAction(today_action)
+    
+    def _show_calendar(self):
+        """Show the calendar popup below the date button."""
+        self.calendar.setSelectedDate(self._date)
+        
+        # Position the menu below the widget
+        pos = self.mapToGlobal(QPoint(0, self.height()))
+        self.calendar_menu.exec(pos)
+    
+    def _on_date_selected(self, date: QDate):
+        """Handle date selection from calendar."""
+        self._date = date
+        self._update_display()
+        self.calendar_menu.close()
+        self.dateChanged.emit(date)
+    
+    def _go_to_today(self):
+        """Set the date to today."""
+        today = QDate.currentDate()
+        self._date = today
+        self.calendar.setSelectedDate(today)
+        self._update_display()
+        self.calendar_menu.close()
+        self.dateChanged.emit(today)
+    
+    def _update_display(self):
+        """Update the button text with the current date."""
+        self.date_button.setText(self._date.toString("yyyy-MM-dd"))
+    
+    def date(self) -> QDate:
+        """Get the currently selected date."""
+        return self._date
+    
+    def setDate(self, date: QDate):
+        """Set the date."""
+        if date.isValid():
+            self._date = date
+            self._update_display()
+    
+    def setMaximumWidth(self, width: int):
+        """Override to set width on the date button."""
+        self.date_button.setMaximumWidth(width - 28)  # Account for icon button
+        super().setMaximumWidth(width)
+    
+    def setMinimumHeight(self, height: int):
+        """Override to set height on child widgets."""
+        self.date_button.setMinimumHeight(height)
+        self.cal_icon_btn.setMinimumHeight(height)
+        super().setMinimumHeight(height)
 
 
 class SectionCard(QFrame):
@@ -95,11 +406,8 @@ class HeaderWidget(QWidget):
         date_label = self._create_label("Date")
         quote_grid.addWidget(date_label, 1, 0)
         
-        self.date_edit = QDateEdit()
-        self.date_edit.setDate(QDate.currentDate())
-        self.date_edit.setCalendarPopup(True)
-        self.date_edit.setDisplayFormat("yyyy-MM-dd")
-        self.date_edit.setMaximumWidth(120)
+        self.date_edit = ModernDatePicker()
+        self.date_edit.setMaximumWidth(148)
         self.date_edit.setMinimumHeight(24)
         self.date_edit.dateChanged.connect(self.on_changed)
         quote_grid.addWidget(self.date_edit, 1, 1)
