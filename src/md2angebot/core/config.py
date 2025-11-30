@@ -3,6 +3,7 @@ import yaml
 import shutil
 import copy
 import time
+import zipfile
 from pathlib import Path
 from datetime import datetime
 from .llm import DEFAULT_SYSTEM_PROMPT
@@ -712,6 +713,106 @@ class ConfigLoader:
             self.config['active_preset'] = first_key
         
         return (True, None)
+
+    def export_preset(self, preset_key: str, export_path: str, preset_data: dict = None) -> tuple[bool, str]:
+        """
+        Exports a preset to a zip file containing config and templates.
+        If preset_data is provided, it uses that configuration (useful for exporting unsaved changes).
+        Otherwise, it uses the stored configuration for preset_key.
+        """
+        if preset_data is None:
+            preset_data = self.config.get('presets', {}).get(preset_key)
+            
+        if not preset_data:
+            return (False, f"Preset data not found for '{preset_key}'")
+
+        try:
+            with zipfile.ZipFile(export_path, 'w') as zf:
+                # 1. Write profile config
+                zf.writestr('profile.yaml', yaml.dump(preset_data, allow_unicode=True, sort_keys=False))
+
+                # 2. Write template files
+                template_name = preset_data.get('layout', {}).get('template', preset_key)
+                
+                for ext in ['html', 'css']:
+                    file_path = self._find_template_file(template_name, ext)
+                    if file_path:
+                        # Store as template.html / template.css for portable import
+                        zf.write(file_path, arcname=f"template.{ext}")
+            
+            return (True, None)
+        except Exception as e:
+            return (False, str(e))
+
+    def import_preset(self, import_path: str) -> tuple[str, str]:
+        """
+        Imports a preset from a zip file.
+        Returns (new_preset_key, error_message).
+        """
+        if not os.path.exists(import_path):
+            return (None, "File not found")
+
+        try:
+            with zipfile.ZipFile(import_path, 'r') as zf:
+                files = zf.namelist()
+                
+                # 1. Read config
+                if 'profile.yaml' not in files:
+                    return (None, "Invalid profile archive: profile.yaml missing")
+                
+                try:
+                    profile_data = yaml.safe_load(zf.read('profile.yaml'))
+                except yaml.YAMLError:
+                    return (None, "Invalid profile.yaml format")
+                    
+                if not profile_data or not isinstance(profile_data, dict):
+                    return (None, "Invalid profile configuration")
+
+                # 2. Generate new key
+                new_key = self._generate_preset_key()
+                
+                # 3. Update profile data with new key and ensure unique name
+                if 'layout' not in profile_data:
+                    profile_data['layout'] = {}
+                profile_data['layout']['template'] = new_key
+                
+                # Check for name collision and append (Imported) if needed
+                original_name = profile_data.get('name', 'Imported Profile')
+                existing_names = [p.get('name') for p in self.config.get('presets', {}).values()]
+                if original_name in existing_names:
+                    profile_data['name'] = f"{original_name} (Imported)"
+                
+                # 4. Extract and save templates
+                self.templates_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Determine which files to extract
+                html_source = 'template.html' if 'template.html' in files else next((f for f in files if f.endswith('.html')), None)
+                css_source = 'template.css' if 'template.css' in files else next((f for f in files if f.endswith('.css')), None)
+                
+                if html_source:
+                    with open(self.templates_dir / f"{new_key}.html", 'wb') as f:
+                        f.write(zf.read(html_source))
+                else:
+                    # Fallback: Create basic HTML if missing
+                    with open(self.templates_dir / f"{new_key}.html", 'w', encoding='utf-8') as f:
+                        f.write("<!-- Imported template placeholder -->\n{{ content }}")
+
+                if css_source:
+                    with open(self.templates_dir / f"{new_key}.css", 'wb') as f:
+                        f.write(zf.read(css_source))
+                else:
+                    # Fallback: Create empty CSS if missing
+                    with open(self.templates_dir / f"{new_key}.css", 'w', encoding='utf-8') as f:
+                        f.write("/* Imported CSS placeholder */")
+
+                # 5. Save to config
+                self.config.setdefault('presets', {})[new_key] = profile_data
+                self._save_config()
+                
+                return (new_key, None)
+
+        except Exception as e:
+            return (None, f"Import failed: {str(e)}")
 
     def rename_preset(self, preset_key: str, new_name: str) -> tuple[bool, str]:
         """

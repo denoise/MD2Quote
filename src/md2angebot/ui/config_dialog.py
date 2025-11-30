@@ -666,6 +666,8 @@ class PresetListWidget(QFrame):
     presetCreated = pyqtSignal(str)   # Emits new preset_key when created
     presetDeleted = pyqtSignal(str)   # Emits deleted preset_key
     presetDuplicated = pyqtSignal(str)  # Emits new preset_key when duplicated
+    presetImported = pyqtSignal(str)    # Emits new preset_key when imported
+    presetExportRequested = pyqtSignal(str) # Emits preset_key when export requested
     
     def __init__(self, config_loader, parent=None):
         super().__init__(parent)
@@ -726,6 +728,22 @@ class PresetListWidget(QFrame):
         self.duplicate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.duplicate_btn.clicked.connect(self._on_duplicate_clicked)
         btn_row.addWidget(self.duplicate_btn)
+        
+        self.import_btn = QPushButton()
+        self.import_btn.setIcon(icon('upload', 16, COLORS['text_primary']))
+        self.import_btn.setToolTip("Import profile from ZIP")
+        self.import_btn.setFixedSize(32, 28)
+        self.import_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.import_btn.clicked.connect(self._on_import_clicked)
+        btn_row.addWidget(self.import_btn)
+
+        self.export_btn = QPushButton()
+        self.export_btn.setIcon(icon('download', 16, COLORS['text_primary']))
+        self.export_btn.setToolTip("Export profile to ZIP")
+        self.export_btn.setFixedSize(32, 28)
+        self.export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.export_btn.clicked.connect(self._on_export_clicked)
+        btn_row.addWidget(self.export_btn)
         
         btn_row.addStretch()
         layout.addLayout(btn_row)
@@ -824,6 +842,7 @@ class PresetListWidget(QFrame):
         
         self.delete_btn.setEnabled(can_delete)
         self.duplicate_btn.setEnabled(has_selection)
+        self.export_btn.setEnabled(has_selection)
     
     def _on_selection_changed(self, current, previous):
         """Handle selection change in the list."""
@@ -893,6 +912,25 @@ class PresetListWidget(QFrame):
         if ok and new_name.strip():
             # Emit signal with the source key - parent will handle the duplication
             self.presetDuplicated.emit(new_name.strip())
+
+    def _on_import_clicked(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Profile", "", "Zip Files (*.zip)"
+        )
+        if path:
+            new_key, error = self.config_loader.import_preset(path)
+            if error:
+                QMessageBox.warning(self, "Import Failed", error)
+            else:
+                QMessageBox.information(self, "Success", "Profile imported successfully.")
+                self.presetImported.emit(new_key)
+
+    def _on_export_clicked(self):
+        current = self.list_widget.currentItem()
+        if not current:
+            return
+        preset_key = current.data(Qt.ItemDataRole.UserRole)
+        self.presetExportRequested.emit(preset_key)
 
 
 class FormField(QWidget):
@@ -1259,6 +1297,8 @@ class ConfigDialog(QDialog):
         self.preset_list.presetCreated.connect(self._on_preset_created)
         self.preset_list.presetDeleted.connect(self._on_preset_deleted)
         self.preset_list.presetDuplicated.connect(self._on_preset_duplicated)
+        self.preset_list.presetImported.connect(self._on_preset_imported)
+        self.preset_list.presetExportRequested.connect(self._on_preset_export_requested)
         main_content.addWidget(self.preset_list)
         
         # Right column: Settings panel
@@ -1993,6 +2033,45 @@ class ConfigDialog(QDialog):
         # Reload the list and select the new preset
         self.preset_list.load_presets(self.config, new_key)
         self._load_preset_values(new_key)
+
+    def _on_preset_imported(self, new_key: str):
+        """Handle imported preset."""
+        # ConfigLoader has already saved the new preset to self.config_loader.config
+        # We need to sync our local copy
+        new_preset = copy.deepcopy(self.config_loader.config['presets'][new_key])
+        self.config['presets'][new_key] = new_preset
+        
+        # Switch to new preset
+        self.current_preset_key = new_key
+        
+        # Reload list
+        self.preset_list.load_presets(self.config, new_key)
+        self._load_preset_values(new_key)
+        
+    def _on_preset_export_requested(self, preset_key: str):
+        """Handle export request."""
+        # Save current state to memory first
+        self._save_current_preset_to_memory()
+        
+        # Get preset name for filename
+        name = self.config['presets'][preset_key].get('name', preset_key)
+        safe_name = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
+        
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Profile", f"{safe_name}.zip", "Zip Files (*.zip)"
+        )
+        
+        if path:
+            success, error = self.config_loader.export_preset(
+                preset_key, 
+                path, 
+                preset_data=self.config['presets'][preset_key]
+            )
+            
+            if success:
+                QMessageBox.information(self, "Success", f"Profile exported to {path}")
+            else:
+                QMessageBox.warning(self, "Export Failed", error)
 
     def _on_preset_deleted(self, preset_key: str):
         """Handle preset deletion from the list widget."""
