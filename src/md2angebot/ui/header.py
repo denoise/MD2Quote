@@ -461,7 +461,7 @@ class HeaderWidget(QWidget):
         quote_card.content_layout.addLayout(quote_grid)
         main_layout.addWidget(quote_card)
 
-        # === Client Section (Right, takes more space) ===
+        # === Client Section (Middle, compact) ===
         client_card = SectionCard("Client")
         client_grid = QGridLayout()
         client_grid.setContentsMargins(0, 0, 0, 0)
@@ -496,7 +496,7 @@ class HeaderWidget(QWidget):
         client_grid.setColumnStretch(3, 1)
 
         client_card.content_layout.addLayout(client_grid)
-        main_layout.addWidget(client_card, stretch=1)  # Reduced stretch to make room for LLM panel
+        main_layout.addWidget(client_card, stretch=1)  # Keep compact so LLM panel can grow
 
         # === LLM Assistant Section (Right) ===
         llm_card = SectionCard("LLM Assistant")
@@ -561,7 +561,7 @@ class HeaderWidget(QWidget):
         
         llm_layout.addLayout(llm_footer)
         llm_card.content_layout.addLayout(llm_layout)
-        main_layout.addWidget(llm_card, stretch=1)
+        main_layout.addWidget(llm_card, stretch=2)
 
     def _create_label(self, text: str) -> QLabel:
         """Creates a styled field label."""
