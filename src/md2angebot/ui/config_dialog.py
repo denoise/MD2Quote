@@ -1077,6 +1077,39 @@ class ConfigDialog(QDialog):
         self.copy_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.copy_button.setMinimumWidth(150)
         self.copy_button.setMenu(self.copy_menu)
+        self.copy_button.setStyleSheet(f"""
+            QToolButton {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                color: {COLORS['text_primary']};
+                padding: 0px 10px;
+                padding-right: 20px;
+                min-height: 24px;
+                max-height: 24px;
+                font-weight: 500;
+                margin: 0px;
+            }}
+            QToolButton:hover {{
+                background-color: {COLORS['bg_hover']};
+                border-color: {COLORS['text_muted']};
+            }}
+            QToolButton:pressed {{
+                background-color: {COLORS['bg_base']};
+                border-color: {COLORS['accent']};
+            }}
+            QToolButton::menu-indicator {{
+                image: none;
+                subcontrol-position: right center;
+                subcontrol-origin: padding;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 5px solid {COLORS['text_muted']};
+                width: 0;
+                height: 0;
+                margin-right: 10px;
+            }}
+        """)
         name_row.addWidget(self.copy_button)
         
         self.copy_status_label = QLabel("")

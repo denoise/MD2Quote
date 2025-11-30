@@ -399,6 +399,33 @@ def get_stylesheet():
     QMessageBox QLabel {{
         color: {COLORS['text_primary']};
     }}
+
+    /* ========================================
+       MENUS
+       ======================================== */
+
+    QMenu {{
+        background-color: {COLORS['bg_elevated']};
+        border: 1px solid {COLORS['border']};
+        color: {COLORS['text_primary']};
+        padding: 4px;
+    }}
+
+    QMenu::item {{
+        padding: 6px 20px 6px 10px;
+        border-radius: 0;
+        color: {COLORS['text_primary']};
+        background-color: transparent;
+    }}
+
+    QMenu::item:selected {{
+        background-color: {COLORS['accent']};
+        color: {COLORS['bg_dark']};
+    }}
+
+    QMenu::icon {{
+        padding-left: 10px;
+    }}
     
     QPushButton {{
         background-color: {COLORS['bg_elevated']};
@@ -533,4 +560,3 @@ SYNTAX_COLORS = {
     'frontmatter': COLORS['text_muted'],
     'link': COLORS['syntax_number'],
 }
-
