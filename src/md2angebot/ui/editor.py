@@ -160,6 +160,12 @@ class ModernPlainTextEdit(QPlainTextEdit):
             (modifiers & Qt.KeyboardModifier.ControlModifier or modifiers & Qt.KeyboardModifier.MetaModifier)):
             self.insert_link()
             return
+
+        # Move line/selection up or down (Option/Alt + Arrow)
+        if (modifiers & Qt.KeyboardModifier.AltModifier) and key in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+            direction = -1 if key == Qt.Key.Key_Up else 1
+            self.move_selected_lines(direction)
+            return
         
         # Handle multi-cursor typing
         if self.extra_cursors:
@@ -356,6 +362,115 @@ class ModernPlainTextEdit(QPlainTextEdit):
         self.setTextCursor(all_cursors[-1])
         self.extra_cursors = all_cursors[:-1]
         self.highlight_current_line()
+
+    def move_selected_lines(self, direction: int):
+        """Move the current line or selection up/down similar to VS Code."""
+        if direction not in (-1, 1):
+            return
+
+        # Moving lines with multi-cursor selections would be ambiguous; clear them first.
+        if self.extra_cursors:
+            self.clear_extra_cursors()
+
+        doc = self.document()
+        cursor = self.textCursor()
+
+        # Determine selection bounds
+        if cursor.hasSelection():
+            sel_start = cursor.selectionStart()
+            sel_end = cursor.selectionEnd()
+            if sel_start > sel_end:
+                sel_start, sel_end = sel_end, sel_start
+        else:
+            sel_start = sel_end = cursor.position()
+
+        start_block = doc.findBlock(sel_start).blockNumber()
+        end_block = doc.findBlock(sel_end).blockNumber()
+
+        # If the selection ends exactly at the start of a block, don't include that block
+        if (cursor.hasSelection() and sel_end == doc.findBlock(sel_end).position() 
+                and sel_start != sel_end):
+            end_block -= 1
+            if end_block < start_block:
+                end_block = start_block
+
+        # Boundary checks
+        if direction == -1 and start_block == 0:
+            return
+        if direction == 1 and end_block >= doc.blockCount() - 1:
+            return
+
+        def block_start(block_number: int) -> int:
+            return doc.findBlockByNumber(block_number).position()
+
+        def block_after(block_number: int) -> int:
+            block = doc.findBlockByNumber(block_number)
+            temp_cursor = QTextCursor(block)
+            temp_cursor.movePosition(QTextCursor.MoveOperation.EndOfBlock)
+            if block.blockNumber() < doc.blockCount() - 1:
+                temp_cursor.movePosition(QTextCursor.MoveOperation.NextBlock)
+            return temp_cursor.position()
+
+        selection_line_start = block_start(start_block)
+        anchor_offset = cursor.anchor() - selection_line_start
+        position_offset = cursor.position() - selection_line_start
+
+        if direction == -1:
+            range_start_block = start_block - 1
+            range_end_block = end_block
+        else:
+            range_start_block = start_block
+            range_end_block = end_block + 1
+
+        range_start_pos = block_start(range_start_block)
+        range_end_pos = block_after(range_end_block)
+        range_text = self._text_between(range_start_pos, range_end_pos)
+        if not range_text:
+            return
+
+        lines = range_text.splitlines()
+        trailing_newline = range_text.endswith('\n')
+
+        if len(lines) < 2:
+            return
+
+        if direction == -1:
+            # Move selection above the previous line
+            new_lines = lines[1:] + lines[:1]
+            selection_offset = 0
+        else:
+            # Move selection below the next line
+            new_lines = lines[-1:] + lines[:-1]
+            selection_offset = len(new_lines[0]) + 1  # Account for the newline added by join
+
+        new_text = '\n'.join(new_lines)
+        if trailing_newline:
+            new_text += '\n'
+
+        edit_cursor = QTextCursor(doc)
+        edit_cursor.setPosition(range_start_pos)
+        edit_cursor.setPosition(range_end_pos, QTextCursor.MoveMode.KeepAnchor)
+        edit_cursor.beginEditBlock()
+        edit_cursor.insertText(new_text)
+        edit_cursor.endEditBlock()
+
+        new_selection_start = range_start_pos + selection_offset
+        new_anchor = new_selection_start + anchor_offset
+        new_position = new_selection_start + position_offset
+
+        updated_cursor = self.textCursor()
+        updated_cursor.setPosition(new_anchor)
+        updated_cursor.setPosition(new_position, QTextCursor.MoveMode.KeepAnchor)
+        self.setTextCursor(updated_cursor)
+        self.ensureCursorVisible()
+        self.highlight_current_line()
+
+    def _text_between(self, start: int, end: int) -> str:
+        """Return plain text between positions, normalizing Qt line separators."""
+        temp_cursor = QTextCursor(self.document())
+        temp_cursor.setPosition(start)
+        temp_cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        return temp_cursor.selectedText().replace('\u2029', '\n')
 
 
 class MarkdownHighlighter(QSyntaxHighlighter):
