@@ -1,21 +1,16 @@
 import os
 import yaml
 import shutil
+import copy
+import time
 from pathlib import Path
 from datetime import datetime
 from .llm import DEFAULT_SYSTEM_PROMPT
-from ..utils import get_app_path
+from ..utils import get_app_path, get_templates_path
 
 
-# Fixed mapping between presets and layout templates
-# Each preset is associated with a specific template that cannot be changed
-PRESET_TEMPLATE_MAP = {
-    'preset_1': 'preset_1',
-    'preset_2': 'preset_2',
-    'preset_3': 'preset_3',
-    'preset_4': 'preset_4',
-    'preset_5': 'preset_5',
-}
+# Default preset keys (used for initial setup and template resolution)
+DEFAULT_PRESET_KEYS = ['preset_1', 'preset_2', 'preset_3', 'preset_4', 'preset_5']
 
 PREVIOUS_DEFAULT_SYSTEM_PROMPT = '''You are an assistant helping create professional quotations and proposals.
 
@@ -224,9 +219,8 @@ class ConfigLoader:
         }
 
     def _get_empty_preset(self, name: str, preset_key: str = 'preset_1') -> dict:
-        """Returns an empty preset structure with the fixed template for this preset."""
-        # Each preset has a fixed template that cannot be changed by the user
-        template = PRESET_TEMPLATE_MAP.get(preset_key, 'preset_1')
+        """Returns an empty preset structure. Template name matches preset key."""
+        # Each preset has its own template file(s) with matching name
         return {
             'name': name,
             'company': {
@@ -247,7 +241,7 @@ class ConfigLoader:
                 'enabled': True
             },
             'layout': {
-                'template': template,
+                'template': preset_key,
                 'page_margins': [20, 20, 20, 20]
             },
             'snippets': {
@@ -531,6 +525,210 @@ class ConfigLoader:
             return p
             
         return None
+
+    # -------------------------------------------------------------------------
+    # Preset CRUD Operations
+    # -------------------------------------------------------------------------
+
+    def _generate_preset_key(self) -> str:
+        """Generates a unique preset key using timestamp."""
+        return f"profile_{int(time.time() * 1000)}"
+
+    def _find_template_file(self, template_name: str, extension: str) -> Path:
+        """
+        Find a template file, prioritizing user config then app templates.
+        Returns the path if found, None otherwise.
+        """
+        filename = f"{template_name}.{extension}"
+        
+        # 1. Check user config templates dir
+        user_path = self.templates_dir / filename
+        if user_path.exists():
+            return user_path
+            
+        # 2. Check app templates dir
+        app_path = get_templates_path() / filename
+        if app_path.exists():
+            return app_path
+            
+        return None
+
+    def _copy_template_files(self, source_key: str, target_key: str) -> tuple[bool, str]:
+        """
+        Copy template files (HTML and CSS) from source preset to target preset.
+        Target files are stored in user config templates directory.
+        
+        Returns a tuple of (success, message).
+        """
+        # Ensure templates dir exists
+        self.templates_dir.mkdir(parents=True, exist_ok=True)
+        
+        copied_files = []
+        errors = []
+        
+        for ext in ['html', 'css']:
+            source_path = self._find_template_file(source_key, ext)
+            if not source_path:
+                errors.append(f"Source {ext.upper()} not found: {source_key}.{ext}")
+                continue
+            
+            target_path = self.templates_dir / f"{target_key}.{ext}"
+            
+            # Don't copy if source and target are the same file
+            if source_path.resolve() == target_path.resolve():
+                continue
+            
+            try:
+                shutil.copy2(source_path, target_path)
+                copied_files.append(f"{target_key}.{ext}")
+            except Exception as e:
+                errors.append(f"Failed to copy {ext.upper()}: {e}")
+        
+        if errors:
+            return (False, "; ".join(errors))
+        elif copied_files:
+            return (True, f"Template files copied: {', '.join(copied_files)}")
+        else:
+            return (True, "Templates already up to date")
+
+    def _delete_template_files(self, preset_key: str) -> tuple[bool, str]:
+        """
+        Delete template files (HTML and CSS) for a preset from user config dir.
+        Only deletes from user config dir, not from app templates.
+        
+        Returns a tuple of (success, message).
+        """
+        deleted_files = []
+        errors = []
+        
+        for ext in ['html', 'css']:
+            user_path = self.templates_dir / f"{preset_key}.{ext}"
+            if user_path.exists():
+                try:
+                    user_path.unlink()
+                    deleted_files.append(f"{preset_key}.{ext}")
+                except Exception as e:
+                    errors.append(f"Failed to delete {ext.upper()}: {e}")
+        
+        if errors:
+            return (False, "; ".join(errors))
+        elif deleted_files:
+            return (True, f"Template files deleted: {', '.join(deleted_files)}")
+        else:
+            return (True, "No template files to delete")
+
+    def get_preset_list(self) -> list[tuple[str, str]]:
+        """
+        Returns a list of (preset_key, preset_name) tuples for all presets,
+        sorted by name.
+        """
+        presets = self.config.get('presets', {})
+        result = []
+        for key, preset in presets.items():
+            name = preset.get('name', key)
+            result.append((key, name))
+        # Sort by name (case-insensitive)
+        result.sort(key=lambda x: x[1].lower())
+        return result
+
+    def create_preset(self, name: str, source_key: str = None) -> tuple[str, str]:
+        """
+        Creates a new preset by copying from source_key (or active preset if None).
+        Also copies the template files.
+        
+        Returns a tuple of (new_preset_key, error_message or None).
+        """
+        if source_key is None:
+            source_key = self.get_active_preset_name()
+        
+        source_preset = self.config.get('presets', {}).get(source_key)
+        if not source_preset:
+            return (None, f"Source preset '{source_key}' not found")
+        
+        # Generate unique key
+        new_key = self._generate_preset_key()
+        
+        # Deep copy the source preset
+        new_preset = copy.deepcopy(source_preset)
+        new_preset['name'] = name
+        # Update template to match new key
+        if 'layout' not in new_preset:
+            new_preset['layout'] = {}
+        new_preset['layout']['template'] = new_key
+        
+        # Reset quotation counter for new preset
+        if 'quotation_number' in new_preset:
+            new_preset['quotation_number']['counter'] = 0
+            new_preset['quotation_number']['last_reset_year'] = None
+            new_preset['quotation_number']['last_reset_month'] = None
+        
+        # Copy template files
+        success, message = self._copy_template_files(source_key, new_key)
+        if not success:
+            return (None, f"Failed to copy templates: {message}")
+        
+        # Add to config
+        self.config.setdefault('presets', {})[new_key] = new_preset
+        
+        return (new_key, None)
+
+    def duplicate_preset(self, source_key: str, new_name: str = None) -> tuple[str, str]:
+        """
+        Duplicates an existing preset with a new name.
+        If new_name is None, appends " (Copy)" to the source name.
+        
+        Returns a tuple of (new_preset_key, error_message or None).
+        """
+        source_preset = self.config.get('presets', {}).get(source_key)
+        if not source_preset:
+            return (None, f"Source preset '{source_key}' not found")
+        
+        if new_name is None:
+            source_name = source_preset.get('name', source_key)
+            new_name = f"{source_name} (Copy)"
+        
+        return self.create_preset(new_name, source_key)
+
+    def delete_preset(self, preset_key: str) -> tuple[bool, str]:
+        """
+        Deletes a preset and its template files.
+        Cannot delete the last remaining preset.
+        
+        Returns a tuple of (success, error_message or None).
+        """
+        presets = self.config.get('presets', {})
+        
+        if preset_key not in presets:
+            return (False, f"Preset '{preset_key}' not found")
+        
+        if len(presets) <= 1:
+            return (False, "Cannot delete the last preset")
+        
+        # Delete template files (only from user config dir)
+        self._delete_template_files(preset_key)
+        
+        # Remove from config
+        del presets[preset_key]
+        
+        # If active preset was deleted, switch to first available
+        if self.config.get('active_preset') == preset_key:
+            first_key = next(iter(presets.keys()))
+            self.config['active_preset'] = first_key
+        
+        return (True, None)
+
+    def rename_preset(self, preset_key: str, new_name: str) -> tuple[bool, str]:
+        """
+        Renames a preset (changes the display name, not the key).
+        
+        Returns a tuple of (success, error_message or None).
+        """
+        preset = self.config.get('presets', {}).get(preset_key)
+        if not preset:
+            return (False, f"Preset '{preset_key}' not found")
+        
+        preset['name'] = new_name
+        return (True, None)
 
 # Global instance
 config = ConfigLoader()

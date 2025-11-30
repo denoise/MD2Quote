@@ -264,17 +264,6 @@ class CSSEditorDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Could not save CSS:\n{e}")
 
 
-# Fixed mapping between presets and layout templates
-# Each preset is associated with a specific template that cannot be changed
-PRESET_TEMPLATE_MAP = {
-    'preset_1': ('preset_1', 'Preset 1 Template'),
-    'preset_2': ('preset_2', 'Preset 2 Template'),
-    'preset_3': ('preset_3', 'Preset 3 Template'),
-    'preset_4': ('preset_4', 'Preset 4 Template'),
-    'preset_5': ('preset_5', 'Preset 5 Template'),
-}
-
-
 # Common font families for dropdowns
 FONT_FAMILIES = {
     'heading': [
@@ -667,6 +656,245 @@ class SectionCard(QFrame):
                 self._track_layout_widgets(item.layout())
 
 
+class PresetListWidget(QFrame):
+    """
+    A widget displaying a list of presets with add/delete/duplicate buttons.
+    Used in the left column of the Profiles dialog.
+    """
+    
+    presetSelected = pyqtSignal(str)  # Emits preset_key when selection changes
+    presetCreated = pyqtSignal(str)   # Emits new preset_key when created
+    presetDeleted = pyqtSignal(str)   # Emits deleted preset_key
+    presetDuplicated = pyqtSignal(str)  # Emits new preset_key when duplicated
+    
+    def __init__(self, config_loader, parent=None):
+        super().__init__(parent)
+        self.config_loader = config_loader
+        self._setup_ui()
+        self._apply_style()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SPACING['sm'])
+        
+        # Header
+        header = QLabel("PROFILES")
+        header.setStyleSheet(f"""
+            QLabel {{
+                color: {COLORS['accent']};
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                padding: {SPACING['sm']}px;
+                padding-bottom: {SPACING['xs']}px;
+            }}
+        """)
+        layout.addWidget(header)
+        
+        # List widget
+        self.list_widget = QListWidget()
+        self.list_widget.setSpacing(1)
+        self.list_widget.currentItemChanged.connect(self._on_selection_changed)
+        layout.addWidget(self.list_widget, 1)
+        
+        # Action buttons row
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(SPACING['xs'])
+        btn_row.setContentsMargins(SPACING['sm'], 0, SPACING['sm'], SPACING['sm'])
+        
+        self.add_btn = QPushButton()
+        self.add_btn.setIcon(icon('add', 16, COLORS['text_primary']))
+        self.add_btn.setToolTip("Add new profile")
+        self.add_btn.setFixedSize(32, 28)
+        self.add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.add_btn.clicked.connect(self._on_add_clicked)
+        btn_row.addWidget(self.add_btn)
+        
+        self.delete_btn = QPushButton()
+        self.delete_btn.setIcon(icon('delete', 16, COLORS['text_primary']))
+        self.delete_btn.setToolTip("Delete selected profile")
+        self.delete_btn.setFixedSize(32, 28)
+        self.delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.delete_btn.clicked.connect(self._on_delete_clicked)
+        btn_row.addWidget(self.delete_btn)
+        
+        self.duplicate_btn = QPushButton()
+        self.duplicate_btn.setIcon(icon('content_copy', 16, COLORS['text_primary']))
+        self.duplicate_btn.setToolTip("Duplicate selected profile")
+        self.duplicate_btn.setFixedSize(32, 28)
+        self.duplicate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.duplicate_btn.clicked.connect(self._on_duplicate_clicked)
+        btn_row.addWidget(self.duplicate_btn)
+        
+        btn_row.addStretch()
+        layout.addLayout(btn_row)
+    
+    def _apply_style(self):
+        self.setStyleSheet(f"""
+            PresetListWidget {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+            }}
+            QListWidget {{
+                background-color: transparent;
+                border: none;
+                outline: none;
+                padding: 0 {SPACING['xs']}px;
+            }}
+            QListWidget::item {{
+                background-color: transparent;
+                color: {COLORS['text_secondary']};
+                padding: 8px 12px;
+                border-radius: 0;
+                margin: 1px 0;
+            }}
+            QListWidget::item:selected {{
+                background-color: {COLORS['accent']};
+                color: white;
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {COLORS['bg_hover']};
+                color: {COLORS['text_primary']};
+            }}
+            QPushButton {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+                border-color: {COLORS['text_muted']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['accent']};
+                border-color: {COLORS['accent']};
+            }}
+        """)
+    
+    def load_presets(self, config: dict, current_key: str = None):
+        """Load presets from config dict and select current_key if provided."""
+        self.list_widget.blockSignals(True)
+        self.list_widget.clear()
+        
+        presets = config.get('presets', {})
+        # Sort by name
+        sorted_items = sorted(presets.items(), key=lambda x: x[1].get('name', x[0]).lower())
+        
+        for preset_key, preset_data in sorted_items:
+            name = preset_data.get('name', preset_key)
+            item = QListWidgetItem(name)
+            item.setData(Qt.ItemDataRole.UserRole, preset_key)
+            self.list_widget.addItem(item)
+            
+            if preset_key == current_key:
+                self.list_widget.setCurrentItem(item)
+        
+        self.list_widget.blockSignals(False)
+        self._update_button_states()
+    
+    def get_selected_key(self) -> str:
+        """Returns the preset key of the currently selected item."""
+        item = self.list_widget.currentItem()
+        if item:
+            return item.data(Qt.ItemDataRole.UserRole)
+        return None
+    
+    def select_preset(self, preset_key: str):
+        """Select a preset by its key."""
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            if item.data(Qt.ItemDataRole.UserRole) == preset_key:
+                self.list_widget.setCurrentItem(item)
+                break
+    
+    def update_item_name(self, preset_key: str, new_name: str):
+        """Update the display name for a preset in the list."""
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            if item.data(Qt.ItemDataRole.UserRole) == preset_key:
+                item.setText(new_name)
+                break
+    
+    def _update_button_states(self):
+        """Update button enabled states based on current selection."""
+        has_selection = self.list_widget.currentItem() is not None
+        can_delete = has_selection and self.list_widget.count() > 1
+        
+        self.delete_btn.setEnabled(can_delete)
+        self.duplicate_btn.setEnabled(has_selection)
+    
+    def _on_selection_changed(self, current, previous):
+        """Handle selection change in the list."""
+        self._update_button_states()
+        if current:
+            preset_key = current.data(Qt.ItemDataRole.UserRole)
+            self.presetSelected.emit(preset_key)
+    
+    def _on_add_clicked(self):
+        """Handle add button click - create new profile."""
+        name, ok = QInputDialog.getText(
+            self,
+            "New Profile",
+            "Enter name for the new profile:",
+            QLineEdit.EchoMode.Normal,
+            "New Profile"
+        )
+        if ok and name.strip():
+            self.presetCreated.emit(name.strip())
+    
+    def _on_delete_clicked(self):
+        """Handle delete button click."""
+        current = self.list_widget.currentItem()
+        if not current:
+            return
+        
+        preset_key = current.data(Qt.ItemDataRole.UserRole)
+        preset_name = current.text()
+        
+        if self.list_widget.count() <= 1:
+            QMessageBox.warning(
+                self,
+                "Cannot Delete",
+                "You cannot delete the last remaining profile."
+            )
+            return
+        
+        reply = QMessageBox.question(
+            self,
+            "Delete Profile",
+            f"Are you sure you want to delete '{preset_name}'?\n\n"
+            "This will also delete the associated template files.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self.presetDeleted.emit(preset_key)
+    
+    def _on_duplicate_clicked(self):
+        """Handle duplicate button click."""
+        current = self.list_widget.currentItem()
+        if not current:
+            return
+        
+        preset_key = current.data(Qt.ItemDataRole.UserRole)
+        preset_name = current.text()
+        
+        new_name, ok = QInputDialog.getText(
+            self,
+            "Duplicate Profile",
+            "Enter name for the duplicated profile:",
+            QLineEdit.EchoMode.Normal,
+            f"{preset_name} (Copy)"
+        )
+        
+        if ok and new_name.strip():
+            # Emit signal with the source key - parent will handle the duplication
+            self.presetDuplicated.emit(new_name.strip())
+
+
 class FormField(QWidget):
     """A form field with label on top and input below."""
     
@@ -710,7 +938,7 @@ class FormRow(QWidget):
         
         lbl = QLabel(label)
         self.label_widget = lbl
-        lbl.setFixedWidth(100)
+        lbl.setFixedWidth(75)  # Reduced from 100 (25% narrower)
         lbl.setStyleSheet(f"""
             color: {COLORS['text_secondary']};
             font-weight: 500;
@@ -852,7 +1080,7 @@ class MarginControl(QWidget):
         for spin in [self.top, self.right, self.bottom, self.left]:
             spin.setRange(0, 100)
             spin.setSuffix(" mm")
-            spin.setMinimumWidth(90)
+            spin.setMinimumWidth(70)  # Reduced from 90 (25% narrower)
         
         # Labels
         top_lbl = QLabel("↑ Top")
@@ -903,12 +1131,11 @@ class ConfigDialog(QDialog):
             self.current_preset_key = self.config.get('active_preset', 'preset_1')
         
         self.setWindowTitle("Profiles")
-        self.setMinimumSize(1000, 620)
-        self.resize(1100, 680)
+        self.setMinimumSize(1100, 620)
+        self.resize(1200, 720)
         
         self._setup_ui()
         self._load_preset_values(self.current_preset_key)
-        self._refresh_copy_menu()
         self._apply_dialog_style()
     
     def _apply_dialog_style(self):
@@ -1020,129 +1247,52 @@ class ConfigDialog(QDialog):
         title_container.addStretch()
         layout.addLayout(title_container)
         
-        # Preset Selector Bar
-        preset_card = SectionCard()
-        preset_card.setStyleSheet(f"""
-            QFrame#section-card {{
-                background-color: {COLORS['bg_dark']};
-                border: 1px solid {COLORS['border']};
-                border-radius: 0;
-                padding: {SPACING['sm']}px;
-            }}
-        """)
+        # Main content: two-column layout
+        main_content = QHBoxLayout()
+        main_content.setSpacing(SPACING['md'])
         
-        preset_inner_layout = QVBoxLayout()
-        preset_inner_layout.setSpacing(SPACING['sm'])
+        # Left column: Preset list (240px fixed width)
+        self.preset_list = PresetListWidget(self.config_loader)
+        self.preset_list.setFixedWidth(240)
+        self.preset_list.load_presets(self.config, self.current_preset_key)
+        self.preset_list.presetSelected.connect(self._on_preset_selected)
+        self.preset_list.presetCreated.connect(self._on_preset_created)
+        self.preset_list.presetDeleted.connect(self._on_preset_deleted)
+        self.preset_list.presetDuplicated.connect(self._on_preset_duplicated)
+        main_content.addWidget(self.preset_list)
         
-        # Preset buttons row
-        preset_btn_layout = QHBoxLayout()
-        preset_btn_layout.setSpacing(SPACING['xs'])
+        # Right column: Settings panel
+        right_column = QVBoxLayout()
+        right_column.setSpacing(SPACING['sm'])
         
-        self.preset_group = QButtonGroup(self)
-        self.preset_group.setExclusive(True)
-        self.preset_group.buttonClicked.connect(self._on_preset_changed)
-        
-        presets = self.config.get('presets', {})
-        for i in range(1, 6):
-            key = f"preset_{i}"
-            preset_data = presets.get(key, {})
-            name = preset_data.get('name', f"Preset {i}")
-            
-            btn = QPushButton(f"{i}. {name}")
-            btn.setCheckable(True)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setProperty("preset_key", key)
-            btn.setFixedHeight(28)
-            btn.setMinimumWidth(100)
-            
-            if key == self.current_preset_key:
-                btn.setChecked(True)
-                
-            self.preset_group.addButton(btn)
-            preset_btn_layout.addWidget(btn)
-        
-        preset_card.addLayout(preset_btn_layout)
-        
-        # Preset name input row
+        # Preset name row at top of right column
         name_row = QHBoxLayout()
         name_row.setSpacing(SPACING['sm'])
         
-        name_label = QLabel("Preset Name:")
+        name_label = QLabel("Profile Name:")
         name_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         name_row.addWidget(name_label)
         
         self.preset_name_edit = QLineEdit()
         self.preset_name_edit.setPlaceholderText("e.g. Company A, Freelance, Private")
-        self.preset_name_edit.setMinimumHeight(24)
-        self.preset_name_edit.setMaximumWidth(260)
-        self.preset_name_edit.textChanged.connect(self._update_preset_button_text)
+        self.preset_name_edit.setMinimumHeight(28)
+        self.preset_name_edit.textChanged.connect(self._on_preset_name_changed)
         name_row.addWidget(self.preset_name_edit, 1)
         
-        self.copy_menu = QMenu(self)
-        self.copy_menu.triggered.connect(self._on_copy_target_selected)
-        
-        self.copy_button = QToolButton()
-        self.copy_button.setText("Copy preset to…")
-        self.copy_button.setIcon(icon('content_copy', 16, COLORS['text_secondary']))
-        self.copy_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.copy_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.copy_button.setMinimumWidth(150)
-        self.copy_button.setMenu(self.copy_menu)
-        self.copy_button.setStyleSheet(f"""
-            QToolButton {{
-                background-color: {COLORS['bg_elevated']};
-                border: 1px solid {COLORS['border']};
-                border-radius: 0;
-                color: {COLORS['text_primary']};
-                padding: 0px 10px;
-                padding-right: 24px;
-                min-height: 26px;
-                max-height: 26px;
-                font-weight: 500;
-                margin: 0px;
-            }}
-            QToolButton:hover {{
-                background-color: {COLORS['bg_hover']};
-                border-color: {COLORS['text_muted']};
-            }}
-            QToolButton:pressed {{
-                background-color: {COLORS['bg_base']};
-                border-color: {COLORS['accent']};
-            }}
-            QToolButton::menu-indicator {{
-                image: none;
-                subcontrol-position: center right;
-                subcontrol-origin: padding;
-                width: 0;
-                height: 0;
-                border-left: 4px solid transparent;
-                border-right: 4px solid transparent;
-                border-top: 5px solid {COLORS['text_muted']};
-                margin-right: 8px;
-            }}
-            QToolButton:hover::menu-indicator {{
-                border-top-color: {COLORS['text_primary']};
-            }}
-        """)
-        name_row.addWidget(self.copy_button)
-        
-        self.copy_status_label = QLabel("")
-        self.copy_status_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
-        self.copy_status_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        name_row.addWidget(self.copy_status_label, 1)
-        
-        preset_card.addLayout(name_row)
-        layout.addWidget(preset_card)
+        right_column.addLayout(name_row)
         
         # Tab widget
         self.tabs = QTabWidget()
-        layout.addWidget(self.tabs, 1)
+        right_column.addWidget(self.tabs, 1)
         
         # Create tabs with Material icons (preset-specific settings)
         self.tabs.addTab(self._create_identity_tab(), icon('badge', 18, COLORS['text_secondary']), "Identity")
         self.tabs.addTab(self._create_document_tab(), icon('article', 18, COLORS['text_secondary']), "Document")
         self.tabs.addTab(self._create_styling_tab(), icon('palette', 18, COLORS['text_secondary']), "Styling")
         self.tabs.addTab(self._create_defaults_tab(), icon('tune', 18, COLORS['text_secondary']), "Defaults")
+        
+        main_content.addLayout(right_column, 1)
+        layout.addLayout(main_content, 1)
         
         # Bottom buttons
         btn_layout = QHBoxLayout()
@@ -1246,7 +1396,7 @@ class ConfigDialog(QDialog):
         
         # Empty label to align with form row
         logo_spacer = QLabel("")
-        logo_spacer.setFixedWidth(100)
+        logo_spacer.setFixedWidth(75)  # Reduced to match FormRow label width
         logo_preview_row.addWidget(logo_spacer)
         
         self.logo_preview = LogoPreview()
@@ -1276,7 +1426,7 @@ class ConfigDialog(QDialog):
         self.contact_postal = QLineEdit()
         self.contact_postal.setPlaceholderText("Postal Code")
         self.contact_postal.setMinimumHeight(24)
-        self.contact_postal.setMaximumWidth(100)
+        self.contact_postal.setMaximumWidth(80)  # Reduced from 100
         city_row.addWidget(self.contact_postal)
         
         self.contact_city = QLineEdit()
@@ -1583,7 +1733,7 @@ class ConfigDialog(QDialog):
         self.defaults_currency.addItems(["EUR", "USD", "GBP", "CHF", "JPY", "CAD", "AUD"])
         self.defaults_currency.setEditable(True)  # Allow custom currencies
         self.defaults_currency.setMinimumHeight(26)
-        self.defaults_currency.setMinimumWidth(90)
+        self.defaults_currency.setMinimumWidth(70)  # Reduced from 90
         currency_col.addWidget(self.defaults_currency)
         row1.addLayout(currency_col)
         
@@ -1595,7 +1745,7 @@ class ConfigDialog(QDialog):
         self.defaults_language = QComboBox()
         self.defaults_language.addItems(["de", "en"])
         self.defaults_language.setMinimumHeight(24)
-        self.defaults_language.setMinimumWidth(80)
+        self.defaults_language.setMinimumWidth(60)  # Reduced from 80
         lang_col.addWidget(self.defaults_language)
         row1.addLayout(lang_col)
         
@@ -1616,7 +1766,7 @@ class ConfigDialog(QDialog):
         self.defaults_vat_type.addItem("Kleinunternehmer (§19 UStG)", "kleinunternehmer")
         self.defaults_vat_type.addItem("German VAT / Deutsche USt", "german_vat")
         self.defaults_vat_type.setMinimumHeight(24)
-        self.defaults_vat_type.setMinimumWidth(200)
+        self.defaults_vat_type.setMinimumWidth(150)  # Reduced from 200
         self.defaults_vat_type.currentIndexChanged.connect(self._on_vat_type_changed)
         vat_type_col.addWidget(self.defaults_vat_type)
         row2.addLayout(vat_type_col)
@@ -1636,7 +1786,7 @@ class ConfigDialog(QDialog):
         self.defaults_tax_rate = StyledSpinBox()
         self.defaults_tax_rate.setRange(0, 100)
         self.defaults_tax_rate.setSuffix(" %")
-        self.defaults_tax_rate.setMinimumWidth(80)
+        self.defaults_tax_rate.setMinimumWidth(60)  # Reduced from 80
         tax_col.addWidget(self.defaults_tax_rate)
         row3.addLayout(tax_col)
         
@@ -1648,7 +1798,7 @@ class ConfigDialog(QDialog):
         self.defaults_payment_days = StyledSpinBox()
         self.defaults_payment_days.setRange(1, 365)
         self.defaults_payment_days.setSuffix(" days")
-        self.defaults_payment_days.setMinimumWidth(100)
+        self.defaults_payment_days.setMinimumWidth(75)  # Reduced from 100
         payment_col.addWidget(self.defaults_payment_days)
         row3.addLayout(payment_col)
         
@@ -1721,7 +1871,7 @@ class ConfigDialog(QDialog):
         counter_row.addStretch()
         
         reset_counter_btn = QPushButton("Reset Counter")
-        reset_counter_btn.setMinimumWidth(90)
+        reset_counter_btn.setMinimumWidth(70)  # Reduced from 90
         reset_counter_btn.clicked.connect(self._reset_qn_counter)
         counter_row.addWidget(reset_counter_btn)
         
@@ -1782,241 +1932,95 @@ class ConfigDialog(QDialog):
             QMessageBox.information(self, "Counter Reset", "Quotation counter has been reset to 0.")
 
     def _preset_display_name(self, preset_key: str) -> str:
-        """Return stored preset name or a numbered fallback."""
+        """Return stored preset name or the key as fallback."""
         presets = self.config.get('presets', {})
         preset = presets.get(preset_key, {})
-        num = preset_key.split('_')[-1]
         name = preset.get('name')
-        return name if name else f"Preset {num}"
+        return name if name else preset_key
 
-    def _preset_label(self, preset_key: str) -> str:
-        """Human friendly label used in copy prompts/status."""
-        num = preset_key.split('_')[-1]
-        name = self._preset_display_name(preset_key)
-        return f"Preset {num}: {name}"
+    # -------------------------------------------------------------------------
+    # Preset List Event Handlers
+    # -------------------------------------------------------------------------
 
-    def _get_preset_button(self, preset_key: str):
-        """Find the toggle button for a given preset key."""
-        for btn in self.preset_group.buttons():
-            if btn.property("preset_key") == preset_key:
-                return btn
-        return None
-
-    def _set_preset_button_text(self, preset_key: str, name: str):
-        """Update preset button text to include its number."""
-        btn = self._get_preset_button(preset_key)
-        if btn:
-            num = preset_key.split('_')[-1]
-            btn.setText(f"{num}. {name}")
-
-    def _select_preset_button(self, preset_key: str):
-        """Check the preset button corresponding to preset_key."""
-        btn = self._get_preset_button(preset_key)
-        if btn:
-            btn.setChecked(True)
-
-    def _refresh_copy_menu(self):
-        """Rebuild the copy target menu, excluding the active preset."""
-        if not hasattr(self, "copy_menu"):
-            return
-
-        self.copy_menu.clear()
-
-        for i in range(1, 6):
-            key = f"preset_{i}"
-            if key == self.current_preset_key:
-                continue
-            name = self._preset_display_name(key)
-            action = self.copy_menu.addAction(f"To {i}. {name}")
-            action.setData(key)
-
-        self.copy_button.setEnabled(len(self.copy_menu.actions()) > 0)
-
-    def _update_copy_status(self, message: str):
-        """Show short status text next to the copy button."""
-        if hasattr(self, "copy_status_label"):
-            self.copy_status_label.setText(message)
-    
-    def _on_preset_changed(self, button):
-        """Handle preset switching. Save current form to memory, load new preset."""
-        new_key = button.property("preset_key")
-        if new_key == self.current_preset_key:
+    def _on_preset_selected(self, preset_key: str):
+        """Handle preset selection from the list widget."""
+        if preset_key == self.current_preset_key:
             return
         
         # Save current values to memory
         self._save_current_preset_to_memory()
         
         # Update current key
-        self.current_preset_key = new_key
+        self.current_preset_key = preset_key
         
         # Load new values
-        self._load_preset_values(new_key)
-        self._refresh_copy_menu()
-        self._update_copy_status("")
-    
-    def _update_preset_button_text(self, text):
-        """Update the text of the button for the current preset."""
-        self._set_preset_button_text(self.current_preset_key, text)
-        
-        # Also update in memory config immediately for name
-        # Ensure keys exist
+        self._load_preset_values(preset_key)
+
+    def _on_preset_name_changed(self, text: str):
+        """Handle preset name change from the name input field."""
+        # Update in memory config
         if 'presets' not in self.config:
             self.config['presets'] = {}
         if self.current_preset_key not in self.config['presets']:
             self.config['presets'][self.current_preset_key] = {}
             
         self.config['presets'][self.current_preset_key]['name'] = text
-        self._refresh_copy_menu()
+        
+        # Update the list widget
+        self.preset_list.update_item_name(self.current_preset_key, text)
 
-    def _on_copy_target_selected(self, action):
-        """Handle click on a copy target menu entry."""
-        if not action:
+    def _on_preset_created(self, name: str):
+        """Handle new preset creation from the list widget."""
+        # Save current preset first
+        self._save_current_preset_to_memory()
+        
+        # Create new preset using config_loader
+        new_key, error = self.config_loader.create_preset(name, self.current_preset_key)
+        
+        if error:
+            QMessageBox.warning(self, "Error", f"Could not create profile:\n{error}")
             return
-        target_key = action.data()
-        if not target_key or target_key == self.current_preset_key:
-            return
-        self._prompt_copy_to(target_key)
-
-    def _prompt_copy_to(self, target_key: str):
-        """Confirm copy and whether to copy the preset name."""
-        source_label = self._preset_label(self.current_preset_key)
-        target_label = self._preset_label(target_key)
-
-        confirm = QMessageBox(self)
-        confirm.setIcon(QMessageBox.Icon.Question)
-        confirm.setWindowTitle("Copy Preset")
-        confirm.setText(f"Replace {target_label} with {source_label}?")
-        confirm.setInformativeText(
-            "This will copy identity, document, styling, defaults, and numbering settings."
+        
+        # Copy the new preset data to our working config
+        self.config['presets'][new_key] = copy.deepcopy(
+            self.config_loader.config['presets'][new_key]
         )
-        copy_name_checkbox = QCheckBox("Copy name too", confirm)
-        copy_name_checkbox.setChecked(False)
-        confirm.setCheckBox(copy_name_checkbox)
-        confirm.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        confirm.setDefaultButton(QMessageBox.StandardButton.Yes)
-
-        result = confirm.exec()
-        if result == QMessageBox.StandardButton.Yes:
-            self._copy_preset_to(target_key, copy_name_checkbox.isChecked())
-
-    def _find_template_file(self, template_name: str, extension: str) -> Path:
-        """Find a template file, prioritizing user config then app templates."""
-        filename = f"{template_name}.{extension}"
         
-        # 1. Check user config templates dir
-        user_path = self.config_loader.templates_dir / filename
-        if user_path.exists():
-            return user_path
-            
-        # 2. Check app templates dir
-        app_path = get_templates_path() / filename
-        if app_path.exists():
-            return app_path
-            
-        return None
-
-    def _is_development_mode(self) -> bool:
-        """Check if running from source (development) or bundled app (production)."""
-        import sys
-        return not (getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'))
-
-    def _copy_template_files(self, source_key: str, target_key: str) -> tuple[bool, str]:
-        """
-        Copy template files (HTML and CSS) from source preset to target preset.
+        # Switch to the new preset
+        self.current_preset_key = new_key
+        self.config['active_preset'] = new_key
         
-        In development mode: copies to source templates directory (templates/)
-        In production mode: copies to user config directory (~/.config/md2angebot/templates/)
-        
-        Returns a tuple of (success, message).
-        """
-        source_template = PRESET_TEMPLATE_MAP.get(source_key, (source_key, ''))[0]
-        target_template = PRESET_TEMPLATE_MAP.get(target_key, (target_key, ''))[0]
-        
-        # Determine target directory based on mode
-        # In development, the renderer loads from source templates first
-        # In production, it loads from user config first
-        is_dev = self._is_development_mode()
-        
-        if is_dev:
-            # Development mode: copy to source templates directory
-            target_dir = get_templates_path()
-        else:
-            # Production mode: copy to user config templates directory
-            target_dir = self.config_loader.templates_dir
-            target_dir.mkdir(parents=True, exist_ok=True)
-        
-        copied_files = []
-        errors = []
-        
-        for ext in ['html', 'css']:
-            source_path = self._find_template_file(source_template, ext)
-            if not source_path:
-                errors.append(f"Source {ext.upper()} not found: {source_template}.{ext}")
-                continue
-            
-            target_path = target_dir / f"{target_template}.{ext}"
-            
-            # Don't copy if source and target are the same file
-            if source_path.resolve() == target_path.resolve():
-                continue
-            
-            try:
-                shutil.copy2(source_path, target_path)
-                copied_files.append(f"{target_template}.{ext}")
-            except Exception as e:
-                errors.append(f"Failed to copy {ext.upper()}: {e}")
-        
-        if errors:
-            return (False, "; ".join(errors))
-        elif copied_files:
-            location = "source" if is_dev else "user config"
-            return (True, f"Template files copied to {location}: {', '.join(copied_files)}")
-        else:
-            return (True, "Templates already up to date")
+        # Reload the list and select the new preset
+        self.preset_list.load_presets(self.config, new_key)
+        self._load_preset_values(new_key)
 
-    def _copy_preset_to(self, target_key: str, copy_name: bool):
-        """Deep copy current preset into target slot, optionally copying the name."""
-        source_key = self.current_preset_key
-        try:
-            self.copy_button.setEnabled(False)
-            self._save_current_preset_to_memory()
+    def _on_preset_deleted(self, preset_key: str):
+        """Handle preset deletion from the list widget."""
+        # Save current state first
+        self._save_current_preset_to_memory()
+        
+        # Delete from our working config
+        if preset_key in self.config.get('presets', {}):
+            del self.config['presets'][preset_key]
+        
+        # Delete template files via config_loader
+        self.config_loader._delete_template_files(preset_key)
+        
+        # If we deleted the current preset, switch to another one
+        if self.current_preset_key == preset_key:
+            remaining_keys = list(self.config.get('presets', {}).keys())
+            if remaining_keys:
+                self.current_preset_key = remaining_keys[0]
+                self.config['active_preset'] = self.current_preset_key
+        
+        # Reload the list
+        self.preset_list.load_presets(self.config, self.current_preset_key)
+        self._load_preset_values(self.current_preset_key)
 
-            presets = self.config.setdefault('presets', {})
-            source_data = copy.deepcopy(presets.get(source_key, {}))
-            target_existing = presets.get(target_key, {})
-
-            if not copy_name:
-                preserved_name = target_existing.get('name', f"Preset {target_key.split('_')[-1]}")
-                source_data['name'] = preserved_name
-            else:
-                source_data['name'] = source_data.get(
-                    'name', f"Preset {source_key.split('_')[-1]}"
-                )
-
-            presets[target_key] = source_data
-
-            # Copy template files (HTML and CSS)
-            template_success, template_msg = self._copy_template_files(source_key, target_key)
-            if not template_success:
-                QMessageBox.warning(
-                    self, 
-                    "Template Copy Warning", 
-                    f"Configuration copied, but template files could not be fully copied:\n{template_msg}"
-                )
-
-            # Switch focus to the target preset
-            self.current_preset_key = target_key
-            self.config['active_preset'] = target_key
-            self._select_preset_button(target_key)
-            self._load_preset_values(target_key)
-            self._refresh_copy_menu()
-            
-            status_msg = f"Copied {self._preset_label(source_key)} -> {self._preset_label(target_key)}"
-            if template_success:
-                status_msg += " (incl. templates)"
-            self._update_copy_status(status_msg)
-        finally:
-            self.copy_button.setEnabled(True)
+    def _on_preset_duplicated(self, new_name: str):
+        """Handle preset duplication from the list widget."""
+        # This is essentially the same as creating a new preset from the current one
+        self._on_preset_created(new_name)
             
     def _save_current_preset_to_memory(self):
         """Saves values from UI fields into self.config for the current preset."""
@@ -2050,10 +2054,9 @@ class ConfigDialog(QDialog):
             'tax_id': self.legal_tax_id.text(),
         }
         
-        # Template is fixed per preset - use the mapping
-        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
+        # Template name matches preset key directly
         preset['layout'] = {
-            'template': template_id,
+            'template': self.current_preset_key,
             'page_margins': self.margin_control.values()
         }
         
@@ -2119,7 +2122,6 @@ class ConfigDialog(QDialog):
         presets = self.config.get('presets', {})
         preset = presets.get(preset_key, {})
         display_name = self._preset_display_name(preset_key)
-        self._set_preset_button_text(preset_key, display_name)
         
         # Name
         self.preset_name_edit.blockSignals(True)
@@ -2267,16 +2269,14 @@ class ConfigDialog(QDialog):
 
     def _edit_template(self):
         """Open the template editor for the current preset's template."""
-        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
-        
-        dialog = TemplateEditorDialog(template_id, self.config_loader, self)
+        # Template name matches preset key directly
+        dialog = TemplateEditorDialog(self.current_preset_key, self.config_loader, self)
         dialog.exec()
 
     def _edit_css(self):
         """Open the CSS editor for the current preset's stylesheet."""
-        template_id, _ = PRESET_TEMPLATE_MAP.get(self.current_preset_key, ('preset_1', 'Preset 1 Template'))
-
-        dialog = CSSEditorDialog(template_id, self.config_loader, self)
+        # Template name matches preset key directly
+        dialog = CSSEditorDialog(self.current_preset_key, self.config_loader, self)
         dialog.exec()
 
     def _save_config(self):
