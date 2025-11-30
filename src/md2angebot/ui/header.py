@@ -345,6 +345,7 @@ class SectionCard(QFrame):
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(SPACING['xs'])
         layout.addLayout(self.content_layout)
+        layout.addStretch()
         
         self.setStyleSheet(f"""
             SectionCard {{
@@ -459,7 +460,7 @@ class HeaderWidget(QWidget):
         quote_grid.addWidget(self.date_edit, 1, 1)
         
         quote_card.content_layout.addLayout(quote_grid)
-        main_layout.addWidget(quote_card)
+        main_layout.addWidget(quote_card, 0)
 
         # === Client Section (Middle, compact) ===
         client_card = SectionCard("Client")
@@ -495,7 +496,7 @@ class HeaderWidget(QWidget):
         client_grid.setColumnStretch(1, 1)
 
         client_card.content_layout.addLayout(client_grid)
-        main_layout.addWidget(client_card, stretch=1)  # Keep compact so LLM panel can grow
+        main_layout.addWidget(client_card, 1)  # Keep compact so LLM panel can grow
 
         # === LLM Assistant Section (Right) ===
         llm_card = SectionCard("LLM Assistant")
@@ -560,7 +561,7 @@ class HeaderWidget(QWidget):
 
         llm_layout.addWidget(llm_input_container)
         llm_card.content_layout.addLayout(llm_layout)
-        main_layout.addWidget(llm_card, stretch=3)
+        main_layout.addWidget(llm_card, 3)
 
     def _create_label(self, text: str) -> QLabel:
         """Creates a styled field label."""
