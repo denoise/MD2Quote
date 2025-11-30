@@ -16,6 +16,27 @@ PRESET_TEMPLATE_MAP = {
     'preset_5': 'preset_5',
 }
 
+# Default LLM configuration
+DEFAULT_LLM_CONFIG = {
+    'provider': 'openrouter',
+    'api_key': '',
+    'model': 'anthropic/claude-sonnet-4-20250514',
+    'system_prompt': '''You are an assistant helping create professional quotations and proposals.
+
+When generating content, follow these guidelines:
+- Use clear, professional language
+- Structure content with appropriate headings and bullet points
+- Include relevant details like scope, deliverables, and timelines when applicable
+- Format output as valid Markdown
+- Be concise but thorough
+
+When editing existing content:
+- Preserve the overall structure unless asked to change it
+- Improve clarity and professionalism
+- Fix any grammatical or formatting issues
+- Maintain the original intent and key information'''
+}
+
 class ConfigLoader:
     APP_NAME = "md2angebot"
     
@@ -113,6 +134,16 @@ class ConfigLoader:
                 except Exception as e:
                     print(f"Error saving backfilled config: {e}")
 
+            # Backfill LLM config if missing (global, not per-preset)
+            if 'llm' not in data:
+                data['llm'] = DEFAULT_LLM_CONFIG.copy()
+                try:
+                    with open(self.config_path, 'w', encoding='utf-8') as f:
+                        yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+                    print("Backfilled LLM config")
+                except Exception as e:
+                    print(f"Error saving backfilled LLM config: {e}")
+
             return data
         except Exception as e:
             print(f"Error loading config: {e}")
@@ -158,7 +189,8 @@ class ConfigLoader:
         
         return {
             'presets': presets,
-            'active_preset': 'preset_1'
+            'active_preset': 'preset_1',
+            'llm': DEFAULT_LLM_CONFIG.copy()
         }
 
     def _get_empty_preset(self, name: str, preset_key: str = 'preset_1') -> dict:
@@ -295,6 +327,20 @@ class ConfigLoader:
     def get_active_preset(self) -> dict:
         """Returns the configuration dict for the active preset."""
         return self.get_preset(self.get_active_preset_name())
+
+    def get_llm_config(self) -> dict:
+        """Returns the LLM configuration."""
+        return self.config.get('llm', DEFAULT_LLM_CONFIG.copy())
+
+    def set_llm_config(self, llm_config: dict):
+        """Sets the LLM configuration."""
+        self.config['llm'] = llm_config
+
+    def is_llm_configured(self) -> bool:
+        """Check if the LLM service is properly configured with an API key."""
+        llm_config = self.get_llm_config()
+        api_key = llm_config.get('api_key', '')
+        return bool(api_key and api_key.strip())
 
     def generate_quotation_number(self, preset_key: str) -> str:
         """

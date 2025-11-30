@@ -138,6 +138,9 @@ ICONS = {
     'bookmark': '\ue866',
     'star': '\ue838',
     'favorite': '\ue87d',
+    'send': '\ue163',
+    'smart_toy': '\uf06c',
+    'add_circle': '\ue147',
     
     # Logo/Brand related
     'branding_watermark': '\ue06b',

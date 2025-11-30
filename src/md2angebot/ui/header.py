@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
                              QTextEdit, QSizePolicy, QFrame, QLabel, QGridLayout,
-                             QPushButton, QCalendarWidget, QMenu, QWidgetAction)
+                             QPushButton, QCalendarWidget, QMenu, QWidgetAction,
+                             QPlainTextEdit)
 from PyQt6.QtCore import QDate, pyqtSignal, Qt, QPoint
-from PyQt6.QtGui import QTextCharFormat, QColor
+from PyQt6.QtGui import QTextCharFormat, QColor, QKeyEvent
 from .styles import COLORS, SPACING
 from .icons import icon
 
@@ -371,9 +372,23 @@ class ModernTextEdit(QTextEdit):
         self.setTabChangesFocus(True)
 
 
+class LLMTextEdit(QPlainTextEdit):
+    """Custom text edit that emits a signal on Cmd+Enter."""
+    
+    submitRequested = pyqtSignal()
+    
+    def keyPressEvent(self, event: QKeyEvent):
+        # Check for Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+        if event.key() == Qt.Key.Key_Return and (event.modifiers() & Qt.KeyboardModifier.ControlModifier):
+            self.submitRequested.emit()
+            return
+        super().keyPressEvent(event)
+
+
 class HeaderWidget(QWidget):
     dataChanged = pyqtSignal()
     generateQuotationRequested = pyqtSignal()
+    llmRequestSubmitted = pyqtSignal(str)  # Emits the instruction text
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -481,7 +496,72 @@ class HeaderWidget(QWidget):
         client_grid.setColumnStretch(3, 1)
 
         client_card.content_layout.addLayout(client_grid)
-        main_layout.addWidget(client_card, stretch=2)
+        main_layout.addWidget(client_card, stretch=1)  # Reduced stretch to make room for LLM panel
+
+        # === LLM Assistant Section (Right) ===
+        llm_card = SectionCard("LLM Assistant")
+        llm_layout = QVBoxLayout()
+        llm_layout.setContentsMargins(0, 0, 0, 0)
+        llm_layout.setSpacing(SPACING['xs'])
+        
+        # Instruction textarea
+        self.llm_instruction = LLMTextEdit()
+        self.llm_instruction.setPlaceholderText("Enter instructions for the LLM... (⌘+Enter to send)")
+        self.llm_instruction.setMaximumHeight(48)
+        self.llm_instruction.setStyleSheet(f"""
+            QPlainTextEdit {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                color: {COLORS['text_primary']};
+                font-size: 12px;
+                padding: {SPACING['xs']}px;
+            }}
+            QPlainTextEdit:focus {{
+                border-color: {COLORS['accent']};
+            }}
+        """)
+        self.llm_instruction.submitRequested.connect(self._on_llm_submit)
+        llm_layout.addWidget(self.llm_instruction)
+        
+        # Footer with send button
+        llm_footer = QHBoxLayout()
+        llm_footer.setContentsMargins(0, 0, 0, 0)
+        llm_footer.setSpacing(SPACING['sm'])
+        
+        llm_footer.addStretch()
+        
+        self.llm_send_button = QPushButton("Send")
+        self.llm_send_button.setIcon(icon('send', 14, COLORS['text_primary']))
+        self.llm_send_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.llm_send_button.setMinimumWidth(70)
+        self.llm_send_button.clicked.connect(self._on_llm_submit)
+        self.llm_send_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['accent']};
+                border: none;
+                border-radius: 0;
+                color: white;
+                font-weight: 600;
+                padding: {SPACING['xs']}px {SPACING['sm']}px;
+                min-height: 22px;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['accent_hover']};
+            }}
+            QPushButton:pressed {{
+                background-color: {COLORS['accent_muted']};
+            }}
+            QPushButton:disabled {{
+                background-color: {COLORS['bg_hover']};
+                color: {COLORS['text_muted']};
+            }}
+        """)
+        llm_footer.addWidget(self.llm_send_button)
+        
+        llm_layout.addLayout(llm_footer)
+        llm_card.content_layout.addLayout(llm_layout)
+        main_layout.addWidget(llm_card, stretch=1)
 
     def _create_label(self, text: str) -> QLabel:
         """Creates a styled field label."""
@@ -501,6 +581,38 @@ class HeaderWidget(QWidget):
     def _on_generate_quotation_clicked(self):
         """Emit signal to request a new quotation number."""
         self.generateQuotationRequested.emit()
+
+    def _on_llm_submit(self):
+        """Handle LLM instruction submission."""
+        instruction = self.llm_instruction.toPlainText().strip()
+        if instruction:
+            self.llmRequestSubmitted.emit(instruction)
+        else:
+            # Still emit with empty string so handler can show a message
+            self.llmRequestSubmitted.emit("")
+
+    def set_llm_enabled(self, enabled: bool, tooltip: str = ""):
+        """Enable or disable the LLM send button with an optional tooltip."""
+        self.llm_send_button.setEnabled(enabled)
+        if tooltip:
+            self.llm_send_button.setToolTip(tooltip)
+        else:
+            self.llm_send_button.setToolTip("")
+
+    def set_llm_loading(self, loading: bool):
+        """Set the LLM panel to loading state."""
+        if loading:
+            self.llm_send_button.setText("Sending...")
+            self.llm_send_button.setEnabled(False)
+            self.llm_instruction.setEnabled(False)
+        else:
+            self.llm_send_button.setText("Send")
+            self.llm_send_button.setEnabled(True)
+            self.llm_instruction.setEnabled(True)
+
+    def clear_llm_instruction(self):
+        """Clear the LLM instruction textarea."""
+        self.llm_instruction.clear()
 
     def get_data(self):
         """Returns a dictionary with the header data."""

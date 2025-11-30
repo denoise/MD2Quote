@@ -24,6 +24,7 @@ from PyQt6.QtSvg import QSvgRenderer
 from .styles import COLORS, SPACING, RADIUS
 from .icons import icon, icon_font, icon_char
 from ..utils import get_templates_path
+from ..core.llm import OPENROUTER_MODELS, OPENAI_MODELS, DEFAULT_SYSTEM_PROMPT
 
 
 class TemplateEditorDialog(QDialog):
@@ -1125,11 +1126,15 @@ class ConfigDialog(QDialog):
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs, 1)
         
-        # Create tabs with Material icons
+        # Create tabs with Material icons (preset-specific settings)
         self.tabs.addTab(self._create_identity_tab(), icon('badge', 18, COLORS['text_secondary']), "Identity")
         self.tabs.addTab(self._create_document_tab(), icon('article', 18, COLORS['text_secondary']), "Document")
         self.tabs.addTab(self._create_styling_tab(), icon('palette', 18, COLORS['text_secondary']), "Styling")
         self.tabs.addTab(self._create_defaults_tab(), icon('tune', 18, COLORS['text_secondary']), "Defaults")
+        
+        # Global LLM Settings section (not per-preset)
+        llm_section = self._create_llm_section()
+        layout.addWidget(llm_section)
         
         # Bottom buttons
         btn_layout = QHBoxLayout()
@@ -1720,6 +1725,291 @@ class ConfigDialog(QDialog):
         layout.addLayout(columns, 1)
         return scroll
     
+    def _create_llm_section(self) -> QWidget:
+        """Create the global LLM settings section (not per-preset)."""
+        container = QFrame()
+        container.setObjectName("llm-section")
+        container.setStyleSheet(f"""
+            QFrame#llm-section {{
+                background-color: {COLORS['bg_dark']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                margin-top: {SPACING['sm']}px;
+            }}
+        """)
+        
+        main_layout = QVBoxLayout(container)
+        main_layout.setContentsMargins(SPACING['md'], SPACING['md'], SPACING['md'], SPACING['md'])
+        main_layout.setSpacing(SPACING['sm'])
+        
+        # Header with title and collapse toggle
+        header_row = QHBoxLayout()
+        header_row.setSpacing(SPACING['sm'])
+        
+        title_label = QLabel("LLM Settings")
+        title_label.setStyleSheet(f"""
+            color: {COLORS['accent']};
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        """)
+        header_row.addWidget(title_label)
+        
+        global_hint = QLabel("(Global - applies to all profiles)")
+        global_hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+        header_row.addWidget(global_hint)
+        
+        header_row.addStretch()
+        
+        # Collapse/expand button
+        self.llm_collapse_btn = QPushButton()
+        self.llm_collapse_btn.setIcon(icon('expand_more', 16, COLORS['text_secondary']))
+        self.llm_collapse_btn.setFixedSize(24, 24)
+        self.llm_collapse_btn.setCheckable(True)
+        self.llm_collapse_btn.setChecked(True)  # Start expanded
+        self.llm_collapse_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.llm_collapse_btn.setToolTip("Collapse/expand LLM settings")
+        self.llm_collapse_btn.toggled.connect(self._toggle_llm_section)
+        self.llm_collapse_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+            }}
+        """)
+        header_row.addWidget(self.llm_collapse_btn)
+        
+        main_layout.addLayout(header_row)
+        
+        # Collapsible content container
+        self.llm_content = QWidget()
+        content_layout = QHBoxLayout(self.llm_content)
+        content_layout.setContentsMargins(0, SPACING['sm'], 0, 0)
+        content_layout.setSpacing(SPACING['md'])
+        
+        # Left side - API Settings
+        left_col = QVBoxLayout()
+        left_col.setSpacing(SPACING['xs'])
+        
+        # Provider row
+        provider_row = QHBoxLayout()
+        provider_row.setSpacing(SPACING['sm'])
+        
+        provider_label = QLabel("Provider")
+        provider_label.setFixedWidth(80)
+        provider_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        provider_row.addWidget(provider_label)
+        
+        self.llm_provider = QComboBox()
+        self.llm_provider.addItem("OpenRouter", "openrouter")
+        self.llm_provider.addItem("OpenAI", "openai")
+        self.llm_provider.setMinimumHeight(24)
+        self.llm_provider.setMinimumWidth(150)
+        self.llm_provider.currentIndexChanged.connect(self._on_llm_provider_changed)
+        provider_row.addWidget(self.llm_provider)
+        provider_row.addStretch()
+        
+        left_col.addLayout(provider_row)
+        
+        # API Key row
+        api_key_row = QHBoxLayout()
+        api_key_row.setSpacing(SPACING['sm'])
+        
+        api_key_label = QLabel("API Key")
+        api_key_label.setFixedWidth(80)
+        api_key_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        api_key_row.addWidget(api_key_label)
+        
+        self.llm_api_key = QLineEdit()
+        self.llm_api_key.setPlaceholderText("sk-... or your OpenRouter key")
+        self.llm_api_key.setEchoMode(QLineEdit.EchoMode.Password)
+        self.llm_api_key.setMinimumHeight(24)
+        self.llm_api_key.setMinimumWidth(200)
+        api_key_row.addWidget(self.llm_api_key)
+        
+        self.llm_api_key_toggle = QPushButton()
+        self.llm_api_key_toggle.setIcon(icon('visibility', 16, COLORS['text_secondary']))
+        self.llm_api_key_toggle.setFixedSize(28, 24)
+        self.llm_api_key_toggle.setCheckable(True)
+        self.llm_api_key_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.llm_api_key_toggle.setToolTip("Show/hide API key")
+        self.llm_api_key_toggle.toggled.connect(self._toggle_api_key_visibility)
+        self.llm_api_key_toggle.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-left: none;
+                border-radius: 0;
+                padding: 0;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['bg_hover']};
+            }}
+            QPushButton:checked {{
+                background-color: {COLORS['accent']};
+                border-color: {COLORS['accent']};
+            }}
+        """)
+        api_key_row.addWidget(self.llm_api_key_toggle)
+        api_key_row.addStretch()
+        
+        left_col.addLayout(api_key_row)
+        
+        # Model row
+        model_row = QHBoxLayout()
+        model_row.setSpacing(SPACING['sm'])
+        
+        model_label = QLabel("Model")
+        model_label.setFixedWidth(80)
+        model_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        model_row.addWidget(model_label)
+        
+        self.llm_model = QComboBox()
+        self.llm_model.setMinimumHeight(24)
+        self.llm_model.setMinimumWidth(200)
+        self._populate_model_dropdown()
+        model_row.addWidget(self.llm_model)
+        model_row.addStretch()
+        
+        left_col.addLayout(model_row)
+        
+        content_layout.addLayout(left_col)
+        
+        # Right side - System Prompt
+        right_col = QVBoxLayout()
+        right_col.setSpacing(SPACING['xs'])
+        
+        prompt_header = QHBoxLayout()
+        prompt_label = QLabel("System Prompt")
+        prompt_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        prompt_header.addWidget(prompt_label)
+        prompt_header.addStretch()
+        
+        reset_prompt_btn = QPushButton("Reset")
+        reset_prompt_btn.setMinimumWidth(60)
+        reset_prompt_btn.clicked.connect(self._reset_system_prompt)
+        prompt_header.addWidget(reset_prompt_btn)
+        
+        right_col.addLayout(prompt_header)
+        
+        self.llm_system_prompt = QPlainTextEdit()
+        self.llm_system_prompt.setPlaceholderText("Enter your system prompt here...")
+        self.llm_system_prompt.setMaximumHeight(80)
+        self.llm_system_prompt.setStyleSheet(f"""
+            QPlainTextEdit {{
+                font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+                font-size: 11px;
+                background-color: {COLORS['bg_elevated']};
+                color: {COLORS['text_primary']};
+                border: 1px solid {COLORS['border']};
+                padding: {SPACING['xs']}px;
+            }}
+        """)
+        right_col.addWidget(self.llm_system_prompt)
+        
+        content_layout.addLayout(right_col, 1)
+        
+        main_layout.addWidget(self.llm_content)
+        
+        # Load LLM values
+        self._load_llm_values()
+        
+        return container
+    
+    def _toggle_llm_section(self, expanded: bool):
+        """Toggle the visibility of the LLM settings content."""
+        self.llm_content.setVisible(expanded)
+        if expanded:
+            self.llm_collapse_btn.setIcon(icon('expand_more', 16, COLORS['text_secondary']))
+        else:
+            self.llm_collapse_btn.setIcon(icon('chevron_right', 16, COLORS['text_secondary']))
+    
+    def _populate_model_dropdown(self):
+        """Populate the model dropdown based on the selected provider."""
+        self.llm_model.clear()
+        provider = self.llm_provider.currentData()
+        
+        if provider == 'openai':
+            models = OPENAI_MODELS
+        else:
+            models = OPENROUTER_MODELS
+        
+        for model_id, display_name in models.items():
+            self.llm_model.addItem(display_name, model_id)
+    
+    def _on_llm_provider_changed(self, index):
+        """Handle provider selection change."""
+        # Store current model before repopulating
+        current_model = self.llm_model.currentData()
+        
+        self._populate_model_dropdown()
+        
+        # Try to restore previous model if it exists in new provider
+        idx = self.llm_model.findData(current_model)
+        if idx >= 0:
+            self.llm_model.setCurrentIndex(idx)
+    
+    def _toggle_api_key_visibility(self, checked: bool):
+        """Toggle API key visibility."""
+        if checked:
+            self.llm_api_key.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.llm_api_key_toggle.setIcon(icon('visibility_off', 16, COLORS['text_primary']))
+        else:
+            self.llm_api_key.setEchoMode(QLineEdit.EchoMode.Password)
+            self.llm_api_key_toggle.setIcon(icon('visibility', 16, COLORS['text_secondary']))
+    
+    def _reset_system_prompt(self):
+        """Reset system prompt to default."""
+        reply = QMessageBox.question(
+            self,
+            "Reset System Prompt",
+            "Are you sure you want to reset the system prompt to the default value?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self.llm_system_prompt.setPlainText(DEFAULT_SYSTEM_PROMPT)
+    
+    def _load_llm_values(self):
+        """Load LLM configuration values into the UI."""
+        llm_config = self.config.get('llm', {})
+        
+        # Provider
+        provider = llm_config.get('provider', 'openrouter')
+        idx = self.llm_provider.findData(provider)
+        if idx >= 0:
+            self.llm_provider.setCurrentIndex(idx)
+        
+        # Repopulate models for the selected provider
+        self._populate_model_dropdown()
+        
+        # Model
+        model = llm_config.get('model', 'anthropic/claude-sonnet-4-20250514')
+        idx = self.llm_model.findData(model)
+        if idx >= 0:
+            self.llm_model.setCurrentIndex(idx)
+        
+        # API Key
+        self.llm_api_key.setText(llm_config.get('api_key', ''))
+        
+        # System Prompt
+        self.llm_system_prompt.setPlainText(
+            llm_config.get('system_prompt', DEFAULT_SYSTEM_PROMPT)
+        )
+    
+    def _save_llm_to_memory(self):
+        """Save LLM settings to the in-memory config."""
+        self.config['llm'] = {
+            'provider': self.llm_provider.currentData() or 'openrouter',
+            'api_key': self.llm_api_key.text(),
+            'model': self.llm_model.currentData() or 'anthropic/claude-sonnet-4-20250514',
+            'system_prompt': self.llm_system_prompt.toPlainText() or DEFAULT_SYSTEM_PROMPT
+        }
+    
     def _on_vat_type_changed(self, index):
         """Handle VAT type selection changes."""
         vat_type = self.defaults_vat_type.currentData()
@@ -2265,6 +2555,9 @@ class ConfigDialog(QDialog):
         # Ensure the currently edited preset is saved to the config dict
         self._save_current_preset_to_memory()
         
+        # Save LLM settings (global, not per-preset)
+        self._save_llm_to_memory()
+        
         # Also update active preset to current one
         self.config['active_preset'] = self.current_preset_key
         
@@ -2300,6 +2593,15 @@ class ConfigDialog(QDialog):
         for key in sorted(presets.keys()):
             preset = presets[key]
             dumped = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
+            lines.append(self._indent_text(dumped, 2))
+            lines.append("")
+        
+        # Add LLM configuration (global, not per-preset)
+        llm_config = config.get('llm', {})
+        if llm_config:
+            lines.append("# LLM Configuration")
+            lines.append("llm:")
+            dumped = yaml.dump(llm_config, allow_unicode=True, sort_keys=False, default_flow_style=False)
             lines.append(self._indent_text(dumped, 2))
             lines.append("")
             

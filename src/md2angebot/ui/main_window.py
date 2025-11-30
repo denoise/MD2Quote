@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox,
                              QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog,
                              QVBoxLayout, QHBoxLayout, QToolButton, QFrame, QSizePolicy, QListView)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
-from PyQt6.QtCore import Qt, QTimer, QDir, QSettings
+from PyQt6.QtCore import Qt, QTimer, QDir, QSettings, QThread, pyqtSignal, QObject
 
 from .editor import EditorWidget
 from .preview import PreviewWidget
@@ -19,6 +19,30 @@ from ..core.parser import MarkdownParser
 from ..core.renderer import TemplateRenderer
 from ..core.pdf import PDFGenerator
 from ..core.config import config
+from ..core.llm import LLMService, LLMError
+
+
+class LLMWorker(QObject):
+    """Worker for running LLM requests in a background thread."""
+    
+    finished = pyqtSignal(str)  # Emits the generated content
+    error = pyqtSignal(str)     # Emits error message
+    
+    def __init__(self, llm_service: LLMService, instruction: str, context: str):
+        super().__init__()
+        self.llm_service = llm_service
+        self.instruction = instruction
+        self.context = context
+    
+    def run(self):
+        """Execute the LLM request."""
+        try:
+            result = self.llm_service.generate(self.instruction, self.context)
+            self.finished.emit(result)
+        except LLMError as e:
+            self.error.emit(str(e))
+        except Exception as e:
+            self.error.emit(f"Unexpected error: {e}")
 
 
 class MainWindow(QMainWindow):
@@ -37,6 +61,11 @@ class MainWindow(QMainWindow):
         self.parser = MarkdownParser()
         self.renderer = TemplateRenderer()
         self.pdf_generator = PDFGenerator()
+        self.llm_service = LLMService(config)
+        
+        # LLM thread management
+        self.llm_thread = None
+        self.llm_worker = None
         
         # State
         self.current_file = None
@@ -59,6 +88,7 @@ class MainWindow(QMainWindow):
 
         # Connect Header
         self.header.dataChanged.connect(self.on_header_changed)
+        self.header.llmRequestSubmitted.connect(self.on_llm_request)
 
         # Restore last client info if available
         self._restore_last_client_data()
@@ -69,6 +99,9 @@ class MainWindow(QMainWindow):
         # Ask for preset on startup if not set (or just sync UI)
         # Actually, let's just sync UI since we have a default from config now
         QTimer.singleShot(100, self.sync_preset_ui)
+        
+        # Update LLM button state on startup
+        QTimer.singleShot(100, self._update_llm_button_state)
 
     def _setup_ui(self):
         # Main Container
@@ -283,6 +316,94 @@ class MainWindow(QMainWindow):
         self.statusbar.showMessage("Modified")
         self._persist_last_client_data()
         self.preview_timer.start()
+
+    def on_llm_request(self, instruction: str):
+        """Handle LLM request from the header panel."""
+        # Check if instruction is empty
+        if not instruction:
+            QMessageBox.information(
+                self,
+                "No Instruction",
+                "Please enter an instruction in the LLM text field."
+            )
+            return
+        
+        # Check if LLM is configured
+        if not self.llm_service.is_configured():
+            reply = QMessageBox.question(
+                self,
+                "LLM Not Configured",
+                "No API key configured. Would you like to open Settings to configure it?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.open_settings()
+            return
+        
+        # Get current editor content as context
+        context = self.editor.get_text()
+        
+        # Show loading state
+        self.header.set_llm_loading(True)
+        self.statusbar.showMessage("Generating content with LLM...")
+        
+        # Create worker and thread
+        self.llm_thread = QThread()
+        self.llm_worker = LLMWorker(self.llm_service, instruction, context)
+        self.llm_worker.moveToThread(self.llm_thread)
+        
+        # Connect signals
+        self.llm_thread.started.connect(self.llm_worker.run)
+        self.llm_worker.finished.connect(self._on_llm_success)
+        self.llm_worker.error.connect(self._on_llm_error)
+        self.llm_worker.finished.connect(self.llm_thread.quit)
+        self.llm_worker.error.connect(self.llm_thread.quit)
+        self.llm_thread.finished.connect(self._cleanup_llm_thread)
+        
+        # Start the thread
+        self.llm_thread.start()
+
+    def _on_llm_success(self, content: str):
+        """Handle successful LLM response."""
+        # Insert content into editor
+        self.editor.set_text(content)
+        
+        # Reset UI state
+        self.header.set_llm_loading(False)
+        self.header.clear_llm_instruction()
+        self.statusbar.showMessage("Content generated successfully")
+        
+        # Mark as modified and refresh preview
+        self.is_modified = True
+        self.preview_timer.start()
+
+    def _on_llm_error(self, error_message: str):
+        """Handle LLM error."""
+        self.header.set_llm_loading(False)
+        self.statusbar.showMessage("LLM request failed")
+        
+        QMessageBox.critical(
+            self,
+            "LLM Error",
+            f"Failed to generate content:\n\n{error_message}"
+        )
+
+    def _cleanup_llm_thread(self):
+        """Clean up the LLM thread after it finishes."""
+        if self.llm_thread:
+            self.llm_thread.deleteLater()
+            self.llm_thread = None
+        if self.llm_worker:
+            self.llm_worker.deleteLater()
+            self.llm_worker = None
+
+    def _update_llm_button_state(self):
+        """Update LLM send button enabled state based on configuration."""
+        # Always enable the button - we'll show a helpful message if not configured
+        if self.llm_service.is_configured():
+            self.header.set_llm_enabled(True, "Send instruction to LLM")
+        else:
+            self.header.set_llm_enabled(True, "Click to configure LLM (no API key set)")
 
     def _get_safe_context(self, metadata, html_body):
         """Ensures context has all required fields with defaults to prevent template errors."""
@@ -591,5 +712,8 @@ class MainWindow(QMainWindow):
         # Update preset selector
         self.update_preset_selector()
         self.sync_preset_ui()
+        
+        # Update LLM button state based on API key configuration
+        self._update_llm_button_state()
         
         self.statusbar.showMessage("Configuration updated")
