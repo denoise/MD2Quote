@@ -1,7 +1,12 @@
-from weasyprint import HTML, CSS
 from pathlib import Path
+from ..utils import get_templates_path, patch_fonttools_instancer
 from .config import config
-from ..utils import get_templates_path
+
+# WeasyPrint imports fontTools' deprecated mutator helper; swap in the recommended
+# instancer implementation before loading the library to avoid noisy warnings.
+patch_fonttools_instancer()
+
+from weasyprint import HTML, CSS
 
 class PDFGenerator:
     def _get_css_files(self):

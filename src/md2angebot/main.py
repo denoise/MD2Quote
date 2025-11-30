@@ -2,12 +2,14 @@ import sys
 import os
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from .ui.main_window import MainWindow
+from .utils import patch_fonttools_instancer
 
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("MD2Angebot")
     
     # Check dependencies
+    patch_fonttools_instancer()
     try:
         import weasyprint
     except OSError as e:
