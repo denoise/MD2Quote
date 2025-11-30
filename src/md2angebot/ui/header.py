@@ -474,26 +474,25 @@ class HeaderWidget(QWidget):
         
         self.receiver_name = ModernLineEdit("Company or contact name")
         self.receiver_name.textChanged.connect(self.on_changed)
-        client_grid.addWidget(self.receiver_name, 0, 1)
+        client_grid.addWidget(self.receiver_name, 0, 1, 1, 3)
 
         email_label = self._create_label("Email")
-        client_grid.addWidget(email_label, 0, 2)
+        client_grid.addWidget(email_label, 1, 0)
         
         self.receiver_email = ModernLineEdit("client@example.com")
         self.receiver_email.textChanged.connect(self.on_changed)
-        client_grid.addWidget(self.receiver_email, 0, 3)
+        client_grid.addWidget(self.receiver_email, 1, 1, 1, 3)
         
         # Row 1: Address (spanning multiple columns)
         address_label = self._create_label("Address")
-        client_grid.addWidget(address_label, 1, 0, Qt.AlignmentFlag.AlignTop)
+        client_grid.addWidget(address_label, 2, 0, Qt.AlignmentFlag.AlignTop)
         
         self.receiver_address = ModernTextEdit("Street, City, Postal Code...")
         self.receiver_address.textChanged.connect(self.on_changed)
-        client_grid.addWidget(self.receiver_address, 1, 1, 1, 3)
+        client_grid.addWidget(self.receiver_address, 2, 1, 1, 3)
         
         # Set column stretch
         client_grid.setColumnStretch(1, 1)
-        client_grid.setColumnStretch(3, 1)
 
         client_card.content_layout.addLayout(client_grid)
         main_layout.addWidget(client_card, stretch=1)  # Keep compact so LLM panel can grow
@@ -504,47 +503,48 @@ class HeaderWidget(QWidget):
         llm_layout.setContentsMargins(0, 0, 0, 0)
         llm_layout.setSpacing(SPACING['xs'])
         
-        # Instruction textarea
-        self.llm_instruction = LLMTextEdit()
-        self.llm_instruction.setPlaceholderText("Enter instructions for the LLM... (⌘+Enter to send)")
-        self.llm_instruction.setMaximumHeight(48)
-        self.llm_instruction.setStyleSheet(f"""
-            QPlainTextEdit {{
+        llm_input_container = QFrame()
+        llm_input_container.setObjectName("llm-input-container")
+        llm_input_container.setStyleSheet(f"""
+            QFrame#llm-input-container {{
                 background-color: {COLORS['bg_dark']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 0;
+            }}
+        """)
+        llm_input_layout = QHBoxLayout(llm_input_container)
+        llm_input_layout.setContentsMargins(SPACING['xs'], SPACING['xs'], SPACING['xs'], SPACING['xs'])
+        llm_input_layout.setSpacing(SPACING['xs'])
+
+        # Instruction textarea with inline send button
+        self.llm_instruction = LLMTextEdit()
+        self.llm_instruction.setPlaceholderText("Enter instructions for the LLM... (⌘+Enter to send)")
+        self.llm_instruction.setMinimumHeight(72)
+        self.llm_instruction.setMaximumHeight(96)
+        self.llm_instruction.setStyleSheet(f"""
+            QPlainTextEdit {{
+                background-color: transparent;
+                border: none;
                 color: {COLORS['text_primary']};
                 font-size: 12px;
-                padding: {SPACING['xs']}px;
-            }}
-            QPlainTextEdit:focus {{
-                border-color: {COLORS['accent']};
+                padding: 0;
             }}
         """)
         self.llm_instruction.submitRequested.connect(self._on_llm_submit)
-        llm_layout.addWidget(self.llm_instruction)
-        
-        # Footer with send button
-        llm_footer = QHBoxLayout()
-        llm_footer.setContentsMargins(0, 0, 0, 0)
-        llm_footer.setSpacing(SPACING['sm'])
-        
-        llm_footer.addStretch()
-        
-        self.llm_send_button = QPushButton("Send")
-        self.llm_send_button.setIcon(icon('send', 14, COLORS['text_primary']))
+        llm_input_layout.addWidget(self.llm_instruction)
+
+        self.llm_send_button = QPushButton()
         self.llm_send_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.llm_send_button.setMinimumWidth(70)
+        self.llm_send_button.setToolTip("Send instruction to LLM")
+        self.llm_send_button.setIcon(icon('smart_toy', 16, COLORS['bg_dark']))
+        self.llm_send_button.setFixedSize(32, 32)
         self.llm_send_button.clicked.connect(self._on_llm_submit)
         self.llm_send_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLORS['accent']};
                 border: none;
-                border-radius: 0;
-                color: white;
-                font-weight: 600;
-                padding: {SPACING['xs']}px {SPACING['sm']}px;
-                min-height: 22px;
+                border-radius: 4px;
+                padding: 0;
             }}
             QPushButton:hover {{
                 background-color: {COLORS['accent_hover']};
@@ -554,14 +554,13 @@ class HeaderWidget(QWidget):
             }}
             QPushButton:disabled {{
                 background-color: {COLORS['bg_hover']};
-                color: {COLORS['text_muted']};
             }}
         """)
-        llm_footer.addWidget(self.llm_send_button)
-        
-        llm_layout.addLayout(llm_footer)
+        llm_input_layout.addWidget(self.llm_send_button, 0, Qt.AlignmentFlag.AlignBottom)
+
+        llm_layout.addWidget(llm_input_container)
         llm_card.content_layout.addLayout(llm_layout)
-        main_layout.addWidget(llm_card, stretch=2)
+        main_layout.addWidget(llm_card, stretch=3)
 
     def _create_label(self, text: str) -> QLabel:
         """Creates a styled field label."""
@@ -602,11 +601,9 @@ class HeaderWidget(QWidget):
     def set_llm_loading(self, loading: bool):
         """Set the LLM panel to loading state."""
         if loading:
-            self.llm_send_button.setText("Sending...")
             self.llm_send_button.setEnabled(False)
             self.llm_instruction.setEnabled(False)
         else:
-            self.llm_send_button.setText("Send")
             self.llm_send_button.setEnabled(True)
             self.llm_instruction.setEnabled(True)
 
