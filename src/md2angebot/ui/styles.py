@@ -151,14 +151,18 @@ def get_stylesheet():
         border: none;
         width: 30px;
         background-color: transparent;
+        subcontrol-origin: padding;
+        subcontrol-position: center right;
     }}
     
     QComboBox::down-arrow {{
         image: none;
+        width: 0;
+        height: 0;
         border-left: 5px solid transparent;
         border-right: 5px solid transparent;
-        border-top: 6px solid {COLORS['text_muted']};
-        margin-right: 4px;
+        border-top: 5px solid {COLORS['text_muted']};
+        margin-right: 8px;
     }}
 
     QComboBox::down-arrow:hover {{
@@ -244,13 +248,18 @@ def get_stylesheet():
     QDateEdit::drop-down {{
         border: none;
         width: 24px;
+        subcontrol-origin: padding;
+        subcontrol-position: center right;
     }}
     
     QDateEdit::down-arrow {{
         image: none;
+        width: 0;
+        height: 0;
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
-        border-top: 6px solid {COLORS['text_secondary']};
+        border-top: 5px solid {COLORS['text_secondary']};
+        margin-right: 6px;
     }}
     
     QCalendarWidget {{

@@ -784,7 +784,7 @@ class StyledComboBox(QComboBox):
     def __init__(self, items: list = None, parent=None):
         super().__init__(parent)
         self.setEditable(True)
-        self.setMinimumHeight(24)
+        self.setMinimumHeight(26)
         if items:
             self.addItems(items)
         self.setStyleSheet(f"""
@@ -794,6 +794,7 @@ class StyledComboBox(QComboBox):
                 border-radius: 0;
                 color: {COLORS['text_primary']};
                 padding: 2px 6px;
+                padding-right: 24px;
                 font-size: 13px;
             }}
             QComboBox:hover {{
@@ -804,13 +805,21 @@ class StyledComboBox(QComboBox):
             }}
             QComboBox::drop-down {{
                 border: none;
-                width: 22px;
+                width: 24px;
+                subcontrol-origin: padding;
+                subcontrol-position: center right;
             }}
             QComboBox::down-arrow {{
                 image: none;
+                width: 0;
+                height: 0;
                 border-left: 4px solid transparent;
                 border-right: 4px solid transparent;
                 border-top: 5px solid {COLORS['text_secondary']};
+                margin-right: 6px;
+            }}
+            QComboBox:hover::down-arrow {{
+                border-top-color: {COLORS['text_primary']};
             }}
             QComboBox QAbstractItemView {{
                 background-color: {COLORS['bg_elevated']};
@@ -1086,9 +1095,9 @@ class ConfigDialog(QDialog):
                 border-radius: 0;
                 color: {COLORS['text_primary']};
                 padding: 0px 10px;
-                padding-right: 20px;
-                min-height: 24px;
-                max-height: 24px;
+                padding-right: 24px;
+                min-height: 26px;
+                max-height: 26px;
                 font-weight: 500;
                 margin: 0px;
             }}
@@ -1102,14 +1111,17 @@ class ConfigDialog(QDialog):
             }}
             QToolButton::menu-indicator {{
                 image: none;
-                subcontrol-position: right center;
+                subcontrol-position: center right;
                 subcontrol-origin: padding;
+                width: 0;
+                height: 0;
                 border-left: 4px solid transparent;
                 border-right: 4px solid transparent;
                 border-top: 5px solid {COLORS['text_muted']};
-                width: 0;
-                height: 0;
-                margin-right: 10px;
+                margin-right: 8px;
+            }}
+            QToolButton:hover::menu-indicator {{
+                border-top-color: {COLORS['text_primary']};
             }}
         """)
         name_row.addWidget(self.copy_button)
@@ -1567,10 +1579,11 @@ class ConfigDialog(QDialog):
         currency_label = QLabel("Currency")
         currency_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         currency_col.addWidget(currency_label)
-        self.defaults_currency = QLineEdit()
-        self.defaults_currency.setPlaceholderText("EUR")
-        self.defaults_currency.setMinimumHeight(24)
-        self.defaults_currency.setMaximumWidth(80)
+        self.defaults_currency = QComboBox()
+        self.defaults_currency.addItems(["EUR", "USD", "GBP", "CHF", "JPY", "CAD", "AUD"])
+        self.defaults_currency.setEditable(True)  # Allow custom currencies
+        self.defaults_currency.setMinimumHeight(26)
+        self.defaults_currency.setMinimumWidth(90)
         currency_col.addWidget(self.defaults_currency)
         row1.addLayout(currency_col)
         
@@ -2061,7 +2074,7 @@ class ConfigDialog(QDialog):
         }
         
         preset['defaults'] = {
-            'currency': self.defaults_currency.text(),
+            'currency': self.defaults_currency.currentText(),
             'vat_type': self.defaults_vat_type.currentData() or 'german_vat',
             'tax_rate': self.defaults_tax_rate.value(),
             'payment_days': self.defaults_payment_days.value(),
@@ -2163,7 +2176,12 @@ class ConfigDialog(QDialog):
         
         # Defaults
         defaults = preset.get('defaults', {})
-        self.defaults_currency.setText(defaults.get('currency', 'EUR'))
+        currency = defaults.get('currency', 'EUR')
+        idx = self.defaults_currency.findText(currency)
+        if idx >= 0:
+            self.defaults_currency.setCurrentIndex(idx)
+        else:
+            self.defaults_currency.setCurrentText(currency)
         
         # VAT Type
         vat_type = defaults.get('vat_type', 'german_vat')
@@ -2331,8 +2349,8 @@ class SettingsDialog(QDialog):
         self.config = copy.deepcopy(config_loader.config)
         
         self.setWindowTitle("Settings")
-        self.setMinimumSize(650, 450)
-        self.resize(700, 480)
+        self.setMinimumSize(650, 550)
+        self.resize(720, 600)
         
         self._setup_ui()
         self._load_llm_values()
@@ -2381,53 +2399,53 @@ class SettingsDialog(QDialog):
         # LLM Settings Card
         llm_card = SectionCard("LLM Configuration")
         
-        # Main content layout with two columns
-        content_layout = QHBoxLayout()
-        content_layout.setSpacing(SPACING['lg'])
-        
-        # Left column - API Settings
-        left_col = QVBoxLayout()
-        left_col.setSpacing(SPACING['sm'])
+        # Main content layout - use grid for proper alignment
+        content_grid = QGridLayout()
+        content_grid.setSpacing(SPACING['sm'])
+        content_grid.setColumnMinimumWidth(0, 80)  # Label column
+        content_grid.setColumnStretch(1, 1)  # Input column stretches
         
         # Provider row
-        provider_row = QHBoxLayout()
-        provider_row.setSpacing(SPACING['sm'])
-        
         provider_label = QLabel("Provider")
-        provider_label.setFixedWidth(100)
         provider_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
-        provider_row.addWidget(provider_label)
+        content_grid.addWidget(provider_label, 0, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         
         self.llm_provider = QComboBox()
         self.llm_provider.addItem("OpenRouter", "openrouter")
         self.llm_provider.addItem("OpenAI", "openai")
-        self.llm_provider.setMinimumHeight(28)
-        self.llm_provider.setMinimumWidth(200)
+        self.llm_provider.setMinimumHeight(30)
         self.llm_provider.currentIndexChanged.connect(self._on_llm_provider_changed)
-        provider_row.addWidget(self.llm_provider)
-        provider_row.addStretch()
+        content_grid.addWidget(self.llm_provider, 0, 1)
         
-        left_col.addLayout(provider_row)
+        # Model row
+        model_label = QLabel("Model")
+        model_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        content_grid.addWidget(model_label, 1, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         
-        # API Key row
-        api_key_row = QHBoxLayout()
-        api_key_row.setSpacing(SPACING['sm'])
+        self.llm_model = QComboBox()
+        self.llm_model.setMinimumHeight(30)
+        self._populate_model_dropdown()
+        content_grid.addWidget(self.llm_model, 1, 1)
         
+        # API Key row (with visibility toggle button)
         api_key_label = QLabel("API Key")
-        api_key_label.setFixedWidth(100)
         api_key_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
-        api_key_row.addWidget(api_key_label)
+        content_grid.addWidget(api_key_label, 2, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        
+        api_key_container = QWidget()
+        api_key_layout = QHBoxLayout(api_key_container)
+        api_key_layout.setContentsMargins(0, 0, 0, 0)
+        api_key_layout.setSpacing(0)
         
         self.llm_api_key = QLineEdit()
         self.llm_api_key.setPlaceholderText("sk-... or your OpenRouter key")
         self.llm_api_key.setEchoMode(QLineEdit.EchoMode.Password)
-        self.llm_api_key.setMinimumHeight(28)
-        self.llm_api_key.setMinimumWidth(250)
-        api_key_row.addWidget(self.llm_api_key)
+        self.llm_api_key.setMinimumHeight(30)
+        api_key_layout.addWidget(self.llm_api_key)
         
         self.llm_api_key_toggle = QPushButton()
         self.llm_api_key_toggle.setIcon(icon('visibility', 16, COLORS['text_secondary']))
-        self.llm_api_key_toggle.setFixedSize(32, 28)
+        self.llm_api_key_toggle.setFixedSize(34, 30)
         self.llm_api_key_toggle.setCheckable(True)
         self.llm_api_key_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.llm_api_key_toggle.setToolTip("Show/hide API key")
@@ -2448,32 +2466,11 @@ class SettingsDialog(QDialog):
                 border-color: {COLORS['accent']};
             }}
         """)
-        api_key_row.addWidget(self.llm_api_key_toggle)
-        api_key_row.addStretch()
+        api_key_layout.addWidget(self.llm_api_key_toggle)
         
-        left_col.addLayout(api_key_row)
+        content_grid.addWidget(api_key_container, 2, 1)
         
-        # Model row
-        model_row = QHBoxLayout()
-        model_row.setSpacing(SPACING['sm'])
-        
-        model_label = QLabel("Model")
-        model_label.setFixedWidth(100)
-        model_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
-        model_row.addWidget(model_label)
-        
-        self.llm_model = QComboBox()
-        self.llm_model.setMinimumHeight(28)
-        self.llm_model.setMinimumWidth(250)
-        self._populate_model_dropdown()
-        model_row.addWidget(self.llm_model)
-        model_row.addStretch()
-        
-        left_col.addLayout(model_row)
-        
-        content_layout.addLayout(left_col)
-        
-        llm_card.addLayout(content_layout)
+        llm_card.addLayout(content_grid)
         layout.addWidget(llm_card)
         
         # System Prompt Card
@@ -2496,7 +2493,7 @@ class SettingsDialog(QDialog):
         
         self.llm_system_prompt = QPlainTextEdit()
         self.llm_system_prompt.setPlaceholderText("Enter your system prompt here...")
-        self.llm_system_prompt.setMinimumHeight(120)
+        self.llm_system_prompt.setMinimumHeight(180)
         self.llm_system_prompt.setStyleSheet(f"""
             QPlainTextEdit {{
                 font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
@@ -2520,11 +2517,13 @@ class SettingsDialog(QDialog):
         
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setMinimumWidth(80)
+        cancel_btn.setFixedHeight(32)
         cancel_btn.clicked.connect(self.reject)
         btn_layout.addWidget(cancel_btn)
         
         save_btn = QPushButton("Save Settings")
         save_btn.setMinimumWidth(120)
+        save_btn.setFixedHeight(32)
         save_btn.setDefault(True)
         save_btn.clicked.connect(self._save_config)
         save_btn.setStyleSheet(f"""
@@ -2532,7 +2531,7 @@ class SettingsDialog(QDialog):
                 background-color: {COLORS['accent']};
                 color: white;
                 font-weight: 600;
-                padding: 8px 20px;
+                padding: 0 20px;
                 border: none;
             }}
             QPushButton:hover {{
