@@ -656,6 +656,71 @@ class SectionCard(QFrame):
                 self._track_layout_widgets(item.layout())
 
 
+class ModernActionButton(QPushButton):
+    """A modern, pill-like action button with icon and text."""
+    
+    def __init__(self, text: str, icon_name: str, is_destructive: bool = False, parent=None):
+        super().__init__(parent)
+        self.setText(text)
+        
+        # Determine icon color
+        icon_color = COLORS['text_secondary']
+        if is_destructive:
+            icon_color = "#d32f2f"  # Red 700
+            
+        self.setIcon(icon(icon_name, 14, icon_color))
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFixedHeight(32)
+        
+        # Base styles
+        bg_base = COLORS['bg_base']
+        border = COLORS['border']
+        text_col = COLORS['text_secondary']
+        
+        # Hover styles
+        if is_destructive:
+            hover_style = """
+                QPushButton:hover {
+                    background-color: #fee2e2;
+                    border-color: #ef4444;
+                    color: #b91c1c;
+                }
+            """
+        else:
+            hover_style = f"""
+                QPushButton:hover {{
+                    background-color: {COLORS['bg_hover']};
+                    border-color: {COLORS['text_primary']};
+                    color: {COLORS['text_primary']};
+                }}
+            """
+
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {bg_base};
+                border: 1px solid {border};
+                border-radius: 6px;
+                color: {text_col};
+                font-size: 11px;
+                font-weight: 500;
+                padding: 0 8px;
+                text-align: center;
+            }}
+            {hover_style}
+            QPushButton:pressed {{
+                background-color: {COLORS['accent']};
+                color: white;
+                border-color: {COLORS['accent']};
+            }}
+            QPushButton:disabled {{
+                color: {COLORS['border']};
+                background-color: {bg_base};
+                border-color: {COLORS['border']};
+                opacity: 0.7;
+            }}
+        """)
+
+
 class PresetListWidget(QFrame):
     """
     A widget displaying a list of presets with add/delete/duplicate buttons.
@@ -700,53 +765,50 @@ class PresetListWidget(QFrame):
         self.list_widget.currentItemChanged.connect(self._on_selection_changed)
         layout.addWidget(self.list_widget, 1)
         
-        # Action buttons row
-        btn_row = QHBoxLayout()
-        btn_row.setSpacing(SPACING['xs'])
-        btn_row.setContentsMargins(SPACING['sm'], 0, SPACING['sm'], SPACING['sm'])
+        # Action buttons area
+        actions_wrapper = QWidget()
+        actions_layout = QVBoxLayout(actions_wrapper)
+        actions_layout.setSpacing(8)
+        actions_layout.setContentsMargins(SPACING['sm'], 0, SPACING['sm'], SPACING['sm'])
         
-        self.add_btn = QPushButton()
-        self.add_btn.setIcon(icon('add', 16, COLORS['text_primary']))
-        self.add_btn.setToolTip("Add new profile")
-        self.add_btn.setFixedSize(32, 28)
-        self.add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Row 1: New, Copy, Delete
+        row1 = QHBoxLayout()
+        row1.setSpacing(8)
+        
+        self.add_btn = ModernActionButton("New", "add")
+        self.add_btn.setToolTip("Create a new profile")
         self.add_btn.clicked.connect(self._on_add_clicked)
-        btn_row.addWidget(self.add_btn)
+        row1.addWidget(self.add_btn, 1)
         
-        self.delete_btn = QPushButton()
-        self.delete_btn.setIcon(icon('delete', 16, COLORS['text_primary']))
-        self.delete_btn.setToolTip("Delete selected profile")
-        self.delete_btn.setFixedSize(32, 28)
-        self.delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.delete_btn.clicked.connect(self._on_delete_clicked)
-        btn_row.addWidget(self.delete_btn)
-        
-        self.duplicate_btn = QPushButton()
-        self.duplicate_btn.setIcon(icon('content_copy', 16, COLORS['text_primary']))
+        self.duplicate_btn = ModernActionButton("Copy", "content_copy")
         self.duplicate_btn.setToolTip("Duplicate selected profile")
-        self.duplicate_btn.setFixedSize(32, 28)
-        self.duplicate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.duplicate_btn.clicked.connect(self._on_duplicate_clicked)
-        btn_row.addWidget(self.duplicate_btn)
+        row1.addWidget(self.duplicate_btn, 1)
         
-        self.import_btn = QPushButton()
-        self.import_btn.setIcon(icon('upload', 16, COLORS['text_primary']))
+        self.delete_btn = ModernActionButton("Delete", "delete", is_destructive=True)
+        self.delete_btn.setToolTip("Delete selected profile")
+        self.delete_btn.clicked.connect(self._on_delete_clicked)
+        row1.addWidget(self.delete_btn, 1)
+        
+        actions_layout.addLayout(row1)
+        
+        # Row 2: Import, Export
+        row2 = QHBoxLayout()
+        row2.setSpacing(8)
+        
+        self.import_btn = ModernActionButton("Import", "download")
         self.import_btn.setToolTip("Import profile from ZIP")
-        self.import_btn.setFixedSize(32, 28)
-        self.import_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.import_btn.clicked.connect(self._on_import_clicked)
-        btn_row.addWidget(self.import_btn)
-
-        self.export_btn = QPushButton()
-        self.export_btn.setIcon(icon('download', 16, COLORS['text_primary']))
-        self.export_btn.setToolTip("Export profile to ZIP")
-        self.export_btn.setFixedSize(32, 28)
-        self.export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.export_btn.clicked.connect(self._on_export_clicked)
-        btn_row.addWidget(self.export_btn)
+        row2.addWidget(self.import_btn, 1)
         
-        btn_row.addStretch()
-        layout.addLayout(btn_row)
+        self.export_btn = ModernActionButton("Export", "upload")
+        self.export_btn.setToolTip("Export profile to ZIP")
+        self.export_btn.clicked.connect(self._on_export_clicked)
+        row2.addWidget(self.export_btn, 1)
+        
+        actions_layout.addLayout(row2)
+        
+        layout.addWidget(actions_wrapper)
     
     def _apply_style(self):
         self.setStyleSheet(f"""
@@ -775,19 +837,6 @@ class PresetListWidget(QFrame):
             QListWidget::item:hover:!selected {{
                 background-color: {COLORS['bg_hover']};
                 color: {COLORS['text_primary']};
-            }}
-            QPushButton {{
-                background-color: {COLORS['bg_dark']};
-                border: 1px solid {COLORS['border']};
-                border-radius: 0;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['bg_hover']};
-                border-color: {COLORS['text_muted']};
-            }}
-            QPushButton:pressed {{
-                background-color: {COLORS['accent']};
-                border-color: {COLORS['accent']};
             }}
         """)
     
@@ -1291,7 +1340,7 @@ class ConfigDialog(QDialog):
         
         # Left column: Preset list (240px fixed width)
         self.preset_list = PresetListWidget(self.config_loader)
-        self.preset_list.setFixedWidth(240)
+        self.preset_list.setFixedWidth(245)
         self.preset_list.load_presets(self.config, self.current_preset_key)
         self.preset_list.presetSelected.connect(self._on_preset_selected)
         self.preset_list.presetCreated.connect(self._on_preset_created)
