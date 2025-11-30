@@ -6,15 +6,25 @@ and editing quotation content.
 """
 
 import json
+import ssl
 import urllib.request
 import urllib.error
 from typing import Optional
 from dataclasses import dataclass
 
+# Try to use certifi for SSL certificates (fixes macOS certificate issues)
+try:
+    import certifi
+    SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    # Fall back to default SSL context if certifi is not installed
+    SSL_CONTEXT = ssl.create_default_context()
+
 
 # Available models for each provider
 OPENROUTER_MODELS = {
-    'anthropic/claude-sonnet-4-20250514': 'Claude Sonnet 4',
+    'anthropic/claude-sonnet-4': 'Claude Sonnet 4',
+    'anthropic/claude-sonnet-4.5': 'Claude Sonnet 4.5',
     'anthropic/claude-3.5-sonnet': 'Claude 3.5 Sonnet',
     'openai/gpt-4o': 'GPT-4o',
     'openai/gpt-4o-mini': 'GPT-4o Mini',
@@ -55,7 +65,7 @@ class LLMConfig:
     """Configuration for LLM service."""
     provider: str = 'openrouter'
     api_key: str = ''
-    model: str = 'anthropic/claude-sonnet-4-20250514'
+    model: str = 'anthropic/claude-sonnet-4'
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
 
 
@@ -86,7 +96,7 @@ class LLMService:
         return LLMConfig(
             provider=llm_config.get('provider', 'openrouter'),
             api_key=llm_config.get('api_key', ''),
-            model=llm_config.get('model', 'anthropic/claude-sonnet-4-20250514'),
+            model=llm_config.get('model', 'anthropic/claude-sonnet-4'),
             system_prompt=llm_config.get('system_prompt', DEFAULT_SYSTEM_PROMPT)
         )
     
@@ -198,7 +208,7 @@ class LLMService:
             data = json.dumps(body).encode('utf-8')
             request = urllib.request.Request(url, data=data, headers=headers, method='POST')
             
-            with urllib.request.urlopen(request, timeout=60) as response:
+            with urllib.request.urlopen(request, timeout=60, context=SSL_CONTEXT) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 
             # Extract the generated content

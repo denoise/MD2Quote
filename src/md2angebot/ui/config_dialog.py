@@ -1988,7 +1988,7 @@ class ConfigDialog(QDialog):
         self._populate_model_dropdown()
         
         # Model
-        model = llm_config.get('model', 'anthropic/claude-sonnet-4-20250514')
+        model = llm_config.get('model', 'anthropic/claude-sonnet-4')
         idx = self.llm_model.findData(model)
         if idx >= 0:
             self.llm_model.setCurrentIndex(idx)
@@ -2006,7 +2006,7 @@ class ConfigDialog(QDialog):
         self.config['llm'] = {
             'provider': self.llm_provider.currentData() or 'openrouter',
             'api_key': self.llm_api_key.text(),
-            'model': self.llm_model.currentData() or 'anthropic/claude-sonnet-4-20250514',
+            'model': self.llm_model.currentData() or 'anthropic/claude-sonnet-4',
             'system_prompt': self.llm_system_prompt.toPlainText() or DEFAULT_SYSTEM_PROMPT
         }
     

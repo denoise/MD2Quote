@@ -20,7 +20,7 @@ PRESET_TEMPLATE_MAP = {
 DEFAULT_LLM_CONFIG = {
     'provider': 'openrouter',
     'api_key': '',
-    'model': 'anthropic/claude-sonnet-4-20250514',
+    'model': 'anthropic/claude-sonnet-4',
     'system_prompt': '''You are an assistant helping create professional quotations and proposals.
 
 When generating content, follow these guidelines:
