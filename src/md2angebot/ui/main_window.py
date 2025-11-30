@@ -12,7 +12,7 @@ from PyQt6.QtCore import Qt, QTimer, QDir, QSettings, QThread, pyqtSignal, QObje
 from .editor import EditorWidget
 from .preview import PreviewWidget
 from .header import HeaderWidget
-from .config_dialog import ConfigDialog
+from .config_dialog import ConfigDialog, SettingsDialog
 from .styles import get_stylesheet, COLORS
 from .icons import icon, icon_font, icon_char
 from ..core.parser import MarkdownParser
@@ -204,15 +204,22 @@ class MainWindow(QMainWindow):
         export_action.triggered.connect(self.export_pdf_dialog)
         toolbar.addAction(export_action)
 
-        # Spacer to push Settings to the right
+        # Spacer to push Profiles and Settings to the right
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         toolbar.addWidget(spacer)
 
+        # Profiles
+        profiles_action = QAction(icon('badge', 20, COLORS['text_secondary']), "Profiles", self)
+        profiles_action.setShortcut("Ctrl+P")
+        profiles_action.setToolTip("Manage Profiles (⌘P)")
+        profiles_action.triggered.connect(self.open_profiles)
+        toolbar.addAction(profiles_action)
+
         # Settings
         settings_action = QAction(icon('settings', 20, COLORS['text_secondary']), "Settings", self)
         settings_action.setShortcut("Ctrl+,")
-        settings_action.setToolTip("Open Configuration (⌘,)")
+        settings_action.setToolTip("Open Settings (⌘,)")
         settings_action.triggered.connect(self.open_settings)
         toolbar.addAction(settings_action)
 
@@ -694,9 +701,15 @@ class MainWindow(QMainWindow):
         if not self.current_file: # User cancelled
             self.current_file = old_file
 
-    def open_settings(self):
-        """Opens the configuration dialog."""
+    def open_profiles(self):
+        """Opens the profiles configuration dialog."""
         dialog = ConfigDialog(config, initial_preset_key=self.current_preset, parent=self)
+        dialog.configSaved.connect(self.on_config_saved)
+        dialog.exec()
+
+    def open_settings(self):
+        """Opens the settings dialog for LLM configuration."""
+        dialog = SettingsDialog(config, parent=self)
         dialog.configSaved.connect(self.on_config_saved)
         dialog.exec()
 
