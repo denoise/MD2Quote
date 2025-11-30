@@ -82,11 +82,7 @@
             {% endif %}
         </div>
         
-        {% if snippets.custom_footer %}
-        <div class="sidebar-footer">
-            <p>{{ snippets.custom_footer }}</p>
-        </div>
-        {% endif %}
+
     </aside>
 
     <!-- Main Content -->
@@ -134,5 +130,12 @@
         </div>
         {% endif %}
     </main>
+    <footer>
+        {% if snippets.custom_footer %}
+        <div class="custom-footer-text">
+            {{ snippets.custom_footer | replace('\n', '<br>') | safe }}
+        </div>
+        {% endif %}
+    </footer>
 </body>
 </html>

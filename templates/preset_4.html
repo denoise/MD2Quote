@@ -91,6 +91,11 @@
     {% endif %}
 
     <footer>
+        {% if snippets.custom_footer %}
+        <div class="custom-footer-text">
+            {{ snippets.custom_footer | replace('\n', '<br>') | safe }}
+        </div>
+        {% endif %}
         <div class="bank-details">
             <h4>{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
             <p>{{ bank.bank_name }} | IBAN: {{ bank.iban }} | BIC: {{ bank.bic }}</p>

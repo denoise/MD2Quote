@@ -129,6 +129,11 @@
     </main>
 
     <div class="page-footer">
+        {% if snippets.custom_footer %}
+        <div class="custom-footer-text">
+            {{ snippets.custom_footer | replace('\n', '<br>') | safe }}
+        </div>
+        {% endif %}
         <div class="footer-columns">
             <div class="col">
                 <strong>{{ company.name }}</strong><br>

@@ -124,6 +124,11 @@
 
         <!-- Footer -->
         <footer>
+        {% if snippets.custom_footer %}
+        <div class="custom-footer-text">
+            {{ snippets.custom_footer | replace('\n', '<br>') | safe }}
+        </div>
+        {% endif %}
             <div class="footer-divider">
                 <span class="footer-line"></span>
                 <span class="footer-ornament">✦</span>

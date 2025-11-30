@@ -1060,7 +1060,14 @@ class StyledSpinBox(QSpinBox):
             QSpinBox:focus {{
                 border-color: {COLORS['accent']};
             }}
+            QSpinBox:disabled {{
+                color: {COLORS['text_muted']};
+                background-color: {COLORS['bg_base']};
+                border-color: {COLORS['border']};
+            }}
             QSpinBox::up-button, QSpinBox::down-button {{
+
+
                 width: 18px;
                 border: none;
                 background-color: {COLORS['bg_hover']};
@@ -1303,6 +1310,11 @@ class ConfigDialog(QDialog):
                 background-color: {COLORS['bg_hover']};
                 color: {COLORS['text_primary']};
             }}
+            /* Specific styling for Signature Block checkbox */
+            QCheckBox#signature-checkbox {{
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }}
         """)
     
     def _setup_ui(self):
@@ -1340,7 +1352,7 @@ class ConfigDialog(QDialog):
         
         # Left column: Preset list (240px fixed width)
         self.preset_list = PresetListWidget(self.config_loader)
-        self.preset_list.setFixedWidth(245)
+        self.preset_list.setFixedWidth(280)
         self.preset_list.load_presets(self.config, self.current_preset_key)
         self.preset_list.presetSelected.connect(self._on_preset_selected)
         self.preset_list.presetCreated.connect(self._on_preset_created)
@@ -1365,6 +1377,7 @@ class ConfigDialog(QDialog):
         self.preset_name_edit = QLineEdit()
         self.preset_name_edit.setPlaceholderText("e.g. Company A, Freelance, Private")
         self.preset_name_edit.setMinimumHeight(28)
+        self.preset_name_edit.setStyleSheet(f"margin-bottom: {SPACING['sm']}px;")
         self.preset_name_edit.textChanged.connect(self._on_preset_name_changed)
         name_row.addWidget(self.preset_name_edit, 1)
         
@@ -1654,12 +1667,17 @@ class ConfigDialog(QDialog):
         self.snippet_terms.setFixedHeight(60)
         snippets_card.addWidget(self.snippet_terms)
         
-        self.snippet_footer = QLineEdit()
+        footer_label = QLabel("Custom Footer")
+        footer_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        snippets_card.addWidget(footer_label)
+        
+        self.snippet_footer = QPlainTextEdit()
         self.snippet_footer.setPlaceholderText("Extra text for page footer (e.g. page number override)")
-        self.snippet_footer.setMinimumHeight(24)
-        snippets_card.addWidget(FormRow("Custom Footer", self.snippet_footer))
+        self.snippet_footer.setFixedHeight(60)
+        snippets_card.addWidget(self.snippet_footer)
         
         self.snippet_signature = QCheckBox("Show Signature Block")
+        self.snippet_signature.setObjectName("signature-checkbox")
         snippets_card.addWidget(self.snippet_signature)
         
         layout.addWidget(snippets_card)
@@ -2192,7 +2210,7 @@ class ConfigDialog(QDialog):
             'enabled': self.snippets_enabled_checkbox.isChecked(),
             'intro_text': self.snippet_intro.toPlainText(),
             'terms': self.snippet_terms.toPlainText(),
-            'custom_footer': self.snippet_footer.text(),
+            'custom_footer': self.snippet_footer.toPlainText(),
             'signature_block': self.snippet_signature.isChecked()
         }
 
@@ -2293,7 +2311,7 @@ class ConfigDialog(QDialog):
         self.snippets_enabled_checkbox.setChecked(snippets.get('enabled', True))
         self.snippet_intro.setPlainText(snippets.get('intro_text', ''))
         self.snippet_terms.setPlainText(snippets.get('terms', ''))
-        self.snippet_footer.setText(snippets.get('custom_footer', ''))
+        self.snippet_footer.setPlainText(snippets.get('custom_footer', ''))
         self.snippet_signature.setChecked(snippets.get('signature_block', True))
         
         # Bank
