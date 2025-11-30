@@ -7,6 +7,7 @@ A visually refined settings dialog with tabs for each configuration category.
 import os
 import yaml
 import copy
+import shutil
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget,
@@ -1884,6 +1885,81 @@ class ConfigDialog(QDialog):
         if result == QMessageBox.StandardButton.Yes:
             self._copy_preset_to(target_key, copy_name_checkbox.isChecked())
 
+    def _find_template_file(self, template_name: str, extension: str) -> Path:
+        """Find a template file, prioritizing user config then app templates."""
+        filename = f"{template_name}.{extension}"
+        
+        # 1. Check user config templates dir
+        user_path = self.config_loader.templates_dir / filename
+        if user_path.exists():
+            return user_path
+            
+        # 2. Check app templates dir
+        app_path = get_templates_path() / filename
+        if app_path.exists():
+            return app_path
+            
+        return None
+
+    def _is_development_mode(self) -> bool:
+        """Check if running from source (development) or bundled app (production)."""
+        import sys
+        return not (getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'))
+
+    def _copy_template_files(self, source_key: str, target_key: str) -> tuple[bool, str]:
+        """
+        Copy template files (HTML and CSS) from source preset to target preset.
+        
+        In development mode: copies to source templates directory (templates/)
+        In production mode: copies to user config directory (~/.config/md2angebot/templates/)
+        
+        Returns a tuple of (success, message).
+        """
+        source_template = PRESET_TEMPLATE_MAP.get(source_key, (source_key, ''))[0]
+        target_template = PRESET_TEMPLATE_MAP.get(target_key, (target_key, ''))[0]
+        
+        # Determine target directory based on mode
+        # In development, the renderer loads from source templates first
+        # In production, it loads from user config first
+        is_dev = self._is_development_mode()
+        
+        if is_dev:
+            # Development mode: copy to source templates directory
+            target_dir = get_templates_path()
+        else:
+            # Production mode: copy to user config templates directory
+            target_dir = self.config_loader.templates_dir
+            target_dir.mkdir(parents=True, exist_ok=True)
+        
+        copied_files = []
+        errors = []
+        
+        for ext in ['html', 'css']:
+            source_path = self._find_template_file(source_template, ext)
+            if not source_path:
+                errors.append(f"Source {ext.upper()} not found: {source_template}.{ext}")
+                continue
+            
+            target_path = target_dir / f"{target_template}.{ext}"
+            
+            # Don't copy if source and target are the same file
+            if source_path.resolve() == target_path.resolve():
+                continue
+            
+            try:
+                shutil.copy2(source_path, target_path)
+                copied_files.append(f"{target_template}.{ext}")
+            except Exception as e:
+                errors.append(f"Failed to copy {ext.upper()}: {e}")
+        
+        if errors:
+            return (False, "; ".join(errors))
+        elif copied_files:
+            location = "source" if is_dev else "user config"
+            return (True, f"Template files copied to {location}: {', '.join(copied_files)}")
+        else:
+            return (True, "Templates already up to date")
+
     def _copy_preset_to(self, target_key: str, copy_name: bool):
         """Deep copy current preset into target slot, optionally copying the name."""
         source_key = self.current_preset_key
@@ -1905,15 +1981,26 @@ class ConfigDialog(QDialog):
 
             presets[target_key] = source_data
 
+            # Copy template files (HTML and CSS)
+            template_success, template_msg = self._copy_template_files(source_key, target_key)
+            if not template_success:
+                QMessageBox.warning(
+                    self, 
+                    "Template Copy Warning", 
+                    f"Configuration copied, but template files could not be fully copied:\n{template_msg}"
+                )
+
             # Switch focus to the target preset
             self.current_preset_key = target_key
             self.config['active_preset'] = target_key
             self._select_preset_button(target_key)
             self._load_preset_values(target_key)
             self._refresh_copy_menu()
-            self._update_copy_status(
-                f"Copied {self._preset_label(source_key)} -> {self._preset_label(target_key)}"
-            )
+            
+            status_msg = f"Copied {self._preset_label(source_key)} -> {self._preset_label(target_key)}"
+            if template_success:
+                status_msg += " (incl. templates)"
+            self._update_copy_status(status_msg)
         finally:
             self.copy_button.setEnabled(True)
             
