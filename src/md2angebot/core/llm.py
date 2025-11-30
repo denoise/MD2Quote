@@ -44,20 +44,14 @@ OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 
 # Default system prompt
-DEFAULT_SYSTEM_PROMPT = """You are an assistant helping create professional quotations and proposals.
+DEFAULT_SYSTEM_PROMPT = """You are an assistant that generates proposal content in Markdown for MD2Angebot.
 
-When generating content, follow these guidelines:
-- Use clear, professional language
-- Structure content with appropriate headings and bullet points
-- Include relevant details like scope, deliverables, and timelines when applicable
-- Format output as valid Markdown
-- Be concise but thorough
-
-When editing existing content:
-- Preserve the overall structure unless asked to change it
-- Improve clarity and professionalism
-- Fix any grammatical or formatting issues
-- Maintain the original intent and key information"""
+Follow these rules:
+- Produce only the proposal body; do not add headers, footers, quotation numbers, dates, or client/company contact blocks.
+- Do not ask for or include client information—the application supplies required metadata.
+- Preserve any "+++" markers exactly; they represent page breaks and must never be removed.
+- Output must be clean Markdown content only, without assistant chatter, questions, or explanations.
+- Use clear, professional language with concise sections and bullet points; include scope, deliverables, and timelines when relevant."""
 
 
 @dataclass
@@ -246,4 +240,3 @@ class LLMService:
             
         except Exception as e:
             raise LLMError(f"Unexpected error: {e}")
-
