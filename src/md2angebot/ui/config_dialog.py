@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QFileDialog, QScrollArea, QFrame, QGridLayout,
     QGroupBox, QColorDialog, QMessageBox, QSizePolicy, QListWidget,
     QListWidgetItem, QInputDialog, QButtonGroup, QPlainTextEdit, QCheckBox,
-    QSlider
+    QSlider, QMenu, QToolButton
 )
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon, QPixmap, QPainter
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
@@ -897,6 +897,7 @@ class ConfigDialog(QDialog):
         
         self._setup_ui()
         self._load_preset_values(self.current_preset_key)
+        self._refresh_copy_menu()
         self._apply_dialog_style()
     
     def _apply_dialog_style(self):
@@ -1062,8 +1063,26 @@ class ConfigDialog(QDialog):
         self.preset_name_edit = QLineEdit()
         self.preset_name_edit.setPlaceholderText("e.g. Company A, Freelance, Private")
         self.preset_name_edit.setMinimumHeight(24)
+        self.preset_name_edit.setMaximumWidth(260)
         self.preset_name_edit.textChanged.connect(self._update_preset_button_text)
         name_row.addWidget(self.preset_name_edit, 1)
+        
+        self.copy_menu = QMenu(self)
+        self.copy_menu.triggered.connect(self._on_copy_target_selected)
+        
+        self.copy_button = QToolButton()
+        self.copy_button.setText("Copy preset to…")
+        self.copy_button.setIcon(icon('content_copy', 16, COLORS['text_secondary']))
+        self.copy_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.copy_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.copy_button.setMinimumWidth(150)
+        self.copy_button.setMenu(self.copy_menu)
+        name_row.addWidget(self.copy_button)
+        
+        self.copy_status_label = QLabel("")
+        self.copy_status_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px;")
+        self.copy_status_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        name_row.addWidget(self.copy_status_label, 1)
         
         preset_card.addLayout(name_row)
         layout.addWidget(preset_card)
@@ -1713,6 +1732,62 @@ class ConfigDialog(QDialog):
             
             self.qn_counter_label.setText("Counter: 0")
             QMessageBox.information(self, "Counter Reset", "Quotation counter has been reset to 0.")
+
+    def _preset_display_name(self, preset_key: str) -> str:
+        """Return stored preset name or a numbered fallback."""
+        presets = self.config.get('presets', {})
+        preset = presets.get(preset_key, {})
+        num = preset_key.split('_')[-1]
+        name = preset.get('name')
+        return name if name else f"Preset {num}"
+
+    def _preset_label(self, preset_key: str) -> str:
+        """Human friendly label used in copy prompts/status."""
+        num = preset_key.split('_')[-1]
+        name = self._preset_display_name(preset_key)
+        return f"Preset {num}: {name}"
+
+    def _get_preset_button(self, preset_key: str):
+        """Find the toggle button for a given preset key."""
+        for btn in self.preset_group.buttons():
+            if btn.property("preset_key") == preset_key:
+                return btn
+        return None
+
+    def _set_preset_button_text(self, preset_key: str, name: str):
+        """Update preset button text to include its number."""
+        btn = self._get_preset_button(preset_key)
+        if btn:
+            num = preset_key.split('_')[-1]
+            btn.setText(f"{num}. {name}")
+
+    def _select_preset_button(self, preset_key: str):
+        """Check the preset button corresponding to preset_key."""
+        btn = self._get_preset_button(preset_key)
+        if btn:
+            btn.setChecked(True)
+
+    def _refresh_copy_menu(self):
+        """Rebuild the copy target menu, excluding the active preset."""
+        if not hasattr(self, "copy_menu"):
+            return
+
+        self.copy_menu.clear()
+
+        for i in range(1, 6):
+            key = f"preset_{i}"
+            if key == self.current_preset_key:
+                continue
+            name = self._preset_display_name(key)
+            action = self.copy_menu.addAction(f"To {i}. {name}")
+            action.setData(key)
+
+        self.copy_button.setEnabled(len(self.copy_menu.actions()) > 0)
+
+    def _update_copy_status(self, message: str):
+        """Show short status text next to the copy button."""
+        if hasattr(self, "copy_status_label"):
+            self.copy_status_label.setText(message)
     
     def _on_preset_changed(self, button):
         """Handle preset switching. Save current form to memory, load new preset."""
@@ -1728,24 +1803,86 @@ class ConfigDialog(QDialog):
         
         # Load new values
         self._load_preset_values(new_key)
-        
+        self._refresh_copy_menu()
+        self._update_copy_status("")
+    
     def _update_preset_button_text(self, text):
         """Update the text of the button for the current preset."""
-        button = self.preset_group.checkedButton()
-        if button:
-            # Extract number prefix
-            current_text = button.text()
-            prefix = current_text.split('.')[0]
-            button.setText(f"{prefix}. {text}")
+        self._set_preset_button_text(self.current_preset_key, text)
+        
+        # Also update in memory config immediately for name
+        # Ensure keys exist
+        if 'presets' not in self.config:
+            self.config['presets'] = {}
+        if self.current_preset_key not in self.config['presets']:
+            self.config['presets'][self.current_preset_key] = {}
             
-            # Also update in memory config immediately for name
-            # Ensure keys exist
-            if 'presets' not in self.config:
-                self.config['presets'] = {}
-            if self.current_preset_key not in self.config['presets']:
-                self.config['presets'][self.current_preset_key] = {}
-                
-            self.config['presets'][self.current_preset_key]['name'] = text
+        self.config['presets'][self.current_preset_key]['name'] = text
+        self._refresh_copy_menu()
+
+    def _on_copy_target_selected(self, action):
+        """Handle click on a copy target menu entry."""
+        if not action:
+            return
+        target_key = action.data()
+        if not target_key or target_key == self.current_preset_key:
+            return
+        self._prompt_copy_to(target_key)
+
+    def _prompt_copy_to(self, target_key: str):
+        """Confirm copy and whether to copy the preset name."""
+        source_label = self._preset_label(self.current_preset_key)
+        target_label = self._preset_label(target_key)
+
+        confirm = QMessageBox(self)
+        confirm.setIcon(QMessageBox.Icon.Question)
+        confirm.setWindowTitle("Copy Preset")
+        confirm.setText(f"Replace {target_label} with {source_label}?")
+        confirm.setInformativeText(
+            "This will copy identity, document, styling, defaults, and numbering settings."
+        )
+        copy_name_checkbox = QCheckBox("Copy name too", confirm)
+        copy_name_checkbox.setChecked(False)
+        confirm.setCheckBox(copy_name_checkbox)
+        confirm.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        confirm.setDefaultButton(QMessageBox.StandardButton.Yes)
+
+        result = confirm.exec()
+        if result == QMessageBox.StandardButton.Yes:
+            self._copy_preset_to(target_key, copy_name_checkbox.isChecked())
+
+    def _copy_preset_to(self, target_key: str, copy_name: bool):
+        """Deep copy current preset into target slot, optionally copying the name."""
+        source_key = self.current_preset_key
+        try:
+            self.copy_button.setEnabled(False)
+            self._save_current_preset_to_memory()
+
+            presets = self.config.setdefault('presets', {})
+            source_data = copy.deepcopy(presets.get(source_key, {}))
+            target_existing = presets.get(target_key, {})
+
+            if not copy_name:
+                preserved_name = target_existing.get('name', f"Preset {target_key.split('_')[-1]}")
+                source_data['name'] = preserved_name
+            else:
+                source_data['name'] = source_data.get(
+                    'name', f"Preset {source_key.split('_')[-1]}"
+                )
+
+            presets[target_key] = source_data
+
+            # Switch focus to the target preset
+            self.current_preset_key = target_key
+            self.config['active_preset'] = target_key
+            self._select_preset_button(target_key)
+            self._load_preset_values(target_key)
+            self._refresh_copy_menu()
+            self._update_copy_status(
+                f"Copied {self._preset_label(source_key)} -> {self._preset_label(target_key)}"
+            )
+        finally:
+            self.copy_button.setEnabled(True)
             
     def _save_current_preset_to_memory(self):
         """Saves values from UI fields into self.config for the current preset."""
@@ -1847,10 +1984,12 @@ class ConfigDialog(QDialog):
         """Load configuration values for the given preset into the UI."""
         presets = self.config.get('presets', {})
         preset = presets.get(preset_key, {})
+        display_name = self._preset_display_name(preset_key)
+        self._set_preset_button_text(preset_key, display_name)
         
         # Name
         self.preset_name_edit.blockSignals(True)
-        self.preset_name_edit.setText(preset.get('name', ''))
+        self.preset_name_edit.setText(display_name)
         self.preset_name_edit.blockSignals(False)
         
         # Company
