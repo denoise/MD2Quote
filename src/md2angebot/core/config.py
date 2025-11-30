@@ -3,6 +3,7 @@ import yaml
 import shutil
 from pathlib import Path
 from datetime import datetime
+from .llm import DEFAULT_SYSTEM_PROMPT
 from ..utils import get_app_path
 
 
@@ -16,12 +17,7 @@ PRESET_TEMPLATE_MAP = {
     'preset_5': 'preset_5',
 }
 
-# Default LLM configuration
-DEFAULT_LLM_CONFIG = {
-    'provider': 'openrouter',
-    'api_key': '',
-    'model': 'anthropic/claude-sonnet-4',
-    'system_prompt': '''You are an assistant helping create professional quotations and proposals.
+PREVIOUS_DEFAULT_SYSTEM_PROMPT = '''You are an assistant helping create professional quotations and proposals.
 
 When generating content, follow these guidelines:
 - Use clear, professional language
@@ -35,6 +31,13 @@ When editing existing content:
 - Improve clarity and professionalism
 - Fix any grammatical or formatting issues
 - Maintain the original intent and key information'''
+
+# Default LLM configuration
+DEFAULT_LLM_CONFIG = {
+    'provider': 'openrouter',
+    'api_key': '',
+    'model': 'anthropic/claude-sonnet-4',
+    'system_prompt': DEFAULT_SYSTEM_PROMPT
 }
 
 class ConfigLoader:
@@ -144,6 +147,7 @@ class ConfigLoader:
                 except Exception as e:
                     print(f"Error saving backfilled LLM config: {e}")
 
+            data = self._migrate_llm_prompt(data)
             return data
         except Exception as e:
             print(f"Error loading config: {e}")
@@ -175,6 +179,32 @@ class ConfigLoader:
             except Exception as e:
                 print(f"Error saving config after template migration: {e}")
         
+        return data
+
+    def _migrate_llm_prompt(self, data: dict) -> dict:
+        """Updates legacy or missing LLM prompts without overwriting custom text."""
+        llm_cfg = data.get('llm')
+        if not isinstance(llm_cfg, dict):
+            return data
+
+        current_prompt = llm_cfg.get('system_prompt', '')
+        updated = False
+
+        if not current_prompt:
+            llm_cfg['system_prompt'] = DEFAULT_SYSTEM_PROMPT
+            updated = True
+        elif current_prompt == PREVIOUS_DEFAULT_SYSTEM_PROMPT:
+            llm_cfg['system_prompt'] = DEFAULT_SYSTEM_PROMPT
+            updated = True
+
+        if updated:
+            try:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+                print("Updated LLM system prompt to latest default.")
+            except Exception as e:
+                print(f"Error saving config after LLM prompt migration: {e}")
+
         return data
 
     def _create_default_structure(self) -> dict:
