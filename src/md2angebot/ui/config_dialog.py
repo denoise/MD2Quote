@@ -779,8 +779,8 @@ class PresetListWidget(QFrame):
         self.list_widget.clear()
         
         presets = config.get('presets', {})
-        # Sort by name
-        sorted_items = sorted(presets.items(), key=lambda x: x[1].get('name', x[0]).lower())
+        # Sort by key to match main window order
+        sorted_items = sorted(presets.items(), key=lambda x: x[0])
         
         for preset_key, preset_data in sorted_items:
             name = preset_data.get('name', preset_key)

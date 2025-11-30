@@ -335,14 +335,10 @@ class ConfigLoader:
         return self.config.get('active_preset', 'preset_1')
 
     def set_active_preset(self, preset_key: str):
-        """Sets the active preset key."""
+        """Sets the active preset key and persists it to disk."""
         if preset_key in self.config.get('presets', {}):
             self.config['active_preset'] = preset_key
-            # Persist change? usually done via save, but we can do it here if we want instant persistence of state
-            # For now we assume save is explicit in config dialog, but for main window usage, we might want to persist.
-            # The Main Window usage usually implies just switching for the session, unless we want to remember last used.
-            # Let's keep it in memory and let explicit save handle persistence, or handle it in Main Window close.
-            # Actually, the user might expect it to be saved. I'll leave it in memory for now as per common pattern.
+            self._save_config()
 
     def get_preset(self, preset_key: str) -> dict:
         """Returns the configuration dict for a specific preset."""
