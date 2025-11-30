@@ -5,7 +5,7 @@ import re
 import yaml
 from PyQt6.QtWidgets import (QMainWindow, QSplitter, QFileDialog, QMessageBox, 
                              QToolBar, QStatusBar, QApplication, QComboBox, QLabel, QWidget, QInputDialog,
-                             QVBoxLayout, QHBoxLayout, QToolButton, QFrame, QSizePolicy, QAbstractItemView)
+                             QVBoxLayout, QHBoxLayout, QToolButton, QSizePolicy)
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QFont
 from PyQt6.QtCore import Qt, QTimer, QDir, QSettings, QThread, pyqtSignal, QObject
 
@@ -20,27 +20,6 @@ from ..core.renderer import TemplateRenderer
 from ..core.pdf import PDFGenerator
 from ..core.config import config
 from ..core.llm import LLMService, LLMError
-
-
-class ProfileComboBox(QComboBox):
-    """Custom QComboBox that correctly highlights the current item when dropdown opens."""
-    
-    def showPopup(self):
-        """Override to sync the view's selection with the combobox's current index."""
-        view = self.view()
-        if view:
-            # Set the view's current index to match the combobox's current index
-            model_index = self.model().index(self.currentIndex(), 0)
-            view.setCurrentIndex(model_index)
-            # Scroll to make sure the current item is visible
-            view.scrollTo(model_index, QAbstractItemView.ScrollHint.PositionAtCenter)
-        super().showPopup()
-        
-        # Offset the popup position to avoid collision with first option
-        popup = self.findChild(QFrame)
-        if popup:
-            pos = popup.pos()
-            popup.move(pos.x() + 8, pos.y() + 8)
 
 
 class LLMWorker(QObject):
@@ -209,7 +188,7 @@ class MainWindow(QMainWindow):
         """)
         toolbar.addWidget(type_label)
         
-        self.preset_combo = ProfileComboBox()
+        self.preset_combo = QComboBox()
         self.preset_combo.setMinimumWidth(200)
         self.update_preset_selector()
         self.preset_combo.currentTextChanged.connect(self.on_preset_changed)
