@@ -189,11 +189,16 @@ def get_stylesheet():
     }}
     
     QComboBox QAbstractItemView::item:hover {{
+        background-color: rgba(255, 107, 107, 0.1);
+        color: {COLORS['text_primary']};
+    }}
+    
+    QComboBox QAbstractItemView::item:selected {{
         background-color: {COLORS['accent']};
         color: {COLORS['bg_dark']};
     }}
     
-    QComboBox QAbstractItemView::item:selected {{
+    QComboBox QAbstractItemView::item:selected:hover {{
         background-color: {COLORS['accent']};
         color: {COLORS['bg_dark']};
     }}
@@ -427,7 +432,17 @@ def get_stylesheet():
         background-color: transparent;
     }}
 
+    QMenu::item:hover {{
+        background-color: rgba(255, 107, 107, 0.1);
+        color: {COLORS['text_primary']};
+    }}
+
     QMenu::item:selected {{
+        background-color: {COLORS['accent']};
+        color: {COLORS['bg_dark']};
+    }}
+    
+    QMenu::item:selected:hover {{
         background-color: {COLORS['accent']};
         color: {COLORS['bg_dark']};
     }}
