@@ -130,20 +130,8 @@ class TemplateEditorDialog(QDialog):
             
         try:
             content = self.editor.toPlainText()
-            
-            # Confirmation
-            reply = QMessageBox.question(
-                self,
-                "Confirm Save",
-                f"Are you sure you want to overwrite the template file?\n{self.file_path}",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
-            )
-            
-            if reply == QMessageBox.StandardButton.Yes:
-                self.file_path.write_text(content, encoding='utf-8')
-                QMessageBox.information(self, "Success", "Template saved successfully.")
-                self.accept()
+            self.file_path.write_text(content, encoding='utf-8')
+            self.accept()
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save template:\n{e}")
@@ -247,19 +235,8 @@ class CSSEditorDialog(QDialog):
 
         try:
             content = self.editor.toPlainText()
-
-            reply = QMessageBox.question(
-                self,
-                "Confirm Save",
-                f"Are you sure you want to overwrite the CSS file?\n{self.file_path}",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No,
-            )
-
-            if reply == QMessageBox.StandardButton.Yes:
-                self.file_path.write_text(content, encoding="utf-8")
-                QMessageBox.information(self, "Success", "CSS file saved successfully.")
-                self.accept()
+            self.file_path.write_text(content, encoding="utf-8")
+            self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save CSS:\n{e}")
 
@@ -1488,16 +1465,11 @@ class ConfigDialog(QDialog):
         btn_layout.setSpacing(SPACING['sm'])
         btn_layout.addStretch()
         
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.setMinimumWidth(70)
-        cancel_btn.clicked.connect(self.reject)
-        btn_layout.addWidget(cancel_btn)
-        
-        save_btn = QPushButton("Save Configuration")
-        save_btn.setMinimumWidth(120)
-        save_btn.setDefault(True)
-        save_btn.clicked.connect(self._save_config)
-        btn_layout.addWidget(save_btn)
+        close_btn = QPushButton("Close")
+        close_btn.setMinimumWidth(100)
+        close_btn.setDefault(True)
+        close_btn.clicked.connect(self._save_config)
+        btn_layout.addWidget(close_btn)
         
         layout.addLayout(btn_layout)
     
