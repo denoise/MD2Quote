@@ -2849,7 +2849,7 @@ class SettingsDialog(QDialog):
         self.config_loader = config_loader
         self.config = copy.deepcopy(config_loader.config)
         
-        self.setWindowTitle("Settings")
+        self.setWindowTitle("LLM Settings")
         self.setMinimumSize(650, 550)
         self.resize(720, 600)
         
@@ -2880,7 +2880,7 @@ class SettingsDialog(QDialog):
         title_container = QVBoxLayout()
         title_container.setSpacing(2)
         
-        title = QLabel("Settings")
+        title = QLabel("LLM Settings")
         title.setStyleSheet(f"""
             font-size: 24px;
             font-weight: 600;

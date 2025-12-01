@@ -200,7 +200,7 @@ class MainWindow(QMainWindow):
         profiles_action.triggered.connect(self.open_profiles)
         toolbar.addAction(profiles_action)
 
-        settings_action = QAction(icon('settings', 20, COLORS['text_secondary']), "Settings", self)
+        settings_action = QAction(icon('settings', 20, COLORS['text_secondary']), "LLM Settings", self)
         settings_action.setShortcut("Ctrl+,")
         settings_action.setToolTip("Open Settings (⌘,)")
         settings_action.triggered.connect(self.open_settings)
