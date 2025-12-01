@@ -238,7 +238,7 @@ class MainWindow(QMainWindow):
 
         # Print (Alias to Export)
         print_action = QAction("Print", self)
-        print_action.setShortcut(QKeySequence.StandardKey.Print)
+        # print_action.setShortcut(QKeySequence.StandardKey.Print) # Conflict with Profiles
         print_action.triggered.connect(self.export_pdf_dialog)
         self.addAction(print_action)
 
