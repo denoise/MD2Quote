@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
                              QTextEdit, QSizePolicy, QFrame, QLabel, QGridLayout,
                              QPushButton, QCalendarWidget, QMenu, QWidgetAction,
-                             QPlainTextEdit)
+                             QPlainTextEdit, QComboBox)
 from PyQt6.QtCore import QDate, pyqtSignal, Qt, QPoint
 from PyQt6.QtGui import QTextCharFormat, QColor, QKeyEvent
 from .styles import COLORS, SPACING
@@ -390,11 +390,15 @@ class HeaderWidget(QWidget):
     dataChanged = pyqtSignal()
     generateQuotationRequested = pyqtSignal()
     llmRequestSubmitted = pyqtSignal(str)  # Emits the instruction text
+    clientSelected = pyqtSignal(str)  # Emits client key when selected from dropdown
+    manageClientsRequested = pyqtSignal()  # Emits when manage clients button clicked
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         self.setObjectName("header-widget")
+        self._updating_client_combo = False  # Prevent recursion
+        self._client_data = {}  # Store selected client data
         self.init_ui()
 
     def init_ui(self):
@@ -458,36 +462,71 @@ class HeaderWidget(QWidget):
         main_layout.addWidget(quote_card, 0)
 
         client_card = SectionCard("Client")
-        client_grid = QGridLayout()
-        client_grid.setContentsMargins(0, 0, 0, 0)
-        client_grid.setHorizontalSpacing(SPACING['sm'])
-        client_grid.setVerticalSpacing(SPACING['xs'])
+        client_layout = QHBoxLayout()
+        client_layout.setContentsMargins(0, 0, 0, 0)
+        client_layout.setSpacing(0)
 
-        name_label = self._create_label("Name")
-        client_grid.addWidget(name_label, 0, 0)
-        
-        self.receiver_name = ModernLineEdit("Company or contact name")
-        self.receiver_name.textChanged.connect(self.on_changed)
-        client_grid.addWidget(self.receiver_name, 0, 1, 1, 3)
+        self.client_combo = QComboBox()
+        self.client_combo.setMinimumWidth(200)
+        self.client_combo.addItem("— Select saved client —", "")
+        self.client_combo.currentIndexChanged.connect(self._on_client_combo_changed)
+        self.client_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 0;
+                color: {COLORS['text_primary']};
+                padding: 6px 10px;
+                min-height: 26px;
+                font-size: 13px;
+            }}
+            QComboBox:hover {{
+                border-color: {COLORS['text_muted']};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 6px solid {COLORS['text_muted']};
+                margin-right: 8px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                selection-background-color: {COLORS['accent']};
+                selection-color: {COLORS['bg_dark']};
+            }}
+        """)
+        client_layout.addWidget(self.client_combo, 1)
 
-        email_label = self._create_label("Email")
-        client_grid.addWidget(email_label, 1, 0)
-        
-        self.receiver_email = ModernLineEdit("client@example.com")
-        self.receiver_email.textChanged.connect(self.on_changed)
-        client_grid.addWidget(self.receiver_email, 1, 1, 1, 3)
-        
-        address_label = self._create_label("Address")
-        client_grid.addWidget(address_label, 2, 0, Qt.AlignmentFlag.AlignTop)
-        
-        self.receiver_address = ModernTextEdit("Street, City, Postal Code...")
-        self.receiver_address.textChanged.connect(self.on_changed)
-        client_grid.addWidget(self.receiver_address, 2, 1, 1, 3)
-        
-        client_grid.setColumnStretch(1, 1)
+        self.manage_clients_button = QPushButton()
+        self.manage_clients_button.setIcon(icon('edit', 16, COLORS['text_secondary']))
+        self.manage_clients_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.manage_clients_button.setToolTip("Manage saved clients")
+        self.manage_clients_button.clicked.connect(self._on_manage_clients_clicked)
+        self.manage_clients_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['bg_elevated']};
+                border: 1px solid {COLORS['border']};
+                border-left: none;
+                border-radius: 0;
+                padding: 6px 10px;
+                min-height: 26px;
+                min-width: 32px;
+            }}
+            QPushButton:hover {{
+                border-color: {COLORS['text_muted']};
+                background-color: {COLORS['bg_hover']};
+            }}
+        """)
+        client_layout.addWidget(self.manage_clients_button)
 
-        client_card.content_layout.addLayout(client_grid)
-        main_layout.addWidget(client_card, 1)
+        client_card.content_layout.addLayout(client_layout)
+        main_layout.addWidget(client_card, 0)
 
         llm_card = SectionCard("LLM Assistant")
         llm_layout = QVBoxLayout()
@@ -567,6 +606,39 @@ class HeaderWidget(QWidget):
     def on_changed(self):
         self.dataChanged.emit()
 
+    def _on_client_combo_changed(self, index: int):
+        """Handle client selection from combo box."""
+        if self._updating_client_combo:
+            return
+        client_key = self.client_combo.currentData()
+        if client_key:
+            self.clientSelected.emit(client_key)
+
+    def _on_manage_clients_clicked(self):
+        """Handle manage clients button click."""
+        self.manageClientsRequested.emit()
+
+    def update_clients_combo(self, clients_list: list):
+        """
+        Update the client combo box with saved clients.
+        
+        Args:
+            clients_list: List of (client_key, institution) tuples
+        """
+        self._updating_client_combo = True
+        self.client_combo.clear()
+        self.client_combo.addItem("— Select saved client —", "")
+        for client_key, institution in clients_list:
+            if institution:
+                self.client_combo.addItem(institution, client_key)
+        self._updating_client_combo = False
+
+    def reset_client_combo(self):
+        """Reset the client combo to the placeholder option."""
+        self._updating_client_combo = True
+        self.client_combo.setCurrentIndex(0)
+        self._updating_client_combo = False
+
     def _on_generate_quotation_clicked(self):
         """Emit signal to request a new quotation number."""
         self.generateQuotationRequested.emit()
@@ -603,15 +675,18 @@ class HeaderWidget(QWidget):
 
     def get_data(self):
         """Returns a dictionary with the header data."""
+        institution = self._client_data.get('institution', '')
         return {
             "quotation": {
                 "number": self.quote_number_edit.text(),
                 "date": self.date_edit.date().toString("yyyy-MM-dd"),
             },
             "client": {
-                "name": self.receiver_name.text(),
-                "email": self.receiver_email.text(),
-                "address": self.receiver_address.toPlainText()
+                "contact": self._client_data.get('contact', ''),
+                "institution": institution,
+                "name": institution,  # Backward compatibility alias
+                "email": self._client_data.get('email', ''),
+                "address": self._client_data.get('address', '')
             }
         }
 
@@ -634,22 +709,34 @@ class HeaderWidget(QWidget):
             except:
                 pass
 
-        # Client
-        if "name" in client:
-            self.receiver_name.setText(str(client["name"]))
-        if "email" in client:
-            self.receiver_email.setText(str(client["email"]))
-        if "address" in client:
-            self.receiver_address.setPlainText(str(client["address"]))
+        # Client - store data internally
+        if client:
+            self._client_data = {
+                'contact': client.get('contact', ''),
+                'institution': client.get('institution', client.get('name', '')),
+                'email': client.get('email', ''),
+                'address': client.get('address', '')
+            }
+            # Reset combo since loaded data may not match saved clients
+            self.reset_client_combo()
 
         self.blockSignals(False)
+
+    def set_client_data(self, client_data: dict):
+        """Sets the client data and triggers a data change."""
+        self._client_data = {
+            'contact': client_data.get('contact', ''),
+            'institution': client_data.get('institution', client_data.get('name', '')),
+            'email': client_data.get('email', ''),
+            'address': client_data.get('address', '')
+        }
+        self.dataChanged.emit()
 
     def clear_data(self):
         """Clears all input fields."""
         self.blockSignals(True)
         self.quote_number_edit.clear()
         self.date_edit.setDate(QDate.currentDate())
-        self.receiver_name.clear()
-        self.receiver_email.clear()
-        self.receiver_address.clear()
+        self._client_data = {}
+        self.reset_client_combo()
         self.blockSignals(False)

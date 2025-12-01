@@ -13,6 +13,7 @@ from .editor import EditorWidget
 from .preview import PreviewWidget
 from .header import HeaderWidget
 from .config_dialog import ConfigDialog, SettingsDialog
+from .clients_dialog import ClientsManagerDialog
 from .styles import get_stylesheet, COLORS
 from .icons import icon, icon_font, icon_char
 from ..core.parser import MarkdownParser
@@ -85,7 +86,10 @@ class MainWindow(QMainWindow):
 
         self.header.dataChanged.connect(self.on_header_changed)
         self.header.llmRequestSubmitted.connect(self.on_llm_request)
+        self.header.clientSelected.connect(self._on_client_selected)
+        self.header.manageClientsRequested.connect(self._on_manage_clients)
 
+        self._update_clients_combo()
         self._restore_last_client_data()
         
         self.statusbar.showMessage("Ready — Select a preset to begin")
@@ -380,6 +384,52 @@ class MainWindow(QMainWindow):
         else:
             self.header.set_llm_enabled(True, "Click to configure LLM (no API key set)")
 
+    def _update_clients_combo(self):
+        """Update the clients dropdown in the header with saved clients."""
+        clients_list = config.get_clients_list()
+        self.header.update_clients_combo(clients_list)
+
+    def _on_client_selected(self, client_key: str):
+        """Handle client selection from the dropdown."""
+        client = config.get_client(client_key)
+        if client:
+            self.header.set_client_data(client)
+            self._persist_last_client_data(client)
+            self.statusbar.showMessage(f"Client: {client.get('institution', 'Unknown')}")
+            self.preview_timer.start()
+
+    def _on_manage_clients(self):
+        """Open the clients manager dialog."""
+        dialog = ClientsManagerDialog(config, parent=self)
+        dialog.clientSelected.connect(self._on_client_from_dialog)
+        dialog.clientsChanged.connect(self._on_clients_changed)
+        dialog.exec()
+
+    def _on_clients_changed(self):
+        """Handle clients list being modified in the dialog."""
+        self._update_clients_combo()
+        # Re-select the current client if it still exists
+        current_client = self.header.get_data().get("client", {})
+        if current_client.get("institution"):
+            # Find the client in the updated list
+            clients = config.get_clients()
+            for key, data in clients.items():
+                if data.get("institution") == current_client.get("institution"):
+                    self.header._updating_client_combo = True
+                    index = self.header.client_combo.findData(key)
+                    if index >= 0:
+                        self.header.client_combo.setCurrentIndex(index)
+                    self.header._updating_client_combo = False
+                    break
+
+    def _on_client_from_dialog(self, client_data: dict):
+        """Handle client selected from the manager dialog."""
+        self.header.set_client_data(client_data)
+        self.header.reset_client_combo()
+        self._persist_last_client_data(client_data)
+        self.statusbar.showMessage(f"Client: {client_data.get('institution', 'Unknown')}")
+        self.preview_timer.start()
+
     def _get_safe_context(self, metadata, html_body, preset_override=None):
         """Ensures context has all required fields with defaults to prevent template errors.
         
@@ -404,9 +454,11 @@ class MainWindow(QMainWindow):
                 "valid_days": profile_valid_days
             },
             "client": {
-                "name": "Client Name",
-                "address": "Client Address",
-                "email": "client@example.com"
+                "contact": "",
+                "institution": "",
+                "name": "",  # Backward compatibility alias
+                "address": "",
+                "email": ""
             }
         }
 
@@ -527,7 +579,7 @@ class MainWindow(QMainWindow):
         """Populate header with last client info if available."""
         client_data = self._load_last_client_data()
         if client_data:
-            self.header.set_data({"client": client_data})
+            self.header.set_client_data(client_data)
 
     def open_file_dialog(self):
         path, _ = QFileDialog.getOpenFileName(

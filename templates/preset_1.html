@@ -57,9 +57,10 @@
 
     <section class="client-info">
         <h3>{% if defaults.language == 'de' %}Empfänger{% else %}To{% endif %}</h3>
-        <p><strong>{{ client.name }}</strong></p>
-        <p>{{ client.address }}</p>
-        <p>{{ client.email }}</p>
+        {% if client.contact %}<p>{{ client.contact | replace('\n', '<br>') | safe }}</p>{% endif %}
+        {% if client.institution %}<p><strong>{{ client.institution }}</strong></p>{% elif client.name %}<p><strong>{{ client.name }}</strong></p>{% endif %}
+        {% if client.address %}<p>{{ client.address | replace('\n', '<br>') | safe }}</p>{% endif %}
+        {% if client.email %}<p>{{ client.email }}</p>{% endif %}
     </section>
 
     <main>

@@ -914,5 +914,109 @@ class ConfigLoader:
         preset['name'] = new_name
         return (True, None)
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Client Management
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _generate_client_key(self) -> str:
+        """Generates a unique client key using timestamp."""
+        return f"client_{int(time.time() * 1000)}"
+
+    def get_clients(self) -> dict:
+        """
+        Returns all saved clients as a dictionary.
+        Keys are client IDs, values are client data dicts.
+        """
+        return self.config.get('clients', {})
+
+    def get_client(self, client_key: str) -> dict | None:
+        """Returns a specific client by key, or None if not found."""
+        return self.config.get('clients', {}).get(client_key)
+
+    def get_clients_list(self) -> list[tuple[str, str]]:
+        """
+        Returns a list of (client_key, institution) tuples for all clients,
+        sorted alphabetically by institution name.
+        """
+        clients = self.get_clients()
+        result = []
+        for key, data in clients.items():
+            institution = data.get('institution', '')
+            result.append((key, institution))
+        result.sort(key=lambda x: x[1].lower())
+        return result
+
+    def add_client(self, client_data: dict) -> tuple[str, str | None]:
+        """
+        Adds a new client to the configuration.
+        
+        Args:
+            client_data: Dict with keys: contact, institution, email, address
+            
+        Returns:
+            Tuple of (new_client_key, error_message or None)
+        """
+        if not client_data.get('institution'):
+            return (None, "Institution is required")
+        
+        new_key = self._generate_client_key()
+        
+        if 'clients' not in self.config:
+            self.config['clients'] = {}
+        
+        self.config['clients'][new_key] = {
+            'contact': client_data.get('contact', ''),
+            'institution': client_data.get('institution', ''),
+            'email': client_data.get('email', ''),
+            'address': client_data.get('address', '')
+        }
+        
+        self._save_config()
+        return (new_key, None)
+
+    def update_client(self, client_key: str, client_data: dict) -> tuple[bool, str | None]:
+        """
+        Updates an existing client.
+        
+        Args:
+            client_key: The client's unique key
+            client_data: Dict with updated client fields
+            
+        Returns:
+            Tuple of (success, error_message or None)
+        """
+        if 'clients' not in self.config or client_key not in self.config['clients']:
+            return (False, f"Client '{client_key}' not found")
+        
+        if not client_data.get('institution'):
+            return (False, "Institution is required")
+        
+        self.config['clients'][client_key] = {
+            'contact': client_data.get('contact', ''),
+            'institution': client_data.get('institution', ''),
+            'email': client_data.get('email', ''),
+            'address': client_data.get('address', '')
+        }
+        
+        self._save_config()
+        return (True, None)
+
+    def delete_client(self, client_key: str) -> tuple[bool, str | None]:
+        """
+        Deletes a client from the configuration.
+        
+        Args:
+            client_key: The client's unique key
+            
+        Returns:
+            Tuple of (success, error_message or None)
+        """
+        if 'clients' not in self.config or client_key not in self.config['clients']:
+            return (False, f"Client '{client_key}' not found")
+        
+        del self.config['clients'][client_key]
+        self._save_config()
+        return (True, None)
+
 
 config = ConfigLoader()

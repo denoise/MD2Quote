@@ -56,8 +56,10 @@
         <div class="recipient-section">
             <div class="label">{% if defaults.language == 'de' %}Empfänger{% else %}To{% endif %}</div>
             <div class="recipient-details">
-                <strong>{{ client.name }}</strong><br>
-                {{ client.address | replace('\n', '<br>') | safe }}
+                {% if client.contact %}{{ client.contact | replace('\n', '<br>') | safe }}<br>{% endif %}
+                {% if client.institution %}<strong>{{ client.institution }}</strong>{% elif client.name %}<strong>{{ client.name }}</strong>{% endif %}
+                {% if client.address %}<br>{{ client.address | replace('\n', '<br>') | safe }}{% endif %}
+                {% if client.email %}<br>{{ client.email }}{% endif %}
             </div>
         </div>
 

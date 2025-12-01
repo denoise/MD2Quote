@@ -95,9 +95,10 @@
             </div>
             <div class="client-info">
                 <h4 class="meta-label">{% if defaults.language == 'de' %}Empfänger{% else %}Prepared For{% endif %}</h4>
-                <p class="client-name">{{ client.name }}</p>
-                <p>{{ client.address }}</p>
-                <p>{{ client.email }}</p>
+                {% if client.contact %}<p>{{ client.contact | replace('\n', '<br>') | safe }}</p>{% endif %}
+                {% if client.institution %}<p class="client-name">{{ client.institution }}</p>{% elif client.name %}<p class="client-name">{{ client.name }}</p>{% endif %}
+                {% if client.address %}<p>{{ client.address | replace('\n', '<br>') | safe }}</p>{% endif %}
+                {% if client.email %}<p>{{ client.email }}</p>{% endif %}
             </div>
         </header>
 

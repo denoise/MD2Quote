@@ -67,9 +67,10 @@
         <!-- Client Section -->
         <section class="client-section">
             <div class="client-card">
-                <p class="client-name">{{ client.name }}</p>
-                <p class="client-detail">{{ client.address }}</p>
-                <p class="client-detail">{{ client.email }}</p>
+                {% if client.contact %}<p class="client-detail">{{ client.contact | replace('\n', '<br>') | safe }}</p>{% endif %}
+                {% if client.institution %}<p class="client-name">{{ client.institution }}</p>{% elif client.name %}<p class="client-name">{{ client.name }}</p>{% endif %}
+                {% if client.address %}<p class="client-detail">{{ client.address | replace('\n', '<br>') | safe }}</p>{% endif %}
+                {% if client.email %}<p class="client-detail">{{ client.email }}</p>{% endif %}
             </div>
         </section>
 
