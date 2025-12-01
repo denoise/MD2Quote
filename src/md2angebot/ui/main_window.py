@@ -21,6 +21,7 @@ from ..core.renderer import TemplateRenderer
 from ..core.pdf import PDFGenerator
 from ..core.config import config
 from ..core.llm import LLMService, LLMError
+from .. import __version__
 
 
 class LLMWorker(QObject):
@@ -134,6 +135,10 @@ class MainWindow(QMainWindow):
         
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
+        
+        version_label = QLabel(f"v{__version__}")
+        version_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 11px; padding-right: 8px;")
+        self.statusbar.addPermanentWidget(version_label)
 
     def _setup_toolbar(self):
         toolbar = QToolBar("Main")
