@@ -598,6 +598,12 @@ class EditorWidget(QWidget):
     def set_text(self, text):
         self.editor.setPlainText(text)
 
+    def append_text(self, text):
+        """Appends text to the end of the document."""
+        self.editor.moveCursor(QTextCursor.MoveOperation.End)
+        self.editor.insertPlainText(text)
+        self.editor.moveCursor(QTextCursor.MoveOperation.End)
+
     def get_text(self):
         return self.editor.toPlainText()
 

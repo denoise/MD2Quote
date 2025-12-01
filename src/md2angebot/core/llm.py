@@ -131,12 +131,36 @@ class LLMService:
         Raises:
             LLMError: If the API call fails or returns an error
         """
+        messages = self._prepare_messages(user_prompt, context)
         config = self.get_config()
         
         if not config.api_key:
             raise LLMError("API key not configured. Please set your API key in Settings → LLM.")
+            
+        return self._make_request(config, messages, stream=False)
+
+    def generate_stream(self, user_prompt: str, context: str = ''):
+        """
+        Generate content using the configured LLM with streaming.
         
-        # Build the messages
+        Args:
+            user_prompt: The user's instruction/request
+            context: Current editor content
+            
+        Yields:
+            Chunks of generated text
+        """
+        messages = self._prepare_messages(user_prompt, context)
+        config = self.get_config()
+        
+        if not config.api_key:
+            raise LLMError("API key not configured. Please set your API key in Settings → LLM.")
+            
+        yield from self._make_request(config, messages, stream=True)
+
+    def _prepare_messages(self, user_prompt: str, context: str) -> list:
+        """Helper to prepare message list."""
+        config = self.get_config()
         messages = [
             {"role": "system", "content": config.system_prompt}
         ]
@@ -157,20 +181,20 @@ class LLMService:
             "role": "user",
             "content": user_prompt
         })
-        
-        # Make the API request
-        return self._make_request(config, messages)
+        return messages
     
-    def _make_request(self, config: LLMConfig, messages: list) -> str:
+    def _make_request(self, config: LLMConfig, messages: list, stream: bool = False):
         """
         Make the actual API request.
         
         Args:
             config: LLM configuration
             messages: List of message dicts for the chat completion
+            stream: Whether to stream the response
             
         Returns:
-            The generated text content
+            The generated text content (if stream=False)
+            OR a generator yielding text chunks (if stream=True)
             
         Raises:
             LLMError: If the request fails
@@ -196,13 +220,19 @@ class LLMService:
             'model': config.model,
             'messages': messages,
             'temperature': 0.7,
-            'max_tokens': 4096
+            'max_tokens': 4096,
+            'stream': stream
         }
         
         try:
             data = json.dumps(body).encode('utf-8')
             request = urllib.request.Request(url, data=data, headers=headers, method='POST')
             
+            # For streaming, we need to handle the response differently
+            if stream:
+                return self._handle_streaming_response(request)
+            
+            # Non-streaming handling
             with urllib.request.urlopen(request, timeout=60, context=SSL_CONTEXT) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 
@@ -240,4 +270,38 @@ class LLMService:
             raise LLMError(f"Failed to parse API response: {e}")
             
         except Exception as e:
+            if isinstance(e, LLMError):
+                raise e
             raise LLMError(f"Unexpected error: {e}")
+
+    def _handle_streaming_response(self, request):
+        """Helper to yield chunks from a streaming response."""
+        try:
+            with urllib.request.urlopen(request, timeout=60, context=SSL_CONTEXT) as response:
+                for line in response:
+                    line = line.decode('utf-8').strip()
+                    if not line:
+                        continue
+                        
+                    if line.startswith('data: '):
+                        data_str = line[6:]
+                        if data_str == '[DONE]':
+                            break
+                        
+                        try:
+                            data = json.loads(data_str)
+                            if 'choices' in data and len(data['choices']) > 0:
+                                delta = data['choices'][0].get('delta', {})
+                                content = delta.get('content', '')
+                                if content:
+                                    yield content
+                        except json.JSONDecodeError:
+                            continue
+                            
+        except Exception as e:
+            if isinstance(e, urllib.error.HTTPError):
+                # Re-raise HTTP errors nicely if possible, similar to _make_request
+                error_body = e.read().decode('utf-8') if e.fp else ''
+                raise LLMError(f"Streaming API error ({e.code}): {error_body or str(e)}")
+            raise LLMError(f"Streaming error: {e}")
+

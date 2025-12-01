@@ -26,6 +26,7 @@ class LLMWorker(QObject):
     """Worker for running LLM requests in a background thread."""
     
     finished = pyqtSignal(str)  # Emits the generated content
+    chunk_received = pyqtSignal(str) # Emits content chunks
     error = pyqtSignal(str)     # Emits error message
     
     def __init__(self, llm_service: LLMService, instruction: str, context: str):
@@ -37,8 +38,12 @@ class LLMWorker(QObject):
     def run(self):
         """Execute the LLM request."""
         try:
-            result = self.llm_service.generate(self.instruction, self.context)
-            self.finished.emit(result)
+            full_content = ""
+            # Use streaming generation
+            for chunk in self.llm_service.generate_stream(self.instruction, self.context):
+                self.chunk_received.emit(chunk)
+                full_content += chunk
+            self.finished.emit(full_content)
         except LLMError as e:
             self.error.emit(str(e))
         except Exception as e:
@@ -66,6 +71,7 @@ class MainWindow(QMainWindow):
         # LLM thread management
         self.llm_thread = None
         self.llm_worker = None
+        self.is_llm_streaming_started = False
         
         # State
         self.current_file = None
@@ -358,7 +364,8 @@ class MainWindow(QMainWindow):
         
         # Show loading state
         self.header.set_llm_loading(True)
-        self.statusbar.showMessage("Generating content with LLM...")
+        self.statusbar.showMessage("Connecting to LLM...")
+        self.is_llm_streaming_started = False
         
         # Create worker and thread
         self.llm_thread = QThread()
@@ -367,6 +374,7 @@ class MainWindow(QMainWindow):
         
         # Connect signals
         self.llm_thread.started.connect(self.llm_worker.run)
+        self.llm_worker.chunk_received.connect(self._on_llm_chunk)
         self.llm_worker.finished.connect(self._on_llm_success)
         self.llm_worker.error.connect(self._on_llm_error)
         self.llm_worker.finished.connect(self.llm_thread.quit)
@@ -376,10 +384,18 @@ class MainWindow(QMainWindow):
         # Start the thread
         self.llm_thread.start()
 
+    def _on_llm_chunk(self, chunk: str):
+        """Handle incoming LLM content chunk."""
+        if not self.is_llm_streaming_started:
+            self.editor.set_text("")  # Clear editor on first chunk
+            self.is_llm_streaming_started = True
+            self.statusbar.showMessage("Receiving response...")
+        
+        self.editor.append_text(chunk)
+
     def _on_llm_success(self, content: str):
-        """Handle successful LLM response."""
-        # Insert content into editor
-        self.editor.set_text(content)
+        """Handle successful LLM response completion."""
+        # Content is already in editor via streaming
         
         # Reset UI state
         self.header.set_llm_loading(False)
