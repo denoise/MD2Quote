@@ -4,7 +4,7 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 
 ![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)
 ![PyQt6](https://img.shields.io/badge/PyQt6-GUI-green.svg)
-![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 
 ## Features
 
@@ -48,13 +48,31 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 
 ---
 
+## Screenshots
+
+![Main Window](images/main_window.png)
+*Main application window with live preview*
+
+![Profile Configuration](images/profile_menu.png)
+*Profile configuration and management*
+
+## Download
+
+[**Download MD2Quote for macOS**](https://github.com/denoise/md2quote/releases/latest)
+
+1. Download the `.dmg` file from the releases page.
+2. Open the disk image and drag **MD2Quote** to your Applications folder.
+3. Run the application.
+
+---
+
 ## Quick Start
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/md2quote.git
+git clone https://github.com/denoise/md2quote.git
 cd md2quote
 
 # Install dependencies
@@ -326,4 +344,4 @@ See `requirements.txt` for the complete list.
 
 ## License
 
-MIT License — See [LICENSE](LICENSE) for details.
+GNU GPL-3.0 License — See [LICENSE](LICENSE) for details.

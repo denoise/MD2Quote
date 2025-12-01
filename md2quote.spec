@@ -100,7 +100,7 @@ app = BUNDLE(
     coll,
     name='MD2Quote.app',
     icon=None,  # Add path to .icns file if you have one
-    bundle_identifier='com.yourcompany.md2quote',
+    bundle_identifier='com.denoise.md2quote',
     info_plist={
         'CFBundleName': 'MD2Quote',
         'CFBundleDisplayName': 'MD2Quote',

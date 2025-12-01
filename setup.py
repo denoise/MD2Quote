@@ -33,7 +33,7 @@ OPTIONS = {
     'plist': {
         'CFBundleName': 'MD2Quote',
         'CFBundleDisplayName': 'MD2Quote',
-        'CFBundleIdentifier': 'com.yourcompany.md2quote',
+        'CFBundleIdentifier': 'com.denoise.md2quote',
         'CFBundleVersion': '1.0.0',
         'CFBundleShortVersionString': '1.0.0',
         'NSHighResolutionCapable': True,
