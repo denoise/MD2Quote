@@ -380,8 +380,14 @@ class MainWindow(QMainWindow):
         else:
             self.header.set_llm_enabled(True, "Click to configure LLM (no API key set)")
 
-    def _get_safe_context(self, metadata, html_body):
-        """Ensures context has all required fields with defaults to prevent template errors."""
+    def _get_safe_context(self, metadata, html_body, preset_override=None):
+        """Ensures context has all required fields with defaults to prevent template errors.
+        
+        Args:
+            metadata: Parsed metadata from the markdown
+            html_body: Rendered HTML content
+            preset_override: Optional preset values to use instead of saved config (for live preview)
+        """
         defaults = {
             "quotation": {
                 "number": "DRAFT",
@@ -409,7 +415,11 @@ class MainWindow(QMainWindow):
 
         context["content"] = html_body
         
-        preset_config = copy.deepcopy(config.get_preset(self.current_preset))
+        # Use preset_override for live preview, otherwise load from config
+        if preset_override is not None:
+            preset_config = copy.deepcopy(preset_override)
+        else:
+            preset_config = copy.deepcopy(config.get_preset(self.current_preset))
         
         if 'company' in metadata and isinstance(metadata['company'], dict):
             if 'company' not in preset_config:
@@ -442,8 +452,12 @@ class MainWindow(QMainWindow):
                     if v:
                         metadata[section][k] = v
 
-    def refresh_preview(self):
-        """Generates PDF in memory and updates preview."""
+    def refresh_preview(self, preset_override=None):
+        """Generates PDF in memory and updates preview.
+        
+        Args:
+            preset_override: Optional preset values to use instead of saved config (for live preview)
+        """
         content = self.editor.get_text()
         
         try:
@@ -451,7 +465,7 @@ class MainWindow(QMainWindow):
             metadata, html_body = self.parser.parse_text(content)
             self._merge_header_data(metadata, self.header.get_data())
             
-            context = self._get_safe_context(metadata, html_body)
+            context = self._get_safe_context(metadata, html_body, preset_override=preset_override)
             
             template_name = metadata.get("template", "base")
             
@@ -653,7 +667,14 @@ class MainWindow(QMainWindow):
         """Opens the profiles configuration dialog."""
         dialog = ConfigDialog(config, initial_preset_key=self.current_preset, parent=self)
         dialog.configSaved.connect(self.on_config_saved)
+        dialog.presetPreviewRequested.connect(self._on_live_preview_requested)
         dialog.exec()
+    
+    def _on_live_preview_requested(self, preset_values: dict):
+        """Handle live preview request from the profiles dialog."""
+        # Reinitialize renderer to pick up any template/CSS changes
+        self.renderer = TemplateRenderer()
+        self.refresh_preview(preset_override=preset_values)
 
     def open_settings(self):
         """Opens the settings dialog for LLM configuration."""

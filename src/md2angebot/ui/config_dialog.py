@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QSlider, QMenu, QToolButton, QAbstractItemView
 )
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon, QPixmap, QPainter
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt6.QtSvg import QSvgRenderer
 
 from .styles import COLORS, SPACING, RADIUS
@@ -30,14 +30,23 @@ from ..core.llm import OPENROUTER_MODELS, OPENAI_MODELS, DEFAULT_SYSTEM_PROMPT
 class TemplateEditorDialog(QDialog):
     """Dialog for editing raw HTML templates."""
     
+    previewRequested = pyqtSignal()  # Signal to request live preview update
+    
     def __init__(self, template_name: str, config_loader, parent=None):
         super().__init__(parent)
         self.template_name = template_name
         self.config_loader = config_loader
         self.file_path = self._find_template_path()
+        self._original_content = None  # Store original to restore on cancel
         
         self.setWindowTitle(f"Edit Template: {template_name}.html")
         self.resize(900, 700)
+        
+        # Timer for debounced live preview
+        self._preview_timer = QTimer()
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.setInterval(800)
+        self._preview_timer.timeout.connect(self._emit_preview_update)
         
         self._setup_ui()
         self._load_content()
@@ -80,6 +89,7 @@ class TemplateEditorDialog(QDialog):
                 border: 1px solid {COLORS['border']};
             }}
         """)
+        self.editor.textChanged.connect(self._request_preview_update)
         layout.addWidget(self.editor)
         
         # Buttons
@@ -87,7 +97,7 @@ class TemplateEditorDialog(QDialog):
         btn_layout.addStretch()
         
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
+        cancel_btn.clicked.connect(self._cancel_changes)
         btn_layout.addWidget(cancel_btn)
         
         save_btn = QPushButton("Save Changes")
@@ -117,10 +127,28 @@ class TemplateEditorDialog(QDialog):
             
         try:
             content = self.file_path.read_text(encoding='utf-8')
+            self._original_content = content  # Store for cancel restoration
+            self.editor.blockSignals(True)  # Don't trigger preview on initial load
             self.editor.setPlainText(content)
+            self.editor.blockSignals(False)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not load template:\n{e}")
             self.reject()
+
+    def _request_preview_update(self):
+        """Request a debounced live preview update."""
+        self._preview_timer.start()
+    
+    def _emit_preview_update(self):
+        """Save content temporarily and emit preview signal."""
+        if not self.file_path:
+            return
+        try:
+            content = self.editor.toPlainText()
+            self.file_path.write_text(content, encoding='utf-8')
+            self.previewRequested.emit()
+        except Exception:
+            pass  # Silently fail for preview updates
 
     def _save_changes(self):
         if not self.file_path:
@@ -129,23 +157,43 @@ class TemplateEditorDialog(QDialog):
         try:
             content = self.editor.toPlainText()
             self.file_path.write_text(content, encoding='utf-8')
+            self._original_content = content  # Update original since we're saving
             self.accept()
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save template:\n{e}")
+    
+    def _cancel_changes(self):
+        """Restore original content and close dialog."""
+        if self._original_content is not None and self.file_path:
+            try:
+                self.file_path.write_text(self._original_content, encoding='utf-8')
+                self.previewRequested.emit()  # Refresh preview with restored content
+            except Exception:
+                pass
+        self.reject()
 
 
 class CSSEditorDialog(QDialog):
     """Dialog for editing raw CSS used by templates."""
+
+    previewRequested = pyqtSignal()  # Signal to request live preview update
 
     def __init__(self, template_name: str, config_loader, parent=None):
         super().__init__(parent)
         self.template_name = template_name
         self.config_loader = config_loader
         self.file_path = self._find_css_path()
+        self._original_content = None  # Store original to restore on cancel
 
         self.setWindowTitle(f"Edit Template CSS: {template_name}.css")
         self.resize(900, 700)
+
+        # Timer for debounced live preview
+        self._preview_timer = QTimer()
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.setInterval(800)
+        self._preview_timer.timeout.connect(self._emit_preview_update)
 
         self._setup_ui()
         self._load_content()
@@ -186,13 +234,14 @@ class CSSEditorDialog(QDialog):
                 border: 1px solid {COLORS['border']};
             }}
         """)
+        self.editor.textChanged.connect(self._request_preview_update)
         layout.addWidget(self.editor)
 
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
+        cancel_btn.clicked.connect(self._cancel_changes)
         btn_layout.addWidget(cancel_btn)
 
         save_btn = QPushButton("Save Changes")
@@ -222,10 +271,28 @@ class CSSEditorDialog(QDialog):
 
         try:
             content = self.file_path.read_text(encoding="utf-8")
+            self._original_content = content  # Store for cancel restoration
+            self.editor.blockSignals(True)  # Don't trigger preview on initial load
             self.editor.setPlainText(content)
+            self.editor.blockSignals(False)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not load CSS:\n{e}")
             self.reject()
+
+    def _request_preview_update(self):
+        """Request a debounced live preview update."""
+        self._preview_timer.start()
+    
+    def _emit_preview_update(self):
+        """Save content temporarily and emit preview signal."""
+        if not self.file_path:
+            return
+        try:
+            content = self.editor.toPlainText()
+            self.file_path.write_text(content, encoding='utf-8')
+            self.previewRequested.emit()
+        except Exception:
+            pass  # Silently fail for preview updates
 
     def _save_changes(self):
         if not self.file_path:
@@ -234,9 +301,20 @@ class CSSEditorDialog(QDialog):
         try:
             content = self.editor.toPlainText()
             self.file_path.write_text(content, encoding="utf-8")
+            self._original_content = content  # Update original since we're saving
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save CSS:\n{e}")
+    
+    def _cancel_changes(self):
+        """Restore original content and close dialog."""
+        if self._original_content is not None and self.file_path:
+            try:
+                self.file_path.write_text(self._original_content, encoding='utf-8')
+                self.previewRequested.emit()  # Refresh preview with restored content
+            except Exception:
+                pass
+        self.reject()
 
 
 # Common font families for dropdowns
@@ -1218,6 +1296,8 @@ class StyledComboBox(QComboBox):
 class MarginControl(QWidget):
     """A compact margin control with 4 values arranged visually."""
     
+    valuesChanged = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self._setup_ui()
@@ -1237,6 +1317,7 @@ class MarginControl(QWidget):
             spin.setRange(0, 100)
             spin.setSuffix(" mm")
             spin.setMinimumWidth(70)  # Reduced from 90 (25% narrower)
+            spin.valueChanged.connect(self.valuesChanged.emit)
         
         # Labels
         top_lbl = QLabel("↑ Top")
@@ -1273,6 +1354,7 @@ class ConfigDialog(QDialog):
     """Main configuration dialog with tabbed interface."""
     
     configSaved = pyqtSignal()
+    presetPreviewRequested = pyqtSignal(dict)  # Emits current preset values for live preview
     
     def __init__(self, config_loader, initial_preset_key=None, parent=None):
         super().__init__(parent)
@@ -1289,6 +1371,12 @@ class ConfigDialog(QDialog):
         self.setWindowTitle("Profiles")
         self.setMinimumSize(1100, 620)
         self.resize(1200, 720)
+        
+        # Timer for debounced live preview updates
+        self._preview_timer = QTimer()
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.setInterval(600)
+        self._preview_timer.timeout.connect(self._emit_preview_update)
         
         self._setup_ui()
         self._load_preset_values(self.current_preset_key)
@@ -1470,6 +1558,81 @@ class ConfigDialog(QDialog):
         btn_layout.addWidget(close_btn)
         
         layout.addLayout(btn_layout)
+        
+        # Connect all form inputs for live preview (after tabs are created)
+        self._connect_preview_signals()
+    
+    def _connect_preview_signals(self):
+        """Connect all form inputs to trigger live preview updates."""
+        # Company fields
+        self.company_name.textChanged.connect(self._request_preview_update)
+        self.company_tagline.textChanged.connect(self._request_preview_update)
+        self.company_logo.pathChanged.connect(self._request_preview_update)
+        self.company_show_name.toggled.connect(self._request_preview_update)
+        self.company_show_tagline.toggled.connect(self._request_preview_update)
+        self.company_show_logo.toggled.connect(self._request_preview_update)
+        self.logo_width_slider.valueChanged.connect(self._request_preview_update)
+        
+        # Contact fields
+        self.contact_enabled_checkbox.toggled.connect(self._request_preview_update)
+        self.contact_street.textChanged.connect(self._request_preview_update)
+        self.contact_city.textChanged.connect(self._request_preview_update)
+        self.contact_postal.textChanged.connect(self._request_preview_update)
+        self.contact_country.textChanged.connect(self._request_preview_update)
+        self.contact_phone.textChanged.connect(self._request_preview_update)
+        self.contact_email.textChanged.connect(self._request_preview_update)
+        self.contact_website.textChanged.connect(self._request_preview_update)
+        
+        # Legal fields
+        self.legal_enabled_checkbox.toggled.connect(self._request_preview_update)
+        self.legal_tax_id.textChanged.connect(self._request_preview_update)
+        
+        # Bank fields
+        self.bank_enabled_checkbox.toggled.connect(self._request_preview_update)
+        self.bank_holder.textChanged.connect(self._request_preview_update)
+        self.bank_name.textChanged.connect(self._request_preview_update)
+        self.bank_iban.textChanged.connect(self._request_preview_update)
+        self.bank_bic.textChanged.connect(self._request_preview_update)
+        
+        # Document/Layout fields
+        self.margin_control.valuesChanged.connect(self._request_preview_update)
+        
+        # Snippets fields
+        self.snippets_enabled_checkbox.toggled.connect(self._request_preview_update)
+        self.snippet_intro.textChanged.connect(self._request_preview_update)
+        self.snippet_terms.textChanged.connect(self._request_preview_update)
+        self.snippet_footer.textChanged.connect(self._request_preview_update)
+        self.snippet_signature.toggled.connect(self._request_preview_update)
+        
+        # Defaults fields
+        self.defaults_currency.currentTextChanged.connect(self._request_preview_update)
+        self.defaults_vat_type.currentIndexChanged.connect(self._request_preview_update)
+        self.defaults_tax_rate.valueChanged.connect(self._request_preview_update)
+        self.defaults_payment_days.valueChanged.connect(self._request_preview_update)
+        self.defaults_language.currentTextChanged.connect(self._request_preview_update)
+        
+        # Quotation number fields
+        self.qn_enabled.toggled.connect(self._request_preview_update)
+        self.qn_format.textChanged.connect(self._request_preview_update)
+        
+        # Typography fields
+        self.typo_heading.currentTextChanged.connect(self._request_preview_update)
+        self.typo_body.currentTextChanged.connect(self._request_preview_update)
+        self.typo_mono.currentTextChanged.connect(self._request_preview_update)
+        self.typo_size_company.valueChanged.connect(self._request_preview_update)
+        self.typo_size_h1.valueChanged.connect(self._request_preview_update)
+        self.typo_size_h2.valueChanged.connect(self._request_preview_update)
+        self.typo_size_body.valueChanged.connect(self._request_preview_update)
+        self.typo_size_small.valueChanged.connect(self._request_preview_update)
+        
+        # Color fields
+        self.color_primary.colorChanged.connect(self._request_preview_update)
+        self.color_accent.colorChanged.connect(self._request_preview_update)
+        self.color_background.colorChanged.connect(self._request_preview_update)
+        self.color_text.colorChanged.connect(self._request_preview_update)
+        self.color_muted.colorChanged.connect(self._request_preview_update)
+        self.color_border.colorChanged.connect(self._request_preview_update)
+        self.color_table_alt.colorChanged.connect(self._request_preview_update)
     
     def _create_scrollable_tab(self) -> tuple[QScrollArea, QVBoxLayout]:
         """Creates a scrollable container for tab content."""
@@ -2342,6 +2505,106 @@ class ConfigDialog(QDialog):
             'border': self.color_border.color(),
             'table_alt': self.color_table_alt.color(),
         }
+    
+    def _get_current_preset_values(self) -> dict:
+        """Returns the current preset values from UI fields without saving to config."""
+        preset = {}
+        
+        preset['name'] = self.preset_name_edit.text()
+        
+        preset['company'] = {
+            'name': self.company_name.text(),
+            'tagline': self.company_tagline.text(),
+            'logo': self.company_logo.path(),
+            'logo_width': self.logo_width_slider.value(),
+            'show_name': self.company_show_name.isChecked(),
+            'show_tagline': self.company_show_tagline.isChecked(),
+            'show_logo': self.company_show_logo.isChecked(),
+        }
+        
+        preset['contact'] = {
+            'enabled': self.contact_enabled_checkbox.isChecked(),
+            'street': self.contact_street.text(),
+            'city': self.contact_city.text(),
+            'postal_code': self.contact_postal.text(),
+            'country': self.contact_country.text(),
+            'phone': self.contact_phone.text(),
+            'email': self.contact_email.text(),
+            'website': self.contact_website.text(),
+        }
+        
+        preset['legal'] = {
+            'enabled': self.legal_enabled_checkbox.isChecked(),
+            'tax_id': self.legal_tax_id.text(),
+        }
+        
+        preset['layout'] = {
+            'template': self.current_preset_key,
+            'page_margins': self.margin_control.values()
+        }
+        
+        preset['snippets'] = {
+            'enabled': self.snippets_enabled_checkbox.isChecked(),
+            'intro_text': self.snippet_intro.toPlainText(),
+            'terms': self.snippet_terms.toPlainText(),
+            'custom_footer': self.snippet_footer.toPlainText(),
+            'signature_block': self.snippet_signature.isChecked()
+        }
+
+        preset['bank'] = {
+            'enabled': self.bank_enabled_checkbox.isChecked(),
+            'holder': self.bank_holder.text(),
+            'iban': self.bank_iban.text(),
+            'bic': self.bank_bic.text(),
+            'bank_name': self.bank_name.text(),
+        }
+        
+        preset['defaults'] = {
+            'currency': self.defaults_currency.currentText(),
+            'vat_type': self.defaults_vat_type.currentData() or 'german_vat',
+            'tax_rate': self.defaults_tax_rate.value(),
+            'payment_days': self.defaults_payment_days.value(),
+            'language': self.defaults_language.currentText(),
+        }
+        
+        preset['quotation_number'] = {
+            'enabled': self.qn_enabled.isChecked(),
+            'format': self.qn_format.text() or '{YYYY}-{NNN}',
+        }
+        
+        preset['typography'] = {
+            'heading': self.typo_heading.currentText(),
+            'body': self.typo_body.currentText(),
+            'mono': self.typo_mono.currentText(),
+            'sizes': {
+                'company_name': self.typo_size_company.value(),
+                'heading1': self.typo_size_h1.value(),
+                'heading2': self.typo_size_h2.value(),
+                'body': self.typo_size_body.value(),
+                'small': self.typo_size_small.value(),
+            }
+        }
+        
+        preset['colors'] = {
+            'primary': self.color_primary.color(),
+            'accent': self.color_accent.color(),
+            'background': self.color_background.color(),
+            'text': self.color_text.color(),
+            'muted': self.color_muted.color(),
+            'border': self.color_border.color(),
+            'table_alt': self.color_table_alt.color(),
+        }
+        
+        return preset
+    
+    def _request_preview_update(self):
+        """Request a debounced live preview update."""
+        self._preview_timer.start()
+    
+    def _emit_preview_update(self):
+        """Emit the current preset values for live preview."""
+        preset_values = self._get_current_preset_values()
+        self.presetPreviewRequested.emit(preset_values)
         
     def _load_preset_values(self, preset_key: str):
         """Load configuration values for the given preset into the UI."""
@@ -2501,13 +2764,21 @@ class ConfigDialog(QDialog):
         """Open the template editor for the current preset's template."""
         # Template name matches preset key directly
         dialog = TemplateEditorDialog(self.current_preset_key, self.config_loader, self)
+        dialog.previewRequested.connect(self._on_template_preview_requested)
         dialog.exec()
 
     def _edit_css(self):
         """Open the CSS editor for the current preset's stylesheet."""
         # Template name matches preset key directly
         dialog = CSSEditorDialog(self.current_preset_key, self.config_loader, self)
+        dialog.previewRequested.connect(self._on_template_preview_requested)
         dialog.exec()
+    
+    def _on_template_preview_requested(self):
+        """Handle preview request from template/CSS editors."""
+        # Emit current preset values to trigger preview refresh
+        preset_values = self._get_current_preset_values()
+        self.presetPreviewRequested.emit(preset_values)
 
     def _save_config(self):
         """Save the configuration to the YAML file."""
