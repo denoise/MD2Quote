@@ -536,6 +536,13 @@ class MainWindow(QMainWindow):
             # We need to fix the renderer to accept the PRESET config.
             
             full_html = self.renderer.render(template_name, context, preset_config=context) # Passing context as config too
+            
+            # Set page margins from preset layout config
+            if 'layout' in context and 'page_margins' in context['layout']:
+                margins = context['layout']['page_margins']
+                if len(margins) == 4:
+                    self.pdf_generator.set_margins(tuple(margins))
+            
             pdf_bytes = self.pdf_generator.generate_bytes(full_html)
             
             self.preview.update_preview(pdf_bytes)
@@ -688,6 +695,12 @@ class MainWindow(QMainWindow):
                 # Use current preset for rendering
                 # Note: context already contains the preset data
                 full_html = self.renderer.render(metadata.get("template", "base"), context, preset_config=context)
+                
+                # Set page margins from preset layout config
+                if 'layout' in context and 'page_margins' in context['layout']:
+                    margins = context['layout']['page_margins']
+                    if len(margins) == 4:
+                        self.pdf_generator.set_margins(tuple(margins))
                 
                 self.pdf_generator.generate(full_html, path)
                 self.statusbar.showMessage(f"Exported to {path}")

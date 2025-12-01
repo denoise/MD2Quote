@@ -3,25 +3,6 @@
 import sys
 from pathlib import Path
 
-def patch_fonttools_instancer() -> None:
-    """
-    Switch fontTools' deprecated mutator instancing to the newer instancer API.
-    
-    WeasyPrint still imports the old helper, which triggers a deprecation warning
-    on import. Updating the reference up front keeps stdout clean without altering
-    behaviour.
-    """
-    try:
-        from fontTools.varLib import instancer, mutator  # type: ignore
-    except Exception:
-        return
-
-    try:
-        mutator.instantiateVariableFont = instancer.instantiateVariableFont
-    except Exception:
-        # If assignment fails (unexpected), fall back to the default implementation.
-        return
-
 
 def get_app_path() -> Path:
     """

@@ -1,41 +1,68 @@
 from pathlib import Path
-from ..utils import get_templates_path, patch_fonttools_instancer
-from .config import config
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEnginePage
+from PyQt6.QtCore import QEventLoop, QUrl, QMarginsF
+from PyQt6.QtGui import QPageLayout, QPageSize
+from ..core.config import config
 
-# WeasyPrint imports fontTools' deprecated mutator helper; swap in the recommended
-# instancer implementation before loading the library to avoid noisy warnings.
-patch_fonttools_instancer()
 
-from weasyprint import HTML, CSS
+# Default page margins in millimeters (top, right, bottom, left)
+DEFAULT_PAGE_MARGINS = (20, 20, 20, 20)
+
 
 class PDFGenerator:
-    def _get_css_files(self):
-        css_files = []
-        # 1. App bundled CSS - REMOVED to prevent conflicts with template-specific CSS
-        # base_css_path = get_templates_path() / 'quotation.css'
-        # if base_css_path.exists():
-        #     css_files.append(CSS(filename=base_css_path))
-            
-        # 2. User custom CSS (keep this for global overrides)
-        user_css_path = config.styles_dir / 'quotation.css'
-        if user_css_path.exists():
-            css_files.append(CSS(filename=user_css_path))
-        
-        return css_files
-
+    """Generates PDFs from HTML using Qt's WebEngine."""
+    
+    def __init__(self):
+        self._view = None
+        self._margins = DEFAULT_PAGE_MARGINS
+    
+    def set_margins(self, margins: tuple):
+        """Set page margins in mm as (top, right, bottom, left)."""
+        self._margins = margins
+    
+    def _ensure_view(self):
+        """Lazily initialize the web view."""
+        if self._view is None:
+            self._view = QWebEngineView()
+            self._view.setMinimumSize(1, 1)
+    
+    def _get_page_layout(self):
+        """Returns A4 page layout with configured margins."""
+        top, right, bottom, left = self._margins
+        return QPageLayout(
+            QPageSize(QPageSize.PageSizeId.A4),
+            QPageLayout.Orientation.Portrait,
+            QMarginsF(left, top, right, bottom),  # QMarginsF takes (left, top, right, bottom)
+            QPageLayout.Unit.Millimeter
+        )
+    
     def generate(self, html_content: str, output_path: str):
-        """
-        Generates a PDF from HTML content and saves to file.
-        """
-        HTML(string=html_content, base_url=str(config.config_dir)).write_pdf(
-            output_path,
-            stylesheets=self._get_css_files()
-        )
-
+        """Generates a PDF from HTML content and saves to file."""
+        pdf_bytes = self.generate_bytes(html_content)
+        Path(output_path).write_bytes(pdf_bytes)
+    
     def generate_bytes(self, html_content: str) -> bytes:
-        """
-        Generates a PDF and returns bytes.
-        """
-        return HTML(string=html_content, base_url=str(config.config_dir)).write_pdf(
-            stylesheets=self._get_css_files()
-        )
+        """Generates a PDF and returns bytes."""
+        self._ensure_view()
+        
+        # Use config directory as base URL for resolving relative paths
+        base_url = QUrl.fromLocalFile(str(config.config_dir) + "/")
+        
+        # Load HTML into the view
+        loop = QEventLoop()
+        self._view.loadFinished.connect(loop.quit)
+        self._view.setHtml(html_content, base_url)
+        loop.exec()
+        
+        # Generate PDF
+        pdf_data = []
+        
+        def on_pdf_ready(data):
+            pdf_data.append(bytes(data))
+            loop.quit()
+        
+        self._view.page().printToPdf(on_pdf_ready, self._get_page_layout())
+        loop.exec()
+        
+        return pdf_data[0] if pdf_data else b""

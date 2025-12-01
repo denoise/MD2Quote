@@ -1,6 +1,6 @@
 PyQt6>=6.5.0
+PyQt6-WebEngine>=6.5.0
 mistune>=3.0.0
-WeasyPrint>=60.0
 Jinja2>=3.1.0
 PyYAML>=6.0
 watchdog>=3.0.0  # For auto-reloading preview
@@ -9,4 +9,3 @@ certifi>=2023.0.0  # SSL certificates for API calls
 # Build tools (for creating standalone .app)
 py2app>=0.28
 pyinstaller>=6.0
-
