@@ -1,8 +1,8 @@
-# MD2Angebot - Software Requirements Specification
+# MD2Quote - Software Requirements Specification
 
 ## 1. Project Overview
 
-**MD2Angebot** is a minimal desktop application for macOS that converts Markdown-formatted text into professionally styled PDF quotations. It is designed for power users, specifically advanced programmers and technical freelancers, who prefer manual configuration via text files over complex graphical user interfaces.
+**MD2Quote** is a minimal desktop application for macOS that converts Markdown-formatted text into professionally styled PDF quotations. It is designed for power users, specifically advanced programmers and technical freelancers, who prefer manual configuration via text files over complex graphical user interfaces.
 
 ### Target User Profile
 - **Role:** Advanced programmer / technical freelancer
@@ -33,7 +33,7 @@ The application features a simple, two-pane window designed for efficiency.
 ### 3.1 Layout
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ MD2Angebot                                    [—][□][×] │
+│ MD2Quote                                    [—][□][×] │
 ├───────────────────────────┬─────────────────────────────┤
 │                           │                             │
 │   Markdown Editor         │   Live PDF Preview          │
@@ -63,7 +63,7 @@ The application features a simple, two-pane window designed for efficiency.
 Configuration is file-based, stored in the user's standard config directory.
 
 ### 4.1 User Config File
-**Path:** `~/.config/md2angebot/config.yaml`
+**Path:** `~/.config/md2quote/config.yaml`
 
 This YAML file contains all user-specific data. The application reads this on startup.
 
@@ -77,8 +77,8 @@ This YAML file contains all user-specific data. The application reads this on st
 - **colors:** Hex codes for the document theme.
 
 ### 4.2 Templates & Styles
-- **Templates:** Custom Jinja2 templates can be placed in `~/.config/md2angebot/templates/`.
-- **Styles:** Custom CSS files can be placed in `~/.config/md2angebot/styles/`.
+- **Templates:** Custom Jinja2 templates can be placed in `~/.config/md2quote/templates/`.
+- **Styles:** Custom CSS files can be placed in `~/.config/md2quote/styles/`.
 
 ---
 
@@ -146,7 +146,7 @@ template: programming  # Optional: specific template to use
 Proposed source code structure for the project:
 
 ```
-md2angebot/
+md2quote/
 ├── src/
 │   ├── main.py           # Application entry point
 │   ├── app.py            # PyQt6 application logic

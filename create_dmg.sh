@@ -1,11 +1,11 @@
 #!/bin/bash
-# Create a DMG installer for MD2Angebot
+# Create a DMG installer for MD2Quote
 # Run this after running build_app.sh
 
 set -e
 
-APP_NAME="MD2Angebot"
-DMG_NAME="MD2Angebot-Installer"
+APP_NAME="MD2Quote"
+DMG_NAME="MD2Quote-Installer"
 APP_PATH="dist/${APP_NAME}.app"
 DMG_PATH="dist/${DMG_NAME}.dmg"
 

@@ -11,7 +11,7 @@ def main():
             sys.argv.append(arg)
 
     app = QApplication(sys.argv)
-    app.setApplicationName("MD2Angebot")
+    app.setApplicationName("MD2Quote")
             
     window = MainWindow()
     window.show()

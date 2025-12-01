@@ -4,9 +4,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from md2angebot.core.parser import MarkdownParser
-from md2angebot.core.renderer import TemplateRenderer
-from md2angebot.core.config import config
+from md2quote.core.parser import MarkdownParser
+from md2quote.core.renderer import TemplateRenderer
+from md2quote.core.config import config
 
 def test_pipeline():
     parser = MarkdownParser()

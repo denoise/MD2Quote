@@ -13,7 +13,7 @@ from ..utils import get_app_path, get_templates_path
 DEFAULT_PRESET_KEYS = ['preset_1', 'preset_2', 'preset_3', 'preset_4', 'preset_5']
 
 LEGACY_SYSTEM_PROMPTS = [
-    """You are an assistant that generates proposal content in Markdown for MD2Angebot.
+    """You are an assistant that generates proposal content in Markdown for MD2Quote.
 
 Follow these rules:
 - Produce only the proposal body; do not add headers, footers, quotation numbers, dates, or client/company contact blocks.
@@ -46,7 +46,7 @@ DEFAULT_LLM_CONFIG = {
 }
 
 class ConfigLoader:
-    APP_NAME = "md2angebot"
+    APP_NAME = "md2quote"
     
     def __init__(self):
         self.project_root = get_app_path()

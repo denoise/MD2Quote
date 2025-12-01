@@ -1,4 +1,4 @@
-"""Utility functions for md2angebot."""
+"""Utility functions for md2quote."""
 
 import sys
 from pathlib import Path

@@ -1,9 +1,9 @@
 #!/bin/bash
-# Build script for MD2Angebot macOS app
+# Build script for MD2Quote macOS app
 
 set -e
 
-echo "🔨 Building MD2Angebot.app..."
+echo "🔨 Building MD2Quote.app..."
 echo ""
 
 # Clean previous builds
@@ -22,15 +22,15 @@ pip3 install -q pyinstaller
 
 # Build the app
 echo "Building app bundle with PyInstaller..."
-pyinstaller --clean --noconfirm md2angebot.spec
+pyinstaller --clean --noconfirm md2quote.spec
 
 echo ""
 echo "✅ Build complete!"
 echo ""
-echo "📦 Your app is located at: dist/MD2Angebot.app"
+echo "📦 Your app is located at: dist/MD2Quote.app"
 echo ""
 echo "To run it:"
-echo "  open dist/MD2Angebot.app"
+echo "  open dist/MD2Quote.app"
 echo ""
 echo "To install it:"
-echo "  cp -r dist/MD2Angebot.app /Applications/"
+echo "  cp -r dist/MD2Quote.app /Applications/"

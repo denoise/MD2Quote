@@ -55,12 +55,12 @@ class LLMWorker(QObject):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MD2Angebot")
+        self.setWindowTitle("MD2Quote")
         self.resize(1400, 900)
         
         self.setStyleSheet(get_stylesheet())
 
-        self.settings = QSettings("MD2Angebot", "MD2Angebot")
+        self.settings = QSettings("MD2Quote", "MD2Quote")
 
         self.parser = MarkdownParser()
         self.renderer = TemplateRenderer()
@@ -617,7 +617,7 @@ class MainWindow(QMainWindow):
             self._persist_last_client_data(metadata.get("client", {}))
 
             self.current_file = path
-            self.setWindowTitle(f"MD2Angebot — {os.path.basename(path)}")
+            self.setWindowTitle(f"MD2Quote — {os.path.basename(path)}")
             self.is_modified = False
             self.statusbar.showMessage(f"Opened: {os.path.basename(path)}")
             self.refresh_preview()
@@ -665,7 +665,7 @@ class MainWindow(QMainWindow):
                 f.write(current_text)
             
             self.is_modified = False
-            self.setWindowTitle(f"MD2Angebot — {os.path.basename(self.current_file)}")
+            self.setWindowTitle(f"MD2Quote — {os.path.basename(self.current_file)}")
             self.statusbar.showMessage(f"Saved: {os.path.basename(self.current_file)}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save file: {e}")
@@ -722,7 +722,7 @@ class MainWindow(QMainWindow):
             self.header.clear_data()
             self._restore_last_client_data()
         self.current_file = None
-        self.setWindowTitle("MD2Angebot")
+        self.setWindowTitle("MD2Quote")
         self.is_modified = False
         self.statusbar.showMessage("New file created")
 

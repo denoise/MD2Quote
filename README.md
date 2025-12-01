@@ -1,4 +1,4 @@
-# MD2Angebot
+# MD2Quote
 
 A modern markdown-to-quotation generator with live PDF preview, AI-powered content generation, and professional templating.
 
@@ -54,8 +54,8 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/md2angebot.git
-cd md2angebot
+git clone https://github.com/yourusername/md2quote.git
+cd md2quote
 
 # Install dependencies
 pip install -r requirements.txt
@@ -150,10 +150,10 @@ Insert `+++` on its own line to create a page break in the PDF output.
 
 ### User Config Directory
 
-All configuration is stored in `~/.config/md2angebot/`:
+All configuration is stored in `~/.config/md2quote/`:
 
 ```
-~/.config/md2angebot/
+~/.config/md2quote/
 ├── config.yaml      # Main configuration file
 ├── templates/       # Custom HTML/CSS templates
 ├── logos/           # Stored logo files
@@ -254,9 +254,9 @@ Configure AI assistance in Settings (`⌘+,`):
 ## Project Structure
 
 ```
-md2angebot/
+md2quote/
 ├── main.py               # Application entry point
-├── src/md2angebot/
+├── src/md2quote/
 │   ├── core/
 │   │   ├── config.py     # Configuration management
 │   │   ├── parser.py     # Markdown/YAML parsing
@@ -300,7 +300,7 @@ Templates in `./templates/` are loaded directly — edit and refresh to see chan
 
 - Templates use Jinja2 + HTML/CSS
 - Each preset has its own template (`preset_1.html`, `preset_1.css`, etc.)
-- User templates in `~/.config/md2angebot/templates/` take priority in production
+- User templates in `~/.config/md2quote/templates/` take priority in production
 
 ### Running Tests
 

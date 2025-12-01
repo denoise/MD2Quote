@@ -1,4 +1,4 @@
-# MD2Angebot - Development Guide
+# MD2Quote - Development Guide
 
 ## Quick Start
 
@@ -20,7 +20,7 @@ The application detects whether it's running from source or as a bundled `.app`:
 
 | Mode | Priority Order |
 |------|----------------|
-| **Development** | Source templates (`./templates/`) → User config (`~/.config/md2angebot/templates/`) |
+| **Development** | Source templates (`./templates/`) → User config (`~/.config/md2quote/templates/`) |
 | **Production** | User config → Bundled templates |
 
 In development mode, source templates always take priority for fast iteration.
@@ -128,7 +128,7 @@ Templates receive these context variables:
 
 ## Project Architecture
 
-### Core Modules (`src/md2angebot/core/`)
+### Core Modules (`src/md2quote/core/`)
 
 | Module | Responsibility |
 |--------|----------------|
@@ -138,7 +138,7 @@ Templates receive these context variables:
 | `pdf.py` | PDF generation using Qt WebEngine |
 | `llm.py` | OpenRouter/OpenAI API integration |
 
-### UI Modules (`src/md2angebot/ui/`)
+### UI Modules (`src/md2quote/ui/`)
 
 | Module | Responsibility |
 |--------|----------------|
@@ -210,7 +210,7 @@ config._save_config()
 ./build_app.sh
 ```
 
-This creates `dist/MD2Angebot.app` using PyInstaller.
+This creates `dist/MD2Quote.app` using PyInstaller.
 
 ### Distribution Build
 
@@ -282,7 +282,7 @@ In development, templates load from `./templates/`. If changes aren't appearing:
 Remove the config directory to start fresh:
 
 ```bash
-rm -rf ~/.config/md2angebot/
+rm -rf ~/.config/md2quote/
 ```
 
 ---
@@ -297,7 +297,7 @@ rm -rf ~/.config/md2angebot/
 
 ### Adding a New LLM Model
 
-Edit `src/md2angebot/core/llm.py`:
+Edit `src/md2quote/core/llm.py`:
 
 ```python
 OPENROUTER_MODELS = {
@@ -308,7 +308,7 @@ OPENROUTER_MODELS = {
 
 ### Changing the Default Theme
 
-Edit `src/md2angebot/ui/styles.py`:
+Edit `src/md2quote/ui/styles.py`:
 
 ```python
 COLORS = {

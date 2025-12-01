@@ -1,5 +1,5 @@
 """
-Modern, minimalistic styling for MD2Angebot.
+Modern, minimalistic styling for MD2Quote.
 
 Design System:
 - Dark theme with warm undertones

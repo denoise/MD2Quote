@@ -1,11 +1,11 @@
-# MD2Angebot — Agent Guidelines
+# MD2Quote — Agent Guidelines
 
 ## Overview
 Python/PyQt6 desktop app that generates PDF quotations from Markdown. Features live preview, multiple profiles, LLM content generation, and Jinja2 templates.
 
 ## Structure
 ```
-src/md2angebot/
+src/md2quote/
 ├── core/          # Business logic (config, parser, renderer, pdf, llm)
 ├── ui/            # PyQt6 interface (main_window, editor, preview, header, config_dialog)
 └── utils/         # Path helpers
@@ -28,7 +28,7 @@ python3 test_core.py  # Smoke test
 - **Templates**: `./templates/` takes priority in dev mode; changes apply on next refresh
 
 ## Config Location
-`~/.config/md2angebot/` — config.yaml, templates/, logos/
+`~/.config/md2quote/` — config.yaml, templates/, logos/
 
 ## Coding Style
 - Python 3, 4-space indent, type hints

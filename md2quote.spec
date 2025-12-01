@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller spec file for MD2Angebot
+PyInstaller spec file for MD2Quote
 
 Usage:
     pip install pyinstaller
-    pyinstaller md2angebot.spec
+    pyinstaller md2quote.spec
 
-This will create MD2Angebot.app in the dist/ folder.
+This will create MD2Quote.app in the dist/ folder.
 """
 
 import sys
@@ -27,21 +27,21 @@ a = Analysis(
         ('assets', 'assets'),
     ],
     hiddenimports=[
-        'md2angebot',
-        'md2angebot.main',
-        'md2angebot.core',
-        'md2angebot.core.config',
-        'md2angebot.core.parser',
-        'md2angebot.core.pdf',
-        'md2angebot.core.renderer',
-        'md2angebot.ui',
-        'md2angebot.ui.main_window',
-        'md2angebot.ui.editor',
-        'md2angebot.ui.preview',
-        'md2angebot.ui.header',
-        'md2angebot.ui.config_dialog',
-        'md2angebot.ui.styles',
-        'md2angebot.ui.icons',
+        'md2quote',
+        'md2quote.main',
+        'md2quote.core',
+        'md2quote.core.config',
+        'md2quote.core.parser',
+        'md2quote.core.pdf',
+        'md2quote.core.renderer',
+        'md2quote.ui',
+        'md2quote.ui.main_window',
+        'md2quote.ui.editor',
+        'md2quote.ui.preview',
+        'md2quote.ui.header',
+        'md2quote.ui.config_dialog',
+        'md2quote.ui.styles',
+        'md2quote.ui.icons',
         'PyQt6.QtPrintSupport',
         'PyQt6.QtWebEngineWidgets',
         'PyQt6.QtWebEngineCore',
@@ -71,7 +71,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='MD2Angebot',
+    name='MD2Quote',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -92,18 +92,18 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='MD2Angebot',
+    name='MD2Quote',
 )
 
 # Create macOS .app bundle
 app = BUNDLE(
     coll,
-    name='MD2Angebot.app',
+    name='MD2Quote.app',
     icon=None,  # Add path to .icns file if you have one
-    bundle_identifier='com.yourcompany.md2angebot',
+    bundle_identifier='com.yourcompany.md2quote',
     info_plist={
-        'CFBundleName': 'MD2Angebot',
-        'CFBundleDisplayName': 'MD2Angebot',
+        'CFBundleName': 'MD2Quote',
+        'CFBundleDisplayName': 'MD2Quote',
         'CFBundleVersion': '1.0.0',
         'CFBundleShortVersionString': '1.0.0',
         'NSHighResolutionCapable': True,

@@ -1,5 +1,5 @@
 """
-LLM Service for MD2Angebot.
+LLM Service for MD2Quote.
 
 Provides integration with OpenRouter and OpenAI APIs for generating
 and editing quotation content.
@@ -39,7 +39,7 @@ OPENAI_MODELS = {
 OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 
-DEFAULT_SYSTEM_PROMPT = """You are an assistant that generates proposal content in Markdown for MD2Angebot.
+DEFAULT_SYSTEM_PROMPT = """You are an assistant that generates proposal content in Markdown for MD2Quote.
 
 Follow these rules:
 - Produce only the proposal body; do not add headers, footers, quotation numbers, dates, or client/company contact blocks.
@@ -204,8 +204,8 @@ class LLMService:
             headers = {
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {config.api_key}',
-                'HTTP-Referer': 'https://github.com/md2angebot',
-                'X-Title': 'MD2Angebot'
+                'HTTP-Referer': 'https://github.com/md2quote',
+                'X-Title': 'MD2Quote'
             }
         
         body = {

@@ -5,8 +5,8 @@ import os
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from md2angebot.core.renderer import TemplateRenderer
-from md2angebot.core.config import config
+from md2quote.core.renderer import TemplateRenderer
+from md2quote.core.config import config
 
 try:
     pass

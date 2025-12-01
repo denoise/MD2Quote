@@ -15,7 +15,7 @@ if sys.platform == "darwin":
             os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{path}:{current_dyld}"
             break
 
-from md2angebot.main import main
+from md2quote.main import main
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-# MD2Angebot — Project Context
+# MD2Quote — Project Context
 
 ## What It Does
 Converts Markdown → professional PDF quotations with live preview, multiple company profiles, LLM-powered content, and customizable templates.
@@ -12,7 +12,7 @@ Converts Markdown → professional PDF quotations with live preview, multiple co
 
 ## Structure
 ```
-src/md2angebot/
+src/md2quote/
 ├── core/
 │   ├── config.py     # Profiles, quotation numbering, import/export
 │   ├── parser.py     # Markdown + YAML frontmatter
@@ -45,7 +45,7 @@ python3 test_core.py  # Smoke test
 ```
 
 ## Config
-Stored in `~/.config/md2angebot/`:
+Stored in `~/.config/md2quote/`:
 - `config.yaml` — All profiles and LLM settings
 - `templates/` — User template overrides
 - `logos/` — Stored logo files

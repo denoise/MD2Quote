@@ -1,5 +1,5 @@
 """
-Configuration Assistant Dialog for MD2Angebot.
+Configuration Assistant Dialog for MD2Quote.
 
 A visually refined settings dialog with tabs for each configuration category.
 """
@@ -2795,7 +2795,7 @@ class ConfigDialog(QDialog):
     def _generate_yaml(self, config: dict) -> str:
         """Generate formatted YAML."""
         lines = [
-            "# MD2Angebot User Configuration",
+            "# MD2Quote User Configuration",
             f"# Config path: {self.config_loader.config_path}",
             "",
             f"active_preset: {config.get('active_preset', 'preset_1')}",
@@ -3141,7 +3141,7 @@ class SettingsDialog(QDialog):
     def _generate_yaml(self, config: dict) -> str:
         """Generate formatted YAML."""
         lines = [
-            "# MD2Angebot User Configuration",
+            "# MD2Quote User Configuration",
             f"# Config path: {self.config_loader.config_path}",
             "",
             f"active_preset: {config.get('active_preset', 'preset_1')}",

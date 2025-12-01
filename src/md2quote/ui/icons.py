@@ -1,5 +1,5 @@
 """
-Material Symbols icon support for MD2Angebot.
+Material Symbols icon support for MD2Quote.
 
 Uses Google's Material Symbols Outlined font for modern, monochrome icons.
 The font supports variable weight, optical size, grade, and fill.
@@ -162,7 +162,7 @@ class MaterialIcons:
     
     def _load_font(self):
         """Load the Material Symbols font from assets."""
-        from md2angebot.utils import get_assets_path
+        from md2quote.utils import get_assets_path
         
         font_file = get_assets_path() / "fonts" / "MaterialSymbolsOutlined.ttf"
         

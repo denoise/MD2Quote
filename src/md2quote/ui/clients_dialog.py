@@ -1,5 +1,5 @@
 """
-Clients Manager Dialog for MD2Angebot.
+Clients Manager Dialog for MD2Quote.
 
 A dialog for managing saved client information (CRUD operations).
 """
