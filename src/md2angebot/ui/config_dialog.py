@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QFileDialog, QScrollArea, QFrame, QGridLayout,
     QGroupBox, QColorDialog, QMessageBox, QSizePolicy, QListWidget,
     QListWidgetItem, QInputDialog, QButtonGroup, QPlainTextEdit, QCheckBox,
-    QSlider, QMenu, QToolButton
+    QSlider, QMenu, QToolButton, QAbstractItemView
 )
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon, QPixmap, QPainter
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
@@ -721,6 +721,48 @@ class ModernActionButton(QPushButton):
         """)
 
 
+class ReorderableListWidget(QListWidget):
+    """A QListWidget that supports internal reordering via drag and drop."""
+    
+    orderChanged = pyqtSignal()
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setAcceptDrops(True)
+        self.setDragEnabled(True)
+        
+    def dropEvent(self, event):
+        super().dropEvent(event)
+        self.orderChanged.emit()
+
+
+class PresetItemWidget(QWidget):
+    """Custom widget for preset list items with a drag handle."""
+    
+    def __init__(self, text: str, parent=None):
+        super().__init__(parent)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+        
+        self.label = QLabel(text)
+        # Apply white color and bold font for better visibility
+        self.label.setStyleSheet("background: transparent; border: none; color: white; font-weight: 600;")
+        layout.addWidget(self.label, 1)
+        
+        self.handle = QLabel()
+        # 'menu' icon looks like a hamburger/handle
+        self.handle.setPixmap(icon('menu', 16, COLORS['text_muted']).pixmap(16, 16))
+        self.handle.setStyleSheet("background: transparent; border: none;")
+        layout.addWidget(self.handle)
+        
+        # Make widget transparent for mouse events so the QListWidget item handles clicks/drags
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+
+
 class PresetListWidget(QFrame):
     """
     A widget displaying a list of presets with add/delete/duplicate buttons.
@@ -733,10 +775,12 @@ class PresetListWidget(QFrame):
     presetDuplicated = pyqtSignal(str)  # Emits new preset_key when duplicated
     presetImported = pyqtSignal(str)    # Emits new preset_key when imported
     presetExportRequested = pyqtSignal(str) # Emits preset_key when export requested
+    presetOrderChanged = pyqtSignal()   # Emits when order changes
     
     def __init__(self, config_loader, parent=None):
         super().__init__(parent)
         self.config_loader = config_loader
+        self.current_config = None  # Store config reference
         self._setup_ui()
         self._apply_style()
     
@@ -760,9 +804,10 @@ class PresetListWidget(QFrame):
         layout.addWidget(header)
         
         # List widget
-        self.list_widget = QListWidget()
+        self.list_widget = ReorderableListWidget()
         self.list_widget.setSpacing(1)
         self.list_widget.currentItemChanged.connect(self._on_selection_changed)
+        self.list_widget.orderChanged.connect(self._on_list_reordered)
         layout.addWidget(self.list_widget, 1)
         
         # Action buttons area
@@ -826,9 +871,9 @@ class PresetListWidget(QFrame):
             QListWidget::item {{
                 background-color: transparent;
                 color: {COLORS['text_secondary']};
-                padding: 8px 12px;
                 border-radius: 0;
                 margin: 1px 0;
+                /* Padding handled by item widget */
             }}
             QListWidget::item:selected {{
                 background-color: {COLORS['accent']};
@@ -842,18 +887,38 @@ class PresetListWidget(QFrame):
     
     def load_presets(self, config: dict, current_key: str = None):
         """Load presets from config dict and select current_key if provided."""
+        self.current_config = config  # Store reference to config
         self.list_widget.blockSignals(True)
         self.list_widget.clear()
         
         presets = config.get('presets', {})
-        # Sort by key to match main window order
-        sorted_items = sorted(presets.items(), key=lambda x: x[0])
+        preset_order = config.get('preset_order', [])
         
-        for preset_key, preset_data in sorted_items:
+        # Use order from config, or fallback to sorted keys if empty/missing
+        if not preset_order:
+             sorted_keys = sorted(presets.keys())
+        else:
+             # Filter to ensure keys exist, add any missing ones
+             sorted_keys = [k for k in preset_order if k in presets]
+             for k in presets:
+                 if k not in sorted_keys:
+                     sorted_keys.append(k)
+        
+        # Update config order if we fixed it up
+        config['preset_order'] = sorted_keys
+        
+        for preset_key in sorted_keys:
+            preset_data = presets[preset_key]
             name = preset_data.get('name', preset_key)
-            item = QListWidgetItem(name)
+            
+            item = QListWidgetItem() # No text here, handled by widget
             item.setData(Qt.ItemDataRole.UserRole, preset_key)
+            
+            widget = PresetItemWidget(name)
+            item.setSizeHint(widget.sizeHint())
+            
             self.list_widget.addItem(item)
+            self.list_widget.setItemWidget(item, widget)
             
             if preset_key == current_key:
                 self.list_widget.setCurrentItem(item)
@@ -861,6 +926,23 @@ class PresetListWidget(QFrame):
         self.list_widget.blockSignals(False)
         self._update_button_states()
     
+    def _on_list_reordered(self):
+        """Handle internal drag-and-drop reordering."""
+        self._update_config_order()
+        self.presetOrderChanged.emit()
+
+    def _update_config_order(self):
+        """Update the preset_order list in the config based on list widget order."""
+        if self.current_config is None:
+            return
+            
+        new_order = []
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            new_order.append(item.data(Qt.ItemDataRole.UserRole))
+        
+        self.current_config['preset_order'] = new_order
+
     def get_selected_key(self) -> str:
         """Returns the preset key of the currently selected item."""
         item = self.list_widget.currentItem()
@@ -881,7 +963,12 @@ class PresetListWidget(QFrame):
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
             if item.data(Qt.ItemDataRole.UserRole) == preset_key:
-                item.setText(new_name)
+                # Update the custom widget's label
+                widget = self.list_widget.itemWidget(item)
+                if isinstance(widget, PresetItemWidget):
+                     widget.label.setText(new_name)
+                     # Reset size hint if text length changed significantly
+                     item.setSizeHint(widget.sizeHint())
                 break
     
     def _update_button_states(self):
@@ -2484,12 +2571,25 @@ class ConfigDialog(QDialog):
             f"# Config path: {self.config_loader.config_path}",
             "",
             f"active_preset: {config.get('active_preset', 'preset_1')}",
-            "",
-            "presets:"
         ]
         
+        # Add preset_order
+        preset_order = config.get('preset_order', [])
+        if preset_order:
+             lines.append(f"preset_order: {str(preset_order)}")
+             lines.append("")
+
+        lines.append("presets:")
+        
         presets = config.get('presets', {})
-        for key in sorted(presets.keys()):
+        
+        # Determine write order
+        ordered_keys = [k for k in preset_order if k in presets]
+        for k in sorted(presets.keys()):
+             if k not in ordered_keys:
+                 ordered_keys.append(k)
+
+        for key in ordered_keys:
             preset = presets[key]
             dumped = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
             lines.append(self._indent_text(dumped, 2))
@@ -2817,12 +2917,25 @@ class SettingsDialog(QDialog):
             f"# Config path: {self.config_loader.config_path}",
             "",
             f"active_preset: {config.get('active_preset', 'preset_1')}",
-            "",
-            "presets:"
         ]
         
+        # Add preset_order
+        preset_order = config.get('preset_order', [])
+        if preset_order:
+             lines.append(f"preset_order: {str(preset_order)}")
+             lines.append("")
+
+        lines.append("presets:")
+        
         presets = config.get('presets', {})
-        for key in sorted(presets.keys()):
+        
+        # Determine write order
+        ordered_keys = [k for k in preset_order if k in presets]
+        for k in sorted(presets.keys()):
+             if k not in ordered_keys:
+                 ordered_keys.append(k)
+
+        for key in ordered_keys:
             preset = presets[key]
             dumped = yaml.dump({key: preset}, allow_unicode=True, sort_keys=False)
             lines.append(self._indent_text(dumped, 2))

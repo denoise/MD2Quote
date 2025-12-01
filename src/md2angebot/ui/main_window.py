@@ -245,16 +245,23 @@ class MainWindow(QMainWindow):
     def update_preset_selector(self):
         """Updates the preset combo box from config."""
         presets = config.get('presets', {})
+        preset_order = config.get('preset_order', [])
+        
+        # Ensure order list is valid
+        ordered_keys = [k for k in preset_order if k in presets]
+        # Fallback for missing keys
+        for k in sorted(presets.keys()):
+            if k not in ordered_keys:
+                ordered_keys.append(k)
+
         self.preset_combo.blockSignals(True)
         self.preset_combo.clear()
         
-        # Sort by key to ensure order 1-5
-        for key in sorted(presets.keys()):
+        for key in ordered_keys:
             data = presets[key]
-            # Extract number from key e.g. preset_1 -> 1
-            num = key.split('_')[-1]
-            name = data.get('name', f"Preset {num}")
-            self.preset_combo.addItem(f"{num}. {name}", key)
+            name = data.get('name', key)
+            # Remove ID prefix, just show name
+            self.preset_combo.addItem(name, key)
                 
         # Set current selection
         index = self.preset_combo.findData(self.current_preset)

@@ -621,15 +621,24 @@ class ConfigLoader:
     def get_preset_list(self) -> list[tuple[str, str]]:
         """
         Returns a list of (preset_key, preset_name) tuples for all presets,
-        sorted by name.
+        sorted by the user-defined order.
         """
         presets = self.config.get('presets', {})
+        preset_order = self.config.get('preset_order', [])
+        
+        # Ensure order list is valid (contains only existing keys)
+        ordered_keys = [k for k in preset_order if k in presets]
+        
+        # Add any presets that might be missing from the order list (fallback)
+        for key in presets:
+            if key not in ordered_keys:
+                ordered_keys.append(key)
+                
         result = []
-        for key, preset in presets.items():
-            name = preset.get('name', key)
+        for key in ordered_keys:
+            name = presets[key].get('name', key)
             result.append((key, name))
-        # Sort by name (case-insensitive)
-        result.sort(key=lambda x: x[1].lower())
+            
         return result
 
     def create_preset(self, name: str, source_key: str = None) -> tuple[str, str]:
@@ -671,6 +680,11 @@ class ConfigLoader:
         # Add to config
         self.config.setdefault('presets', {})[new_key] = new_preset
         
+        # Add to order
+        if 'preset_order' not in self.config:
+            self.config['preset_order'] = []
+        self.config['preset_order'].append(new_key)
+        
         return (new_key, None)
 
     def duplicate_preset(self, source_key: str, new_name: str = None) -> tuple[str, str]:
@@ -710,6 +724,11 @@ class ConfigLoader:
         
         # Remove from config
         del presets[preset_key]
+        
+        # Remove from order
+        if 'preset_order' in self.config:
+            if preset_key in self.config['preset_order']:
+                self.config['preset_order'].remove(preset_key)
         
         # If active preset was deleted, switch to first available
         if self.config.get('active_preset') == preset_key:
@@ -811,6 +830,12 @@ class ConfigLoader:
 
                 # 5. Save to config
                 self.config.setdefault('presets', {})[new_key] = profile_data
+                
+                # Add to order
+                if 'preset_order' not in self.config:
+                    self.config['preset_order'] = []
+                self.config['preset_order'].append(new_key)
+                
                 self._save_config()
                 
                 return (new_key, None)
