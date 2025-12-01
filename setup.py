@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 from setuptools import setup, find_packages
 
-# Add src to path so py2app can find md2angebot
 src_path = str(Path(__file__).parent / "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
@@ -29,8 +28,8 @@ DATA_FILES = [
 ]
 
 OPTIONS = {
-    'argv_emulation': False,  # Recommended False for PyQt apps
-    'iconfile': None,  # Add path to .icns file if you have one
+    'argv_emulation': False,
+    'iconfile': None,
     'plist': {
         'CFBundleName': 'MD2Angebot',
         'CFBundleDisplayName': 'MD2Angebot',

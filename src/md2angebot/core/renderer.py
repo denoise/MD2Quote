@@ -8,14 +8,6 @@ class TemplateRenderer:
     def __init__(self):
         """
         Initialize the template renderer with appropriate template directory priority.
-        
-        Development Mode (running from source):
-            1. Source templates (`./templates/`) - for live editing
-            2. User config templates (`~/.config/md2angebot/templates/`) - fallback
-        
-        Production Mode (bundled .app):
-            1. User config templates - user customizations
-            2. Bundled templates - defaults
         """
         is_bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
         
@@ -51,7 +43,6 @@ class TemplateRenderer:
             context: Data context for rendering
             preset_config: Optional preset configuration to merge
         """
-        # Map legacy template names to new preset names
         legacy_map = {
             'modern-split': 'preset_1',
             'elegant-centered': 'preset_2',

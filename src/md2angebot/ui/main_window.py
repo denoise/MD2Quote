@@ -675,7 +675,6 @@ class MainWindow(QMainWindow):
     
     def _on_live_preview_requested(self, preset_values: dict):
         """Handle live preview request from the profiles dialog."""
-        # Reinitialize renderer to pick up any template/CSS changes
         self.renderer = TemplateRenderer()
         self.refresh_preview(preset_override=preset_values)
 

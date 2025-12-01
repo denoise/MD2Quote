@@ -963,7 +963,6 @@ class PresetListWidget(QFrame):
                  if k not in sorted_keys:
                      sorted_keys.append(k)
         
-        # Update config order if we fixed it up
         config['preset_order'] = sorted_keys
         
         for preset_key in sorted_keys:
@@ -1026,7 +1025,6 @@ class PresetListWidget(QFrame):
                 widget = self.list_widget.itemWidget(item)
                 if isinstance(widget, PresetItemWidget):
                      widget.label.setText(new_name)
-                     # Reset size hint if text length changed significantly
                      item.setSizeHint(widget.sizeHint())
                 break
     
@@ -1365,10 +1363,8 @@ class ConfigDialog(QDialog):
     def __init__(self, config_loader, initial_preset_key=None, parent=None):
         super().__init__(parent)
         self.config_loader = config_loader
-        # Deep copy config so we can modify freely
         self.config = copy.deepcopy(config_loader.config)
         
-        # Track which preset we are currently editing
         if initial_preset_key:
             self.current_preset_key = initial_preset_key
         else:
@@ -1378,7 +1374,6 @@ class ConfigDialog(QDialog):
         self.setMinimumSize(1100, 620)
         self.resize(1200, 720)
         
-        # Timer for debounced live preview updates
         self._preview_timer = QTimer()
         self._preview_timer.setSingleShot(True)
         self._preview_timer.setInterval(600)
@@ -1506,7 +1501,6 @@ class ConfigDialog(QDialog):
         main_content = QHBoxLayout()
         main_content.setSpacing(SPACING['md'])
         
-        # Left column: Preset list (240px fixed width)
         self.preset_list = PresetListWidget(self.config_loader)
         self.preset_list.setFixedWidth(280)
         self.preset_list.load_presets(self.config, self.current_preset_key)
@@ -1518,7 +1512,6 @@ class ConfigDialog(QDialog):
         self.preset_list.presetExportRequested.connect(self._on_preset_export_requested)
         main_content.addWidget(self.preset_list)
         
-        # Right column: Settings panel
         right_column = QVBoxLayout()
         right_column.setSpacing(SPACING['sm'])
         
@@ -1543,7 +1536,6 @@ class ConfigDialog(QDialog):
         self.tabs = QTabWidget()
         right_column.addWidget(self.tabs, 1)
         
-        # Create tabs with Material icons (preset-specific settings)
         self.tabs.addTab(self._create_identity_tab(), icon('badge', 18, COLORS['text_secondary']), "Identity")
         self.tabs.addTab(self._create_document_tab(), icon('article', 18, COLORS['text_secondary']), "Document")
         self.tabs.addTab(self._create_styling_tab(), icon('palette', 18, COLORS['text_secondary']), "Styling")
@@ -1756,12 +1748,10 @@ class ConfigDialog(QDialog):
         
         company_card.addLayout(logo_preview_row)
         
-        # Connect path changes to update preview
         self.company_logo.pathChanged.connect(self.logo_preview.setPath)
         
         left_col.addWidget(company_card)
         
-        # Contact Card (with enable checkbox)
         contact_card = SectionCard("Contact Details", with_enable_checkbox=True)
         self.contact_enabled_checkbox = contact_card.enableCheckbox()
         
@@ -1853,7 +1843,6 @@ class ConfigDialog(QDialog):
         
         right_col.addWidget(bank_card)
         
-        # Add spacer to right column to align with left column height
         right_col.addStretch(1)
         
         columns.addLayout(right_col, 1)
@@ -2013,7 +2002,6 @@ class ConfigDialog(QDialog):
         hint.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; margin-bottom: {SPACING['xs']}px;")
         colors_card.addWidget(hint)
         
-        # Colors grid - 2 columns
         colors_grid = QGridLayout()
         colors_grid.setSpacing(SPACING['sm'])
         colors_grid.setColumnStretch(1, 1)
@@ -2228,7 +2216,6 @@ class ConfigDialog(QDialog):
         self.qn_format.setMinimumHeight(24)
         qn_card.addWidget(self.qn_format)
         
-        # Counter display and reset
         counter_row = QHBoxLayout()
         counter_row.setSpacing(SPACING['sm'])
         
@@ -2288,7 +2275,6 @@ class ConfigDialog(QDialog):
             QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
-            # Reset in memory
             presets = self.config.setdefault('presets', {})
             preset = presets.setdefault(self.current_preset_key, {})
             qn = preset.setdefault('quotation_number', {})
@@ -2306,27 +2292,19 @@ class ConfigDialog(QDialog):
         name = preset.get('name')
         return name if name else preset_key
 
-    # -------------------------------------------------------------------------
-    # Preset List Event Handlers
-    # -------------------------------------------------------------------------
-
     def _on_preset_selected(self, preset_key: str):
         """Handle preset selection from the list widget."""
         if preset_key == self.current_preset_key:
             return
         
-        # Save current values to memory
         self._save_current_preset_to_memory()
         
-        # Update current key
         self.current_preset_key = preset_key
         
-        # Load new values
         self._load_preset_values(preset_key)
 
     def _on_preset_name_changed(self, text: str):
         """Handle preset name change from the name input field."""
-        # Update in memory config
         if 'presets' not in self.config:
             self.config['presets'] = {}
         if self.current_preset_key not in self.config['presets']:
@@ -2334,7 +2312,6 @@ class ConfigDialog(QDialog):
             
         self.config['presets'][self.current_preset_key]['name'] = text
         
-        # Update the list widget
         self.preset_list.update_item_name(self.current_preset_key, text)
 
     def _on_preset_created(self, name: str):
@@ -2358,30 +2335,23 @@ class ConfigDialog(QDialog):
         self.current_preset_key = new_key
         self.config['active_preset'] = new_key
         
-        # Reload the list and select the new preset
         self.preset_list.load_presets(self.config, new_key)
         self._load_preset_values(new_key)
 
     def _on_preset_imported(self, new_key: str):
         """Handle imported preset."""
-        # ConfigLoader has already saved the new preset to self.config_loader.config
-        # We need to sync our local copy
         new_preset = copy.deepcopy(self.config_loader.config['presets'][new_key])
         self.config['presets'][new_key] = new_preset
         
-        # Switch to new preset
         self.current_preset_key = new_key
         
-        # Reload list
         self.preset_list.load_presets(self.config, new_key)
         self._load_preset_values(new_key)
         
     def _on_preset_export_requested(self, preset_key: str):
         """Handle export request."""
-        # Save current state to memory first
         self._save_current_preset_to_memory()
         
-        # Get preset name for filename
         name = self.config['presets'][preset_key].get('name', preset_key)
         safe_name = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
         
@@ -2498,7 +2468,6 @@ class ConfigDialog(QDialog):
             'language': self.defaults_language.currentText(),
         }
         
-        # Preserve existing counter values when saving
         existing_qn = preset.get('quotation_number', {})
         preset['quotation_number'] = {
             'enabled': self.qn_enabled.isChecked(),
@@ -2733,7 +2702,6 @@ class ConfigDialog(QDialog):
         counter = qn.get('counter', 0)
         self.qn_counter_label.setText(f"Counter: {counter}")
         
-        # Set format preset dropdown to "Custom" if format doesn't match a preset
         current_format = qn.get('format', '{YYYY}-{NNN}')
         preset_idx = self.qn_format_presets.findData(current_format)
         if preset_idx >= 0:
@@ -2742,13 +2710,11 @@ class ConfigDialog(QDialog):
             self.qn_format_presets.blockSignals(False)
         else:
             self.qn_format_presets.blockSignals(True)
-            self.qn_format_presets.setCurrentIndex(0)  # Custom
+            self.qn_format_presets.setCurrentIndex(0)
             self.qn_format_presets.blockSignals(False)
         
-        # Typography
         typography = preset.get('typography', {})
         
-        # Set font dropdowns (handle both existing values and new ones)
         heading_font = typography.get('heading', 'Montserrat')
         idx = self.typo_heading.findText(heading_font)
         if idx >= 0:
@@ -2803,27 +2769,21 @@ class ConfigDialog(QDialog):
     
     def _on_template_preview_requested(self):
         """Handle preview request from template/CSS editors."""
-        # Emit current preset values to trigger preview refresh
         preset_values = self._get_current_preset_values()
         self.presetPreviewRequested.emit(preset_values)
 
     def _save_config(self):
         """Save the configuration to the YAML file."""
-        # Ensure the currently edited preset is saved to the config dict
         self._save_current_preset_to_memory()
         
-        # Also update active preset to current one
         self.config['active_preset'] = self.current_preset_key
         
         try:
-            # Generate YAML
             yaml_content = self._generate_yaml(self.config)
             
-            # Write to file
             with open(self.config_loader.config_path, 'w', encoding='utf-8') as f:
                 f.write(yaml_content)
             
-            # Update the config loader's config
             self.config_loader.config = self.config
             
             self.configSaved.emit()
@@ -3209,7 +3169,6 @@ class SettingsDialog(QDialog):
             lines.append(self._indent_text(dumped, 2))
             lines.append("")
         
-        # Add LLM configuration
         llm_config = config.get('llm', {})
         if llm_config:
             lines.append("# LLM Configuration")
