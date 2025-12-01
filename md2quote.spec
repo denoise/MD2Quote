@@ -104,8 +104,8 @@ app = BUNDLE(
     info_plist={
         'CFBundleName': 'MD2Quote',
         'CFBundleDisplayName': 'MD2Quote',
-        'CFBundleVersion': '1.0.0',
-        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleVersion': '0.9.0 beta',
+        'CFBundleShortVersionString': '0.9.0 beta',
         'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': '10.15',
     },
