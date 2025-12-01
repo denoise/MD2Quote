@@ -52,6 +52,7 @@ Follow these rules:
 - Do not ask for or include client information—the application supplies required metadata.
 - Preserve any "+++" markers exactly; they represent page breaks and must never be removed.
 - Output must be clean Markdown content only, without assistant chatter, questions, or explanations.
+- Do NOT enclose the output in markdown code blocks (e.g., ```markdown ... ```). Return raw markdown text directly.
 - Use clear, professional language with concise sections and bullet points; include scope, deliverables, and timelines when relevant."""
 
 

@@ -13,7 +13,17 @@ from ..utils import get_app_path, get_templates_path
 # Default preset keys (used for initial setup and template resolution)
 DEFAULT_PRESET_KEYS = ['preset_1', 'preset_2', 'preset_3', 'preset_4', 'preset_5']
 
-PREVIOUS_DEFAULT_SYSTEM_PROMPT = '''You are an assistant helping create professional quotations and proposals.
+LEGACY_SYSTEM_PROMPTS = [
+    """You are an assistant that generates proposal content in Markdown for MD2Angebot.
+
+Follow these rules:
+- Produce only the proposal body; do not add headers, footers, quotation numbers, dates, or client/company contact blocks.
+- Do not create sections such as "Client Information", acceptance/signature areas, payment instructions, or validity/expiry dates unless they already exist in the provided context.
+- Do not ask for or include client information—the application supplies required metadata.
+- Preserve any "+++" markers exactly; they represent page breaks and must never be removed.
+- Output must be clean Markdown content only, without assistant chatter, questions, or explanations.
+- Use clear, professional language with concise sections and bullet points; include scope, deliverables, and timelines when relevant.""",
+    '''You are an assistant helping create professional quotations and proposals.
 
 When generating content, follow these guidelines:
 - Use clear, professional language
@@ -27,6 +37,7 @@ When editing existing content:
 - Improve clarity and professionalism
 - Fix any grammatical or formatting issues
 - Maintain the original intent and key information'''
+]
 
 # Default LLM configuration
 DEFAULT_LLM_CONFIG = {
@@ -192,7 +203,7 @@ class ConfigLoader:
         if not current_prompt:
             llm_cfg['system_prompt'] = DEFAULT_SYSTEM_PROMPT
             updated = True
-        elif current_prompt == PREVIOUS_DEFAULT_SYSTEM_PROMPT:
+        elif current_prompt in LEGACY_SYSTEM_PROMPTS:
             llm_cfg['system_prompt'] = DEFAULT_SYSTEM_PROMPT
             updated = True
 
