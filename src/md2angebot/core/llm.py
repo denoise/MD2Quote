@@ -12,16 +12,13 @@ import urllib.error
 from typing import Optional
 from dataclasses import dataclass
 
-# Try to use certifi for SSL certificates (fixes macOS certificate issues)
 try:
     import certifi
     SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 except ImportError:
-    # Fall back to default SSL context if certifi is not installed
     SSL_CONTEXT = ssl.create_default_context()
 
 
-# Available models for each provider
 OPENROUTER_MODELS = {
     'anthropic/claude-sonnet-4': 'Claude Sonnet 4',
     'anthropic/claude-sonnet-4.5': 'Claude Sonnet 4.5',
@@ -39,11 +36,9 @@ OPENAI_MODELS = {
     'gpt-3.5-turbo': 'GPT-3.5 Turbo',
 }
 
-# API endpoints
 OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 
-# Default system prompt
 DEFAULT_SYSTEM_PROMPT = """You are an assistant that generates proposal content in Markdown for MD2Angebot.
 
 Follow these rules:
@@ -166,7 +161,6 @@ class LLMService:
             {"role": "system", "content": config.system_prompt}
         ]
         
-        # Add context if provided
         if context and context.strip():
             messages.append({
                 "role": "user",
@@ -177,7 +171,6 @@ class LLMService:
                 "content": "I understand the current document. What would you like me to help with?"
             })
         
-        # Add the user's instruction
         messages.append({
             "role": "user",
             "content": user_prompt
@@ -200,14 +193,13 @@ class LLMService:
         Raises:
             LLMError: If the request fails
         """
-        # Determine endpoint and headers based on provider
         if config.provider == 'openai':
             url = OPENAI_API_URL
             headers = {
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {config.api_key}'
             }
-        else:  # openrouter
+        else:
             url = OPENROUTER_API_URL
             headers = {
                 'Content-Type': 'application/json',
@@ -216,7 +208,6 @@ class LLMService:
                 'X-Title': 'MD2Angebot'
             }
         
-        # Build request body
         body = {
             'model': config.model,
             'messages': messages,
@@ -229,15 +220,12 @@ class LLMService:
             data = json.dumps(body).encode('utf-8')
             request = urllib.request.Request(url, data=data, headers=headers, method='POST')
             
-            # For streaming, we need to handle the response differently
             if stream:
                 return self._handle_streaming_response(request)
             
-            # Non-streaming handling
             with urllib.request.urlopen(request, timeout=60, context=SSL_CONTEXT) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 
-            # Extract the generated content
             if 'choices' in result and len(result['choices']) > 0:
                 choice = result['choices'][0]
                 if 'message' in choice and 'content' in choice['message']:
@@ -301,7 +289,6 @@ class LLMService:
                             
         except Exception as e:
             if isinstance(e, urllib.error.HTTPError):
-                # Re-raise HTTP errors nicely if possible, similar to _make_request
                 error_body = e.read().decode('utf-8') if e.fp else ''
                 raise LLMError(f"Streaming API error ({e.code}): {error_body or str(e)}")
             raise LLMError(f"Streaming error: {e}")

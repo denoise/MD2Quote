@@ -6,7 +6,6 @@ from PyQt6.QtGui import QPageLayout, QPageSize
 from ..core.config import config
 
 
-# Default page margins in millimeters (top, right, bottom, left)
 DEFAULT_PAGE_MARGINS = (20, 20, 20, 20)
 
 
@@ -33,7 +32,7 @@ class PDFGenerator:
         return QPageLayout(
             QPageSize(QPageSize.PageSizeId.A4),
             QPageLayout.Orientation.Portrait,
-            QMarginsF(left, top, right, bottom),  # QMarginsF takes (left, top, right, bottom)
+            QMarginsF(left, top, right, bottom),
             QPageLayout.Unit.Millimeter
         )
     
@@ -46,16 +45,13 @@ class PDFGenerator:
         """Generates a PDF and returns bytes."""
         self._ensure_view()
         
-        # Use config directory as base URL for resolving relative paths
         base_url = QUrl.fromLocalFile(str(config.config_dir) + "/")
         
-        # Load HTML into the view
         loop = QEventLoop()
         self._view.loadFinished.connect(loop.quit)
         self._view.setHtml(html_content, base_url)
         loop.exec()
         
-        # Generate PDF
         pdf_data = []
         
         def on_pdf_ready(data):

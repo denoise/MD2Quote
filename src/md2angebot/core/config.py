@@ -39,7 +39,6 @@ When editing existing content:
 - Maintain the original intent and key information'''
 ]
 
-# Default LLM configuration
 DEFAULT_LLM_CONFIG = {
     'provider': 'openrouter',
     'api_key': '',
@@ -51,7 +50,7 @@ class ConfigLoader:
     APP_NAME = "md2angebot"
     
     def __init__(self):
-        self.project_root = get_app_path()  # Works both in development and bundled app
+        self.project_root = get_app_path()
         self.config_dir = self._get_config_dir()
         self.config_path = self.config_dir / "config.yaml"
         self.templates_dir = self.config_dir / "templates"
@@ -71,7 +70,6 @@ class ConfigLoader:
             self.styles_dir.mkdir(exist_ok=True)
 
         if not self.config_path.exists():
-            # Try to find the example config in the project root
             example_config = self.project_root / "examples" / "config.yaml"
             
             if example_config.exists():
@@ -92,18 +90,14 @@ class ConfigLoader:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f) or {}
                 
-            # Check if migration is needed (old config structure has company at root)
             if 'company' in data and 'presets' not in data:
                 return self._migrate_config(data)
             
-            # Ensure structure is valid even if file exists
             if 'presets' not in data:
                  return self._create_default_structure()
 
-            # Migrate old template names to new preset names
             data = self._migrate_template_names(data)
                  
-            # Backfill missing keys (like layout/snippets/vat_type) in existing presets
             updated = False
             presets = data.get('presets', {})
             for key, preset in presets.items():
@@ -117,7 +111,6 @@ class ConfigLoader:
                     preset['snippets'] = empty['snippets']
                     updated = True
                 
-                # Backfill company display flags
                 if 'company' in preset:
                     company = preset['company']
                     if 'show_name' not in company:
@@ -133,21 +126,18 @@ class ConfigLoader:
                         company['logo_width'] = 40
                         updated = True
                 
-                # Backfill vat_type in defaults if missing
                 if 'defaults' in preset and 'vat_type' not in preset['defaults']:
                     preset['defaults']['vat_type'] = 'german_vat'
                     updated = True
                     
             if updated:
                 print("Backfilled missing config keys (layout/snippets/company_flags)")
-                # Save the updated config
                 try:
                      with open(self.config_path, 'w', encoding='utf-8') as f:
                         yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
                 except Exception as e:
                     print(f"Error saving backfilled config: {e}")
 
-            # Backfill LLM config if missing (global, not per-preset)
             if 'llm' not in data:
                 data['llm'] = DEFAULT_LLM_CONFIG.copy()
                 try:

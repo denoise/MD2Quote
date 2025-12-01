@@ -11,32 +11,26 @@ Design System:
 
 # Color palette
 COLORS = {
-    # Background layers
-    'bg_dark': '#1a1b1e',       # Deepest background
-    'bg_base': '#25262b',       # Main background
-    'bg_elevated': '#2c2e33',   # Cards, inputs
-    'bg_hover': '#373a40',      # Hover states
+    'bg_dark': '#1a1b1e',
+    'bg_base': '#25262b',
+    'bg_elevated': '#2c2e33',
+    'bg_hover': '#373a40',
     
-    # Text
     'text_primary': '#e4e5e7',
     'text_secondary': '#909296',
     'text_muted': '#5c5f66',
     
-    # Accent
     'accent': '#ff6b6b',
     'accent_hover': '#ff8787',
     'accent_muted': '#c92a2a',
     
-    # Semantic
     'success': '#51cf66',
     'warning': '#fcc419',
     'error': '#ff6b6b',
     
-    # Borders
     'border': '#373a40',
     'border_focus': '#ff6b6b',
     
-    # Syntax highlighting
     'syntax_keyword': '#ff6b6b',
     'syntax_string': '#69db7c',
     'syntax_comment': '#5c5f66',
@@ -46,7 +40,6 @@ COLORS = {
     'syntax_italic': '#c9cacc',
 }
 
-# Spacing (tight UI)
 SPACING = {
     'xs': 2,
     'sm': 4,
@@ -55,7 +48,6 @@ SPACING = {
     'xl': 16,
 }
 
-# Border radius (none - sharp corners)
 RADIUS = {
     'sm': 0,
     'md': 0,
@@ -67,9 +59,6 @@ RADIUS = {
 def get_stylesheet():
     """Returns the complete application stylesheet."""
     return f"""
-    /* ========================================
-       GLOBAL STYLES
-       ======================================== */
     
     QMainWindow {{
         background-color: {COLORS['bg_dark']};
@@ -82,9 +71,6 @@ def get_stylesheet():
         font-size: 13px;
     }}
     
-    /* ========================================
-       TOOLBAR
-       ======================================== */
     
     QToolBar {{
         background-color: {COLORS['bg_base']};
@@ -120,9 +106,6 @@ def get_stylesheet():
         background-color: {COLORS['bg_elevated']};
     }}
     
-    /* ========================================
-       COMBOBOX
-       ======================================== */
     
     QComboBox {{
         background-color: {COLORS['bg_elevated']};
@@ -203,9 +186,6 @@ def get_stylesheet():
         color: {COLORS['bg_dark']};
     }}
     
-    /* ========================================
-       LINE EDIT & TEXT EDIT
-       ======================================== */
     
     QLineEdit, QTextEdit, QPlainTextEdit {{
         background-color: {COLORS['bg_elevated']};
@@ -229,9 +209,6 @@ def get_stylesheet():
         color: {COLORS['text_muted']};
     }}
     
-    /* ========================================
-       DATE EDIT
-       ======================================== */
     
     QDateEdit {{
         background-color: {COLORS['bg_elevated']};
@@ -286,9 +263,6 @@ def get_stylesheet():
         background-color: {COLORS['bg_base']};
     }}
     
-    /* ========================================
-       LABELS
-       ======================================== */
     
     QLabel {{
         color: {COLORS['text_secondary']};
@@ -303,9 +277,6 @@ def get_stylesheet():
         letter-spacing: 0.5px;
     }}
     
-    /* ========================================
-       SPLITTER
-       ======================================== */
     
     QSplitter {{
         background-color: {COLORS['bg_dark']};
@@ -324,9 +295,6 @@ def get_stylesheet():
         height: 1px;
     }}
     
-    /* ========================================
-       STATUS BAR
-       ======================================== */
     
     QStatusBar {{
         background-color: {COLORS['bg_base']};
@@ -336,9 +304,6 @@ def get_stylesheet():
         font-size: 12px;
     }}
     
-    /* ========================================
-       SCROLLBARS
-       ======================================== */
     
     QScrollBar:vertical {{
         background-color: transparent;
@@ -390,21 +355,15 @@ def get_stylesheet():
         background: none;
     }}
     
-    /* ========================================
-       FRAMES & SEPARATORS
-       ======================================== */
     
-    QFrame[frameShape="4"], /* HLine */
-    QFrame[frameShape="5"]  /* VLine */ {{
+    QFrame[frameShape="4"], 
+    QFrame[frameShape="5"] {{
         background-color: {COLORS['border']};
         border: none;
         max-height: 1px;
         max-width: 1px;
     }}
     
-    /* ========================================
-       MESSAGE BOX & DIALOGS
-       ======================================== */
     
     QMessageBox {{
         background-color: {COLORS['bg_base']};
@@ -414,9 +373,6 @@ def get_stylesheet():
         color: {COLORS['text_primary']};
     }}
 
-    /* ========================================
-       MENUS
-       ======================================== */
 
     QMenu {{
         background-color: {COLORS['bg_elevated']};
@@ -494,9 +450,6 @@ def get_stylesheet():
         min-width: 200px;
     }}
     
-    /* ========================================
-       HEADER WIDGET
-       ======================================== */
     
     #header-widget {{
         background-color: {COLORS['bg_base']};
@@ -518,9 +471,6 @@ def get_stylesheet():
         margin-bottom: {SPACING['sm']}px;
     }}
     
-    /* ========================================
-       EDITOR WIDGET
-       ======================================== */
     
     #editor-container {{
         background-color: {COLORS['bg_base']};
@@ -548,9 +498,6 @@ def get_stylesheet():
         line-height: 1.6;
     }}
     
-    /* ========================================
-       PREVIEW WIDGET
-       ======================================== */
     
     #preview-container {{
         background-color: {COLORS['bg_base']};
@@ -574,7 +521,6 @@ def get_stylesheet():
     """
 
 
-# Syntax highlighting colors for editor
 SYNTAX_COLORS = {
     'heading': COLORS['syntax_heading'],
     'bold': COLORS['syntax_bold'],

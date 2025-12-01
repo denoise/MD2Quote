@@ -46,12 +46,10 @@ class TemplateEditorDialog(QDialog):
         """Find the template file path, prioritizing user config then app templates."""
         filename = f"{self.template_name}.html"
         
-        # 1. Check user config templates dir
         user_path = self.config_loader.templates_dir / filename
         if user_path.exists():
             return user_path
             
-        # 2. Check app templates dir
         app_path = get_templates_path() / filename
         if app_path.exists():
             return app_path

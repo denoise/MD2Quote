@@ -23,7 +23,6 @@ class ModernPlainTextEdit(QPlainTextEdit):
         super().__init__(parent)
         self.line_number_area = LineNumberArea(self)
         
-        # Multi-cursor state for Cmd+D functionality
         self.extra_cursors: list[QTextCursor] = []
         self.multi_select_search_text: str = ""
         
@@ -107,7 +106,6 @@ class ModernPlainTextEdit(QPlainTextEdit):
         extra_selections = []
         
         if not self.isReadOnly():
-            # Highlight current line
             selection = QTextEdit.ExtraSelection()
             line_color = QColor(COLORS['bg_elevated'])
             selection.format.setBackground(line_color)
@@ -116,7 +114,6 @@ class ModernPlainTextEdit(QPlainTextEdit):
             selection.cursor.clearSelection()
             extra_selections.append(selection)
             
-            # Highlight extra cursor selections (multi-cursor)
             for cursor in self.extra_cursors:
                 if cursor.hasSelection():
                     sel = QTextEdit.ExtraSelection()
@@ -132,42 +129,34 @@ class ModernPlainTextEdit(QPlainTextEdit):
         modifiers = event.modifiers()
         key = event.key()
         
-        # Escape clears extra cursors
         if key == Qt.Key.Key_Escape:
             if self.extra_cursors:
                 self.clear_extra_cursors()
                 return
         
-        # Cmd+D / Ctrl+D - Add selection to next find match
         if (key == Qt.Key.Key_D and 
             (modifiers & Qt.KeyboardModifier.ControlModifier or modifiers & Qt.KeyboardModifier.MetaModifier)):
             self.handle_cmd_d()
             return
         
-        # Bold (Cmd+B / Ctrl+B)
         if event.matches(QKeySequence.StandardKey.Bold):
             self.toggle_formatting('**')
             return
 
-        # Italic (Cmd+I / Ctrl+I)
         if event.matches(QKeySequence.StandardKey.Italic):
             self.toggle_formatting('*')
             return
 
-        # Link (Cmd+K / Ctrl+K) - No StandardKey for Link, check manual
-        # Check if K is pressed with either Control or Meta (Command) modifier
         if (key == Qt.Key.Key_K and 
             (modifiers & Qt.KeyboardModifier.ControlModifier or modifiers & Qt.KeyboardModifier.MetaModifier)):
             self.insert_link()
             return
 
-        # Move line/selection up or down (Option/Alt + Arrow)
         if (modifiers & Qt.KeyboardModifier.AltModifier) and key in (Qt.Key.Key_Up, Qt.Key.Key_Down):
             direction = -1 if key == Qt.Key.Key_Up else 1
             self.move_selected_lines(direction)
             return
         
-        # Handle multi-cursor typing
         if self.extra_cursors:
             if key == Qt.Key.Key_Backspace:
                 self.handle_multi_cursor_backspace()
@@ -180,7 +169,6 @@ class ModernPlainTextEdit(QPlainTextEdit):
                 return
             elif key in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down,
                          Qt.Key.Key_Home, Qt.Key.Key_End):
-                # Clear extra cursors on navigation
                 self.clear_extra_cursors()
 
         super().keyPressEvent(event)
@@ -190,19 +178,15 @@ class ModernPlainTextEdit(QPlainTextEdit):
         cursor = self.textCursor()
         if cursor.hasSelection():
             text = cursor.selectedText()
-            # Check if already wrapped (naive check)
             if text.startswith(symbol) and text.endswith(symbol) and len(text) >= 2 * len(symbol):
-                # Unwrap
                 new_text = text[len(symbol):-len(symbol)]
             else:
-                # Wrap
                 new_text = f"{symbol}{text}{symbol}"
             
             cursor.beginEditBlock()
             cursor.insertText(new_text)
             cursor.endEditBlock()
         else:
-            # Insert empty wrapper and move cursor inside
             cursor.beginEditBlock()
             cursor.insertText(f"{symbol}{symbol}")
             cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, len(symbol))
@@ -216,13 +200,10 @@ class ModernPlainTextEdit(QPlainTextEdit):
         if cursor.hasSelection():
             text = cursor.selectedText()
             cursor.insertText(f"[{text}](url)")
-            # Optional: Select 'url' to let user type immediately? 
-            # Keeping it simple for now.
         else:
             cursor.insertText("[text](url)")
-            # Select 'text'
-            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, 6) # '](url)' is 6 chars
-            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 4) # 'text' is 4 chars
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, 6)
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 4)
             self.setTextCursor(cursor)
         cursor.endEditBlock()
 
@@ -230,31 +211,26 @@ class ModernPlainTextEdit(QPlainTextEdit):
         """Handle Cmd+D: select word or add next occurrence."""
         cursor = self.textCursor()
         
-        # If no selection and no extra cursors, select word at cursor
         if not cursor.hasSelection() and not self.extra_cursors:
             self.select_word_at_cursor()
             return
         
-        # Get the search text from current selection
         if cursor.hasSelection():
             self.multi_select_search_text = cursor.selectedText()
         
         if not self.multi_select_search_text:
             return
         
-        # Find next occurrence after the last cursor
         last_cursor = self.extra_cursors[-1] if self.extra_cursors else cursor
         next_cursor = self.find_next_occurrence(last_cursor)
         
         if next_cursor:
-            # Check if we've wrapped around to an existing selection
             new_start = next_cursor.selectionStart()
             existing_positions = [cursor.selectionStart()]
             existing_positions.extend(c.selectionStart() for c in self.extra_cursors)
             
             if new_start not in existing_positions:
                 self.extra_cursors.append(next_cursor)
-                # Scroll to make the new selection visible (temporarily set cursor, then restore)
                 original_cursor = self.textCursor()
                 self.setTextCursor(next_cursor)
                 self.ensureCursorVisible()
@@ -278,13 +254,10 @@ class ModernPlainTextEdit(QPlainTextEdit):
         doc = self.document()
         search_text = self.multi_select_search_text
         
-        # Start searching from the end of the current selection
         start_pos = from_cursor.selectionEnd()
         
-        # Search forward from current position
         search_cursor = doc.find(search_text, start_pos)
         
-        # If not found, wrap around to the beginning
         if search_cursor.isNull():
             search_cursor = doc.find(search_text, 0)
         
@@ -301,13 +274,10 @@ class ModernPlainTextEdit(QPlainTextEdit):
 
     def handle_multi_cursor_backspace(self):
         """Handle backspace for all cursors."""
-        # Collect all cursors including the primary one
         all_cursors = [self.textCursor()] + self.extra_cursors
         
-        # Sort by position in reverse order to preserve positions during edits
         all_cursors.sort(key=lambda c: c.selectionStart(), reverse=True)
         
-        # Begin edit block for undo grouping
         primary_cursor = self.textCursor()
         primary_cursor.beginEditBlock()
         
@@ -319,8 +289,7 @@ class ModernPlainTextEdit(QPlainTextEdit):
         
         primary_cursor.endEditBlock()
         
-        # Update primary cursor and extra cursors
-        self.setTextCursor(all_cursors[-1])  # Last in sorted order = first in document
+        self.setTextCursor(all_cursors[-1])
         self.extra_cursors = all_cursors[:-1]
         self.highlight_current_line()
 
@@ -357,8 +326,6 @@ class ModernPlainTextEdit(QPlainTextEdit):
         
         primary_cursor.endEditBlock()
         
-        # After insertion, update cursor positions
-        # The cursors have already moved due to insertText
         self.setTextCursor(all_cursors[-1])
         self.extra_cursors = all_cursors[:-1]
         self.highlight_current_line()
@@ -368,14 +335,12 @@ class ModernPlainTextEdit(QPlainTextEdit):
         if direction not in (-1, 1):
             return
 
-        # Moving lines with multi-cursor selections would be ambiguous; clear them first.
         if self.extra_cursors:
             self.clear_extra_cursors()
 
         doc = self.document()
         cursor = self.textCursor()
 
-        # Determine selection bounds
         if cursor.hasSelection():
             sel_start = cursor.selectionStart()
             sel_end = cursor.selectionEnd()
@@ -387,14 +352,12 @@ class ModernPlainTextEdit(QPlainTextEdit):
         start_block = doc.findBlock(sel_start).blockNumber()
         end_block = doc.findBlock(sel_end).blockNumber()
 
-        # If the selection ends exactly at the start of a block, don't include that block
         if (cursor.hasSelection() and sel_end == doc.findBlock(sel_end).position() 
                 and sel_start != sel_end):
             end_block -= 1
             if end_block < start_block:
                 end_block = start_block
 
-        # Boundary checks
         if direction == -1 and start_block == 0:
             return
         if direction == 1 and end_block >= doc.blockCount() - 1:
@@ -435,13 +398,11 @@ class ModernPlainTextEdit(QPlainTextEdit):
             return
 
         if direction == -1:
-            # Move selection above the previous line
             new_lines = lines[1:] + lines[:1]
             selection_offset = 0
         else:
-            # Move selection below the next line
             new_lines = lines[-1:] + lines[:-1]
-            selection_offset = len(new_lines[0]) + 1  # Account for the newline added by join
+            selection_offset = len(new_lines[0]) + 1
 
         new_text = '\n'.join(new_lines)
         if trailing_newline:
@@ -488,31 +449,23 @@ class MarkdownHighlighter(QSyntaxHighlighter):
                 fmt.setFontItalic(True)
             self.highlightingRules.append((QRegularExpression(pattern), fmt))
 
-        # Headers (most prominent)
         add_rule(r"^#{1,6}\s+.*$", SYNTAX_COLORS['heading'], bold=True)
         
-        # Frontmatter (YAML block)
         add_rule(r"^---[\s\S]*?---", SYNTAX_COLORS['frontmatter'])
 
-        # Bold
         add_rule(r"\*\*[^*]+\*\*", SYNTAX_COLORS['bold'], bold=True)
         add_rule(r"__[^_]+__", SYNTAX_COLORS['bold'], bold=True)
 
-        # Italic
         add_rule(r"(?<!\*)\*[^*]+\*(?!\*)", SYNTAX_COLORS['italic'], italic=True)
         add_rule(r"(?<!_)_[^_]+_(?!_)", SYNTAX_COLORS['italic'], italic=True)
 
-        # Lists
         add_rule(r"^\s*[-*+]\s+", SYNTAX_COLORS['list'])
         add_rule(r"^\s*\d+\.\s+", SYNTAX_COLORS['list'])
         
-        # Inline code
         add_rule(r"`[^`]+`", SYNTAX_COLORS['code'])
         
-        # Links
         add_rule(r"\[([^\]]+)\]\([^\)]+\)", SYNTAX_COLORS['link'])
         
-        # URLs
         add_rule(r"https?://[^\s]+", SYNTAX_COLORS['link'])
 
     def highlightBlock(self, text):
@@ -533,7 +486,6 @@ class EditorWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Section header
         header = QLabel("Markdown")
         header.setObjectName("editor-label")
         header.setStyleSheet(f"""
@@ -548,15 +500,12 @@ class EditorWidget(QWidget):
         """)
         layout.addWidget(header)
 
-        # Editor
         self.editor = ModernPlainTextEdit()
         self.editor.setObjectName("markdown-editor")
         self.highlighter = MarkdownHighlighter(self.editor.document())
         
-        # Set monospace font - use system default first, then try alternatives
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         
-        # Try to find a preferred font from available families
         available_families = QFontDatabase.families()
         preferred_fonts = ["Menlo", "Monaco", "Fira Code", "JetBrains Mono", "Consolas", "Source Code Pro"]
         
@@ -569,7 +518,6 @@ class EditorWidget(QWidget):
         font.setStyleHint(QFont.StyleHint.Monospace)
         self.editor.setFont(font)
         
-        # Configure editor appearance
         self.editor.setTabStopDistance(self.editor.fontMetrics().horizontalAdvance(' ') * 4)
         self.editor.setStyleSheet(f"""
             ModernPlainTextEdit {{
@@ -583,7 +531,6 @@ class EditorWidget(QWidget):
         
         layout.addWidget(self.editor)
 
-        # Add the page break hint
         page_break_hint = QLabel("+++ -> page break (on its own line)")
         page_break_hint.setObjectName("page-break-hint")
         page_break_hint.setStyleSheet(f"""

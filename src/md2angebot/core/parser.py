@@ -5,7 +5,6 @@ from typing import Dict, Any, Tuple
 
 class MarkdownParser:
     def __init__(self):
-        # Enable escape=False to allow raw HTML (e.g. for custom divs)
         self.markdown = mistune.create_markdown(
             plugins=['table', 'url', 'strikethrough'],
             escape=False
@@ -28,9 +27,6 @@ class MarkdownParser:
         metadata, markdown_body = self._extract_frontmatter(content)
         html_content = self.markdown(markdown_body)
         
-        # Post-processing: Convert "+++" on its own line (which becomes <p>+++</p>)
-        # into a page break div.
-        # We use regex to handle potential whitespace around +++
         html_content = re.sub(
             r'<p>\s*\+\+\+\s*</p>', 
             '<div class="page-break"></div>', 
@@ -50,7 +46,6 @@ class MarkdownParser:
             yaml_content = match.group(1)
             try:
                 metadata = yaml.safe_load(yaml_content) or {}
-                # Return content after the frontmatter
                 return metadata, content[match.end():]
             except yaml.YAMLError as e:
                 print(f"Error parsing YAML frontmatter: {e}")

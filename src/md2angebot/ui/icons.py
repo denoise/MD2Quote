@@ -12,9 +12,7 @@ from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtWidgets import QApplication
 
 # Material Symbols codepoints (Unicode)
-# Reference: https://fonts.google.com/icons
 ICONS = {
-    # File operations
     'folder_open': '\ue2c8',
     'save': '\ue161',
     'file_save': '\uf17f',
@@ -23,19 +21,16 @@ ICONS = {
     'file_copy': '\ue173',
     'description': '\ue873',
     
-    # Export/PDF
     'picture_as_pdf': '\ue415',
     'print': '\ue8ad',
     'share': '\ue80d',
     'ios_share': '\ue6b8',
     
-    # Settings & Config
     'settings': '\ue8b8',
     'tune': '\ue429',
     'build': '\ue869',
     'handyman': '\uf10b',
     
-    # Navigation
     'arrow_back': '\ue5c4',
     'arrow_forward': '\ue5c8',
     'close': '\ue5cd',
@@ -47,7 +42,6 @@ ICONS = {
     'chevron_left': '\ue5cb',
     'chevron_right': '\ue5cc',
     
-    # Actions
     'add': '\ue145',
     'remove': '\ue15b',
     'edit': '\ue3c9',
@@ -60,13 +54,11 @@ ICONS = {
     'undo': '\ue166',
     'redo': '\ue15a',
     
-    # Content
     'content_copy': '\ue14d',
     'content_paste': '\ue14f',
     'content_cut': '\ue14e',
     'select_all': '\ue162',
     
-    # View
     'visibility': '\ue8f4',
     'visibility_off': '\ue8f5',
     'fullscreen': '\ue5d0',
@@ -74,7 +66,6 @@ ICONS = {
     'zoom_in': '\ue8ff',
     'zoom_out': '\ue900',
     
-    # Status & Feedback
     'info': '\ue88e',
     'warning': '\ue002',
     'error': '\ue000',
@@ -82,7 +73,6 @@ ICONS = {
     'check_circle': '\ue86c',
     'cancel': '\ue5c9',
     
-    # Categories / Tabs (for config dialog)
     'badge': '\uea67',
     'person': '\ue7fd',
     'business': '\ue0af',
@@ -99,7 +89,6 @@ ICONS = {
     'admin_panel_settings': '\uef3d',
     'manage_accounts': '\uf02e',
     
-    # Document
     'receipt_long': '\uef6e',
     'request_quote': '\uf1b6',
     'payments': '\uef63',
@@ -107,7 +96,6 @@ ICONS = {
     'calculate': '\uea5f',
     'summarize': '\uf071',
     
-    # Layout
     'dashboard': '\ue871',
     'view_agenda': '\ue8e9',
     'table_chart': '\ue265',
@@ -115,7 +103,6 @@ ICONS = {
     'list': '\ue896',
     'view_module': '\ue8f3',
     
-    # Formatting
     'format_bold': '\ue238',
     'format_italic': '\ue23f',
     'format_underlined': '\ue249',
@@ -125,7 +112,6 @@ ICONS = {
     'code': '\ue86f',
     'title': '\ue264',
     
-    # Misc
     'schedule': '\ue8b5',
     'calendar_today': '\ue935',
     'event': '\ue878',
@@ -142,12 +128,10 @@ ICONS = {
     'smart_toy': '\uf06c',
     'add_circle': '\ue147',
     
-    # Logo/Brand related
     'branding_watermark': '\ue06b',
     'image': '\ue3f4',
     'photo_library': '\ue413',
     
-    # Numbers/counters
     'pin': '\uf045',
     'numbers': '\ueac7',
     'counter_1': '\ue0fb',
@@ -156,7 +140,6 @@ ICONS = {
     'counter_4': '\ue0fe',
     'counter_5': '\ue0ff',
 
-    # AI / Automation
     'auto_awesome': '\ue65f',
 }
 
@@ -181,7 +164,6 @@ class MaterialIcons:
         """Load the Material Symbols font from assets."""
         from md2angebot.utils import get_assets_path
         
-        # Find the font file using the centralized path utility
         font_file = get_assets_path() / "fonts" / "MaterialSymbolsOutlined.ttf"
         
         if font_file.exists():
@@ -200,13 +182,12 @@ class MaterialIcons:
         """Get a QFont configured for Material Symbols."""
         font = QFont(MaterialIcons._font_family)
         font.setPixelSize(size)
-        # Use weight 400 for outlined style
         font.setWeight(QFont.Weight.Normal)
         return font
     
     def get_char(self, name: str) -> str:
         """Get the Unicode character for an icon name."""
-        return ICONS.get(name, '\ue88e')  # Default to 'info' icon
+        return ICONS.get(name, '\ue88e')
     
     def get_icon(self, name: str, size: int = 24, color: str = None) -> QIcon:
         """
@@ -219,11 +200,9 @@ class MaterialIcons:
         """
         char = self.get_char(name)
         
-        # Create pixmap
         pixmap = QPixmap(size, size)
         pixmap.fill(Qt.GlobalColor.transparent)
         
-        # Draw the icon
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
@@ -234,7 +213,6 @@ class MaterialIcons:
         if color:
             painter.setPen(QColor(color))
         else:
-            # Use text color from palette
             app = QApplication.instance()
             if app:
                 painter.setPen(app.palette().text().color())

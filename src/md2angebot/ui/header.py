@@ -398,19 +398,16 @@ class HeaderWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        # Main horizontal layout
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(SPACING['sm'], SPACING['sm'], SPACING['sm'], SPACING['sm'])
         main_layout.setSpacing(SPACING['sm'])
 
-        # === Quotation Section (Left) ===
         quote_card = SectionCard("Quotation")
         quote_grid = QGridLayout()
         quote_grid.setContentsMargins(0, 0, 0, 0)
         quote_grid.setHorizontalSpacing(SPACING['sm'])
         quote_grid.setVerticalSpacing(SPACING['xs'])
         
-        # Number field
         number_label = self._create_label("Number")
         quote_grid.addWidget(number_label, 0, 0)
         
@@ -443,13 +440,11 @@ class HeaderWidget(QWidget):
                 background-color: {COLORS['bg_hover']};
             }}
         """)
-        # Slightly taller than the line edit for better visual alignment
         self.generate_quote_button.setFixedHeight(self.quote_number_edit.sizeHint().height() + 2)
         number_layout.addWidget(self.generate_quote_button)
 
         quote_grid.addWidget(number_container, 0, 1)
 
-        # Date field
         date_label = self._create_label("Date")
         quote_grid.addWidget(date_label, 1, 0)
         
@@ -462,14 +457,12 @@ class HeaderWidget(QWidget):
         quote_card.content_layout.addLayout(quote_grid)
         main_layout.addWidget(quote_card, 0)
 
-        # === Client Section (Middle, compact) ===
         client_card = SectionCard("Client")
         client_grid = QGridLayout()
         client_grid.setContentsMargins(0, 0, 0, 0)
         client_grid.setHorizontalSpacing(SPACING['sm'])
         client_grid.setVerticalSpacing(SPACING['xs'])
 
-        # Row 0: Name and Email
         name_label = self._create_label("Name")
         client_grid.addWidget(name_label, 0, 0)
         
@@ -484,7 +477,6 @@ class HeaderWidget(QWidget):
         self.receiver_email.textChanged.connect(self.on_changed)
         client_grid.addWidget(self.receiver_email, 1, 1, 1, 3)
         
-        # Row 1: Address (spanning multiple columns)
         address_label = self._create_label("Address")
         client_grid.addWidget(address_label, 2, 0, Qt.AlignmentFlag.AlignTop)
         
@@ -492,13 +484,11 @@ class HeaderWidget(QWidget):
         self.receiver_address.textChanged.connect(self.on_changed)
         client_grid.addWidget(self.receiver_address, 2, 1, 1, 3)
         
-        # Set column stretch
         client_grid.setColumnStretch(1, 1)
 
         client_card.content_layout.addLayout(client_grid)
-        main_layout.addWidget(client_card, 1)  # Keep compact so LLM panel can grow
+        main_layout.addWidget(client_card, 1)
 
-        # === LLM Assistant Section (Right) ===
         llm_card = SectionCard("LLM Assistant")
         llm_layout = QVBoxLayout()
         llm_layout.setContentsMargins(0, 0, 0, 0)
@@ -517,7 +507,6 @@ class HeaderWidget(QWidget):
         llm_input_layout.setContentsMargins(SPACING['xs'], SPACING['xs'], SPACING['xs'], SPACING['xs'])
         llm_input_layout.setSpacing(SPACING['xs'])
 
-        # Instruction textarea with inline send button
         self.llm_instruction = LLMTextEdit()
         self.llm_instruction.setPlaceholderText("Enter instructions for the LLM... (⌘+Enter to send)")
         self.llm_instruction.setMinimumHeight(72)

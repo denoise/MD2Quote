@@ -12,11 +12,8 @@ def get_app_path() -> Path:
     When running from source, returns the project root directory.
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        # Running in a PyInstaller bundle
         return Path(sys._MEIPASS)
     else:
-        # Running from source - go up from utils/__init__.py to project root
-        # src/md2angebot/utils/__init__.py -> src/md2angebot/utils -> src/md2angebot -> src -> root
         return Path(__file__).parent.parent.parent.parent
 
 

@@ -56,98 +56,75 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MD2Angebot")
         self.resize(1400, 900)
         
-        # Apply modern styling
         self.setStyleSheet(get_stylesheet())
 
-        # Settings for remembering user preferences
         self.settings = QSettings("MD2Angebot", "MD2Angebot")
 
-        # Core components
         self.parser = MarkdownParser()
         self.renderer = TemplateRenderer()
         self.pdf_generator = PDFGenerator()
         self.llm_service = LLMService(config)
         
-        # LLM thread management
         self.llm_thread = None
         self.llm_worker = None
         self.is_llm_streaming_started = False
         
-        # State
         self.current_file = None
         self.is_modified = False
-        # Default to active preset from config
         self.current_preset = config.get_active_preset_name()
 
-        # UI Setup
         self._setup_ui()
         self._setup_toolbar()
         
-        # Live Preview Timer (Debounce)
         self.preview_timer = QTimer()
         self.preview_timer.setSingleShot(True)
-        self.preview_timer.setInterval(800)  # Slightly faster response
+        self.preview_timer.setInterval(800)
         self.preview_timer.timeout.connect(self.refresh_preview)
         
-        # Connect editor
         self.editor.textChanged.connect(self.on_text_changed)
 
-        # Connect Header
         self.header.dataChanged.connect(self.on_header_changed)
         self.header.llmRequestSubmitted.connect(self.on_llm_request)
 
-        # Restore last client info if available
         self._restore_last_client_data()
         
-        # Initial empty state
         self.statusbar.showMessage("Ready — Select a preset to begin")
         
-        # Ask for preset on startup if not set (or just sync UI)
-        # Actually, let's just sync UI since we have a default from config now
         QTimer.singleShot(100, self.sync_preset_ui)
         
-        # Update LLM button state on startup
         QTimer.singleShot(100, self._update_llm_button_state)
 
     def _setup_ui(self):
-        # Main Container
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Header Widget (Top)
         self.header = HeaderWidget()
         self.header.setObjectName("header-widget")
         self.header.generateQuotationRequested.connect(self._generate_new_quotation_number)
         main_layout.addWidget(self.header)
 
-        # Content Area (Editor + Preview)
         content_widget = QWidget()
         content_layout = QHBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(0)
         
-        # Splitter for editor and preview
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)
         content_layout.addWidget(self.splitter)
 
-        # Editor (Left)
         self.editor = EditorWidget()
         self.splitter.addWidget(self.editor)
 
-        # Preview (Right)
         self.preview = PreviewWidget()
         self.splitter.addWidget(self.preview)
 
-        # Set initial sizes (slightly favor preview)
         self.splitter.setSizes([600, 700])
         
         main_layout.addWidget(content_widget)
         
-        # Status bar
         self.statusbar = QStatusBar()
         self.setStatusBar(self.statusbar)
 
@@ -182,7 +159,6 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Preset Selector with label
         type_label = QLabel("Profile")
         type_label.setStyleSheet(f"""
             color: {COLORS['text_muted']};
@@ -202,47 +178,37 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        # Export PDF
         export_action = QAction(icon('picture_as_pdf', 20, COLORS['text_secondary']), "Export PDF", self)
         export_action.setShortcut("Ctrl+E")
         export_action.setToolTip("Export to PDF (⌘E)")
         export_action.triggered.connect(self.export_pdf_dialog)
         toolbar.addAction(export_action)
 
-        # Spacer to push Profiles and Settings to the right
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         toolbar.addWidget(spacer)
 
-        # Profiles
         profiles_action = QAction(icon('badge', 20, COLORS['text_secondary']), "Profiles", self)
         profiles_action.setShortcut("Ctrl+P")
         profiles_action.setToolTip("Manage Profiles (⌘P)")
         profiles_action.triggered.connect(self.open_profiles)
         toolbar.addAction(profiles_action)
 
-        # Settings
         settings_action = QAction(icon('settings', 20, COLORS['text_secondary']), "Settings", self)
         settings_action.setShortcut("Ctrl+,")
         settings_action.setToolTip("Open Settings (⌘,)")
         settings_action.triggered.connect(self.open_settings)
         toolbar.addAction(settings_action)
 
-        # --- Invisible Global Actions ---
-        
-        # Save As
         save_as_action = QAction("Save As", self)
         save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
         save_as_action.triggered.connect(self.save_file_as)
         self.addAction(save_as_action)
 
-        # Print (Alias to Export)
         print_action = QAction("Print", self)
-        # print_action.setShortcut(QKeySequence.StandardKey.Print) # Conflict with Profiles
         print_action.triggered.connect(self.export_pdf_dialog)
         self.addAction(print_action)
 
-        # Refresh
         refresh_action = QAction("Refresh", self)
         refresh_action.setShortcut(QKeySequence.StandardKey.Refresh)
         refresh_action.triggered.connect(self.refresh_preview)
@@ -253,9 +219,7 @@ class MainWindow(QMainWindow):
         presets = config.get('presets', {})
         preset_order = config.get('preset_order', [])
         
-        # Ensure order list is valid
         ordered_keys = [k for k in preset_order if k in presets]
-        # Fallback for missing keys
         for k in sorted(presets.keys()):
             if k not in ordered_keys:
                 ordered_keys.append(k)
@@ -266,10 +230,8 @@ class MainWindow(QMainWindow):
         for key in ordered_keys:
             data = presets[key]
             name = data.get('name', key)
-            # Remove ID prefix, just show name
             self.preset_combo.addItem(name, key)
                 
-        # Set current selection
         index = self.preset_combo.findData(self.current_preset)
         if index >= 0:
             self.preset_combo.setCurrentIndex(index)
@@ -282,12 +244,10 @@ class MainWindow(QMainWindow):
         if index >= 0:
             self.preset_combo.setCurrentIndex(index)
         else:
-            # Fallback to first if active not found
             if self.preset_combo.count() > 0:
                 self.preset_combo.setCurrentIndex(0)
                 self.current_preset = self.preset_combo.currentData()
         
-        # Populate quotation number field with the last used value for this preset
         last_number = config.get_last_quotation_number(self.current_preset)
         if last_number:
             self.header.quote_number_edit.setText(last_number)
@@ -303,7 +263,6 @@ class MainWindow(QMainWindow):
             self.current_preset = preset_key
             config.set_active_preset(preset_key)
             
-            # Show the last used quotation number for this preset
             last_number = config.get_last_quotation_number(self.current_preset)
             if last_number:
                 self.header.quote_number_edit.setText(last_number)
@@ -321,7 +280,6 @@ class MainWindow(QMainWindow):
             self.header.quote_number_edit.setText(quotation_number)
             self.statusbar.showMessage(f"New quotation: {quotation_number}")
         else:
-            # Quotation numbering is disabled for this preset
             self.header.quote_number_edit.clear()
             self.header.quote_number_edit.setPlaceholderText("(numbering disabled)")
 
@@ -338,7 +296,6 @@ class MainWindow(QMainWindow):
 
     def on_llm_request(self, instruction: str):
         """Handle LLM request from the header panel."""
-        # Check if instruction is empty
         if not instruction:
             QMessageBox.information(
                 self,
@@ -347,7 +304,6 @@ class MainWindow(QMainWindow):
             )
             return
         
-        # Check if LLM is configured
         if not self.llm_service.is_configured():
             reply = QMessageBox.question(
                 self,
@@ -359,20 +315,16 @@ class MainWindow(QMainWindow):
                 self.open_settings()
             return
         
-        # Get current editor content as context
         context = self.editor.get_text()
         
-        # Show loading state
         self.header.set_llm_loading(True)
         self.statusbar.showMessage("Connecting to LLM...")
         self.is_llm_streaming_started = False
         
-        # Create worker and thread
         self.llm_thread = QThread()
         self.llm_worker = LLMWorker(self.llm_service, instruction, context)
         self.llm_worker.moveToThread(self.llm_thread)
         
-        # Connect signals
         self.llm_thread.started.connect(self.llm_worker.run)
         self.llm_worker.chunk_received.connect(self._on_llm_chunk)
         self.llm_worker.finished.connect(self._on_llm_success)
@@ -381,13 +333,12 @@ class MainWindow(QMainWindow):
         self.llm_worker.error.connect(self.llm_thread.quit)
         self.llm_thread.finished.connect(self._cleanup_llm_thread)
         
-        # Start the thread
         self.llm_thread.start()
 
     def _on_llm_chunk(self, chunk: str):
         """Handle incoming LLM content chunk."""
         if not self.is_llm_streaming_started:
-            self.editor.set_text("")  # Clear editor on first chunk
+            self.editor.set_text("")
             self.is_llm_streaming_started = True
             self.statusbar.showMessage("Receiving response...")
         
@@ -395,14 +346,10 @@ class MainWindow(QMainWindow):
 
     def _on_llm_success(self, content: str):
         """Handle successful LLM response completion."""
-        # Content is already in editor via streaming
-        
-        # Reset UI state
         self.header.set_llm_loading(False)
         self.header.clear_llm_instruction()
         self.statusbar.showMessage("Content generated successfully")
         
-        # Mark as modified and refresh preview
         self.is_modified = True
         self.preview_timer.start()
 
@@ -428,7 +375,6 @@ class MainWindow(QMainWindow):
 
     def _update_llm_button_state(self):
         """Update LLM send button enabled state based on configuration."""
-        # Always enable the button - we'll show a helpful message if not configured
         if self.llm_service.is_configured():
             self.header.set_llm_enabled(True, "Send instruction to LLM")
         else:
@@ -463,34 +409,22 @@ class MainWindow(QMainWindow):
 
         context["content"] = html_body
         
-        # --- PRESET CONFIG INTEGRATION ---
-        # Load full config from the selected preset (deep copy to avoid modifying original)
         preset_config = copy.deepcopy(config.get_preset(self.current_preset))
         
-        # Allow metadata overrides if specified in markdown (optional feature)
         if 'company' in metadata and isinstance(metadata['company'], dict):
-            # We deep merge or just update top level? 
-            # Let's do a simple update for now to allow overrides
             if 'company' not in preset_config:
                 preset_config['company'] = {}
             preset_config['company'].update(metadata['company'])
         
-        # Resolve logo path to absolute file:// URL for WeasyPrint
         if 'company' in preset_config and preset_config['company'].get('logo'):
             logo_str = preset_config['company']['logo']
-            # Skip if already a file:// URL
             if not logo_str.startswith('file://'):
                 logo_path = config.resolve_path(logo_str)
                 if logo_path and logo_path.exists():
-                    # Use Path.as_uri() for proper URL encoding (handles spaces, special chars)
                     preset_config['company']['logo'] = logo_path.as_uri()
                 else:
-                    # Clear invalid logo path to prevent broken image
                     preset_config['company']['logo'] = ''
             
-        # Add the preset config to the context
-        # We need to ensure company, contact, bank, legal, etc. are in context root
-        # ConfigLoader returns { company: ..., contact: ... } so we update context with it
         context.update(preset_config)
         
         return context
@@ -517,27 +451,12 @@ class MainWindow(QMainWindow):
             metadata, html_body = self.parser.parse_text(content)
             self._merge_header_data(metadata, self.header.get_data())
             
-            # Get context which includes preset data
             context = self._get_safe_context(metadata, html_body)
             
             template_name = metadata.get("template", "base")
             
-            # Pass preset key to renderer if needed, but actually we passed full context
-            # The renderer might need to know where to look for templates?
-            # Current renderer takes (template_name, context).
-            # And inside context we have all the config.
-            # But `renderer.render` also merges `config.config` in the original code.
-            # We should update the renderer to NOT merge the global config blindly,
-            # or we should ensure `context` overrides it. 
-            # Actually, `renderer.render` logic was: `full_context = {**config.config, **context}`.
-            # `config.config` is now the root dict with `presets`.
-            # So the old renderer logic of accessing `{{ company.name }}` from `config.config` will fail
-            # because `company` is no longer at root of `config.config`.
-            # We need to fix the renderer to accept the PRESET config.
+            full_html = self.renderer.render(template_name, context, preset_config=context)
             
-            full_html = self.renderer.render(template_name, context, preset_config=context) # Passing context as config too
-            
-            # Set page margins from preset layout config
             if 'layout' in context and 'page_margins' in context['layout']:
                 margins = context['layout']['page_margins']
                 if len(margins) == 4:
@@ -547,7 +466,6 @@ class MainWindow(QMainWindow):
             
             self.preview.update_preview(pdf_bytes)
             
-            # Show current type in status
             preset_name = self.preset_combo.currentText()
             self.statusbar.showMessage(f"Preview updated — {preset_name}")
             
@@ -574,7 +492,6 @@ class MainWindow(QMainWindow):
         try:
             self.settings.setValue("last_client", json.dumps(client_data))
         except TypeError:
-            # Ignore values that cannot be serialized
             pass
 
     def _load_last_client_data(self):
@@ -689,14 +606,10 @@ class MainWindow(QMainWindow):
                 metadata, html_body = self.parser.parse_text(content)
                 self._merge_header_data(metadata, header_data)
                 
-                # Use safe context which uses preset
                 context = self._get_safe_context(metadata, html_body)
                 
-                # Use current preset for rendering
-                # Note: context already contains the preset data
                 full_html = self.renderer.render(metadata.get("template", "base"), context, preset_config=context)
                 
-                # Set page margins from preset layout config
                 if 'layout' in context and 'page_margins' in context['layout']:
                     margins = context['layout']['page_margins']
                     if len(margins) == 4:
@@ -731,9 +644,9 @@ class MainWindow(QMainWindow):
 
     def save_file_as(self):
         old_file = self.current_file
-        self.current_file = None # Force dialog
+        self.current_file = None
         self.save_file()
-        if not self.current_file: # User cancelled
+        if not self.current_file:
             self.current_file = old_file
 
     def open_profiles(self):
@@ -750,18 +663,14 @@ class MainWindow(QMainWindow):
 
     def on_config_saved(self):
         """Called when configuration is saved."""
-        # Reload the config
         config._ensure_config_exists()
         config.config = config._load_config()
         
-        # Re-initialize renderer to pick up any template changes
         self.renderer = TemplateRenderer()
         
-        # Update preset selector
         self.update_preset_selector()
         self.sync_preset_ui()
         
-        # Update LLM button state based on API key configuration
         self._update_llm_button_state()
         
         self.statusbar.showMessage("Configuration updated")
