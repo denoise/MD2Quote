@@ -94,7 +94,8 @@ class MainWindow(QMainWindow):
         self._update_clients_combo()
         self._restore_last_client_data()
         
-        self.statusbar.showMessage("Ready — Select a preset to begin")
+        preset_name = self.preset_combo.currentText() if self.preset_combo.count() > 0 else "None"
+        self.statusbar.showMessage(f"Ready — Profile: {preset_name}")
         
         QTimer.singleShot(100, self.sync_preset_ui)
         
@@ -276,6 +277,7 @@ class MainWindow(QMainWindow):
                 self.header.quote_number_edit.clear()
                 self.header.quote_number_edit.setPlaceholderText("e.g. 2025-001")
             
+            self.statusbar.showMessage(f"Profile: {text}")
             self.refresh_preview()
     
     def _generate_new_quotation_number(self):
@@ -520,7 +522,6 @@ class MainWindow(QMainWindow):
         content = self.editor.get_text()
         
         try:
-            self.statusbar.showMessage("Rendering preview...")
             metadata, html_body = self.parser.parse_text(content)
             self._merge_header_data(metadata, self.header.get_data())
             
@@ -538,9 +539,6 @@ class MainWindow(QMainWindow):
             pdf_bytes = self.pdf_generator.generate_bytes(full_html)
             
             self.preview.update_preview(pdf_bytes)
-            
-            preset_name = self.preset_combo.currentText()
-            self.statusbar.showMessage(f"Preview updated — {preset_name}")
             
         except Exception as e:
             import traceback
@@ -616,6 +614,7 @@ class MainWindow(QMainWindow):
             self.current_file = path
             self.setWindowTitle(f"MD2Angebot — {os.path.basename(path)}")
             self.is_modified = False
+            self.statusbar.showMessage(f"Opened: {os.path.basename(path)}")
             self.refresh_preview()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not open file: {e}")
@@ -662,7 +661,7 @@ class MainWindow(QMainWindow):
             
             self.is_modified = False
             self.setWindowTitle(f"MD2Angebot — {os.path.basename(self.current_file)}")
-            self.statusbar.showMessage("Saved successfully")
+            self.statusbar.showMessage(f"Saved: {os.path.basename(self.current_file)}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save file: {e}")
 
@@ -696,7 +695,7 @@ class MainWindow(QMainWindow):
                         self.pdf_generator.set_margins(tuple(margins))
                 
                 self.pdf_generator.generate(full_html, path)
-                self.statusbar.showMessage(f"Exported to {path}")
+                self.statusbar.showMessage(f"Exported: {os.path.basename(path)}")
                 QMessageBox.information(self, "Success", "PDF exported successfully!")
             except Exception as e:
                 self.statusbar.showMessage(f"Export error: {str(e)}")
@@ -759,4 +758,5 @@ class MainWindow(QMainWindow):
         
         self._update_llm_button_state()
         
-        self.statusbar.showMessage("Configuration updated")
+        preset_name = self.preset_combo.currentText()
+        self.statusbar.showMessage(f"Profile saved: {preset_name}")
