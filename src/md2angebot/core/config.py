@@ -1018,5 +1018,20 @@ class ConfigLoader:
         self._save_config()
         return (True, None)
 
+    def ensure_default_client(self) -> None:
+        """
+        Ensures at least one default client exists.
+        Creates a default client if the clients list is empty.
+        """
+        clients = self.get_clients()
+        if not clients:
+            default_client = {
+                'contact': '',
+                'institution': 'New Client',
+                'email': '',
+                'address': ''
+            }
+            self.add_client(default_client)
+
 
 config = ConfigLoader()

@@ -468,7 +468,6 @@ class HeaderWidget(QWidget):
 
         self.client_combo = QComboBox()
         self.client_combo.setMinimumWidth(200)
-        self.client_combo.addItem("— Select saved client —", "")
         self.client_combo.currentIndexChanged.connect(self._on_client_combo_changed)
         self.client_combo.setStyleSheet(f"""
             QComboBox {{
@@ -618,25 +617,31 @@ class HeaderWidget(QWidget):
         """Handle manage clients button click."""
         self.manageClientsRequested.emit()
 
-    def update_clients_combo(self, clients_list: list):
+    def update_clients_combo(self, clients_list: list, select_last: bool = True):
         """
         Update the client combo box with saved clients.
         
         Args:
             clients_list: List of (client_key, institution) tuples
+            select_last: If True, select the last client in the list
         """
         self._updating_client_combo = True
         self.client_combo.clear()
-        self.client_combo.addItem("— Select saved client —", "")
         for client_key, institution in clients_list:
             if institution:
                 self.client_combo.addItem(institution, client_key)
+        
+        # Select the last client by default
+        if select_last and self.client_combo.count() > 0:
+            self.client_combo.setCurrentIndex(self.client_combo.count() - 1)
+        
         self._updating_client_combo = False
 
     def reset_client_combo(self):
-        """Reset the client combo to the placeholder option."""
+        """Reset the client combo to the last client."""
         self._updating_client_combo = True
-        self.client_combo.setCurrentIndex(0)
+        if self.client_combo.count() > 0:
+            self.client_combo.setCurrentIndex(self.client_combo.count() - 1)
         self._updating_client_combo = False
 
     def _on_generate_quotation_clicked(self):

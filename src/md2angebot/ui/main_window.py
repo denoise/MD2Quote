@@ -89,6 +89,8 @@ class MainWindow(QMainWindow):
         self.header.clientSelected.connect(self._on_client_selected)
         self.header.manageClientsRequested.connect(self._on_manage_clients)
 
+        # Ensure at least one default client exists (only check once at startup)
+        config.ensure_default_client()
         self._update_clients_combo()
         self._restore_last_client_data()
         
@@ -384,10 +386,10 @@ class MainWindow(QMainWindow):
         else:
             self.header.set_llm_enabled(True, "Click to configure LLM (no API key set)")
 
-    def _update_clients_combo(self):
+    def _update_clients_combo(self, select_last: bool = True):
         """Update the clients dropdown in the header with saved clients."""
         clients_list = config.get_clients_list()
-        self.header.update_clients_combo(clients_list)
+        self.header.update_clients_combo(clients_list, select_last=select_last)
 
     def _on_client_selected(self, client_key: str):
         """Handle client selection from the dropdown."""
@@ -407,7 +409,7 @@ class MainWindow(QMainWindow):
 
     def _on_clients_changed(self):
         """Handle clients list being modified in the dialog."""
-        self._update_clients_combo()
+        self._update_clients_combo(select_last=False)
         # Re-select the current client if it still exists
         current_client = self.header.get_data().get("client", {})
         if current_client.get("institution"):
@@ -420,7 +422,9 @@ class MainWindow(QMainWindow):
                     if index >= 0:
                         self.header.client_combo.setCurrentIndex(index)
                     self.header._updating_client_combo = False
-                    break
+                    return
+        # If current client was not found, select the last one
+        self.header.reset_client_combo()
 
     def _on_client_from_dialog(self, client_data: dict):
         """Handle client selected from the manager dialog."""
@@ -576,10 +580,17 @@ class MainWindow(QMainWindow):
             return None
 
     def _restore_last_client_data(self):
-        """Populate header with last client info if available."""
+        """Populate header with last client info if available, otherwise load selected client from combo."""
         client_data = self._load_last_client_data()
         if client_data:
             self.header.set_client_data(client_data)
+        else:
+            # Load the currently selected client from the combo
+            client_key = self.header.client_combo.currentData()
+            if client_key:
+                client = config.get_client(client_key)
+                if client:
+                    self.header.set_client_data(client)
 
     def open_file_dialog(self):
         path, _ = QFileDialog.getOpenFileName(

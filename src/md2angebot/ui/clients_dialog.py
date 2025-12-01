@@ -30,7 +30,7 @@ class ClientsManagerDialog(QDialog):
         self._is_modified = False
         
         self.setWindowTitle("Manage Clients")
-        self.resize(700, 500)
+        self.resize(900, 500)
         self.setModal(True)
         
         self._setup_ui()
@@ -225,7 +225,7 @@ class ClientsManagerDialog(QDialog):
         splitter.addWidget(right_panel)
         
         # Set splitter sizes
-        splitter.setSizes([250, 450])
+        splitter.setSizes([300, 450])
         layout.addWidget(splitter)
         
         # Bottom buttons
