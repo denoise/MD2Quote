@@ -21,8 +21,7 @@
 </head>
 <body>
     <div class="page-container">
-        
-
+       
         <!-- Header -->
         <header>
             {% if company.show_logo and company.logo %}
@@ -67,10 +66,6 @@
 
         <!-- Client Section -->
         <section class="client-section">
-            <div class="section-header">
-                <span class="section-icon">❖</span>
-                <span class="section-title">{% if defaults.language == 'de' %}Erstellt für{% else %}Prepared For{% endif %}</span>
-            </div>
             <div class="client-card">
                 <p class="client-name">{{ client.name }}</p>
                 <p class="client-detail">{{ client.address }}</p>

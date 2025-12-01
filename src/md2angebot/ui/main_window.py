@@ -388,11 +388,20 @@ class MainWindow(QMainWindow):
             html_body: Rendered HTML content
             preset_override: Optional preset values to use instead of saved config (for live preview)
         """
+        # Use preset_override for live preview, otherwise load from config
+        if preset_override is not None:
+            preset_config = copy.deepcopy(preset_override)
+        else:
+            preset_config = copy.deepcopy(config.get_preset(self.current_preset))
+        
+        # Get valid_days from profile defaults, fallback to 30
+        profile_valid_days = preset_config.get('defaults', {}).get('valid_days', 30)
+        
         defaults = {
             "quotation": {
                 "number": "DRAFT",
                 "date": "YYYY-MM-DD",
-                "valid_days": 30
+                "valid_days": profile_valid_days
             },
             "client": {
                 "name": "Client Name",
@@ -414,12 +423,6 @@ class MainWindow(QMainWindow):
                 context[key] = value
 
         context["content"] = html_body
-        
-        # Use preset_override for live preview, otherwise load from config
-        if preset_override is not None:
-            preset_config = copy.deepcopy(preset_override)
-        else:
-            preset_config = copy.deepcopy(config.get_preset(self.current_preset))
         
         if 'company' in metadata and isinstance(metadata['company'], dict):
             if 'company' not in preset_config:

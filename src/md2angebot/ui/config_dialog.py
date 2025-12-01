@@ -1609,6 +1609,7 @@ class ConfigDialog(QDialog):
         self.defaults_vat_type.currentIndexChanged.connect(self._request_preview_update)
         self.defaults_tax_rate.valueChanged.connect(self._request_preview_update)
         self.defaults_payment_days.valueChanged.connect(self._request_preview_update)
+        self.defaults_valid_days.valueChanged.connect(self._request_preview_update)
         self.defaults_language.currentTextChanged.connect(self._request_preview_update)
         
         # Quotation number fields
@@ -2151,6 +2152,18 @@ class ConfigDialog(QDialog):
         payment_col.addWidget(self.defaults_payment_days)
         row3.addLayout(payment_col)
         
+        valid_days_col = QVBoxLayout()
+        valid_days_col.setSpacing(2)
+        valid_days_label = QLabel("Quote Validity")
+        valid_days_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
+        valid_days_col.addWidget(valid_days_label)
+        self.defaults_valid_days = StyledSpinBox()
+        self.defaults_valid_days.setRange(1, 365)
+        self.defaults_valid_days.setSuffix(" days")
+        self.defaults_valid_days.setMinimumWidth(75)
+        valid_days_col.addWidget(self.defaults_valid_days)
+        row3.addLayout(valid_days_col)
+        
         row3.addStretch()
         defaults_card.addLayout(row3)
         
@@ -2470,6 +2483,7 @@ class ConfigDialog(QDialog):
             'vat_type': self.defaults_vat_type.currentData() or 'german_vat',
             'tax_rate': self.defaults_tax_rate.value(),
             'payment_days': self.defaults_payment_days.value(),
+            'valid_days': self.defaults_valid_days.value(),
             'language': self.defaults_language.currentText(),
         }
         
@@ -2564,6 +2578,7 @@ class ConfigDialog(QDialog):
             'vat_type': self.defaults_vat_type.currentData() or 'german_vat',
             'tax_rate': self.defaults_tax_rate.value(),
             'payment_days': self.defaults_payment_days.value(),
+            'valid_days': self.defaults_valid_days.value(),
             'language': self.defaults_language.currentText(),
         }
         
@@ -2689,6 +2704,7 @@ class ConfigDialog(QDialog):
         
         self.defaults_tax_rate.setValue(defaults.get('tax_rate', 19))
         self.defaults_payment_days.setValue(defaults.get('payment_days', 14))
+        self.defaults_valid_days.setValue(defaults.get('valid_days', 30))
         lang = defaults.get('language', 'de')
         idx = self.defaults_language.findText(lang)
         if idx >= 0:
