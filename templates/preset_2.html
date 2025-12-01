@@ -148,13 +148,13 @@
                     <span>{{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}</span>
                 </div>
                 
+                {% if bank.iban or bank.bank_name %}
                 <div class="footer-row bank-row">
-                    <span>{{ bank.bank_name }}</span>
-                    <span class="footer-sep">|</span>
-                    <span>IBAN: {{ bank.iban }}</span>
-                    <span class="footer-sep">|</span>
-                    <span>BIC: {{ bank.bic }}</span>
+                    {% if bank.bank_name %}<span>{{ bank.bank_name }}</span>{% endif %}
+                    {% if bank.iban %}<span class="footer-sep">|</span><span>IBAN: {{ bank.iban }}</span>{% endif %}
+                    {% if bank.bic %}<span class="footer-sep">|</span><span>BIC: {{ bank.bic }}</span>{% endif %}
                 </div>
+                {% endif %}
                 
                 {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
                 <div class="footer-row legal-row">

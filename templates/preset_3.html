@@ -64,12 +64,14 @@
                 </div>
             </div>
 
+            {% if bank.iban or bank.bank_name %}
             <div class="meta-block">
                 <h4 class="meta-label">{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
-                <p>{{ bank.bank_name }}</p>
-                <p class="mono-text">{{ bank.iban }}</p>
-                <p>{{ bank.bic }}</p>
+                {% if bank.bank_name %}<p>{{ bank.bank_name }}</p>{% endif %}
+                {% if bank.iban %}<p class="mono-text">{{ bank.iban }}</p>{% endif %}
+                {% if bank.bic %}<p>{{ bank.bic }}</p>{% endif %}
             </div>
+            {% endif %}
 
             {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
             <div class="meta-block">

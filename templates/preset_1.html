@@ -96,11 +96,13 @@
             {{ snippets.custom_footer | replace('\n', '<br>') | safe }}
         </div>
         {% endif %}
+        {% if bank.iban or bank.bank_name %}
         <div class="bank-details">
             <h4>{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
-            <p>{{ bank.bank_name }} | IBAN: {{ bank.iban }} | BIC: {{ bank.bic }}</p>
-            <p>{{ bank.holder }}</p>
+            <p>{{ bank.bank_name }}{% if bank.iban %} | IBAN: {{ bank.iban }}{% endif %}{% if bank.bic %} | BIC: {{ bank.bic }}{% endif %}</p>
+            {% if bank.holder %}<p>{{ bank.holder }}</p>{% endif %}
         </div>
+        {% endif %}
         <div class="company-footer">
             <p>{{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}, {{ contact.country }}</p>
             <p>{{ contact.email }} | {{ contact.website }}</p>

@@ -145,12 +145,14 @@
                 {{ contact.email }}<br>
                 {{ contact.phone }}
             </div>
+            {% if bank.iban or bank.bank_name %}
             <div class="col">
                 <strong>Bank</strong><br>
-                {{ bank.bank_name }}<br>
-                {{ bank.iban }}<br>
-                BIC: {{ bank.bic }}
+                {% if bank.bank_name %}{{ bank.bank_name }}<br>{% endif %}
+                {% if bank.iban %}{{ bank.iban }}<br>{% endif %}
+                {% if bank.bic %}BIC: {{ bank.bic }}{% endif %}
             </div>
+            {% endif %}
             <div class="col">
                 <strong>{% if defaults.language == 'de' %}Details{% else %}Details{% endif %}</strong><br>
                 {% if legal.tax_id %}VAT: {{ legal.tax_id }}<br>{% endif %}
