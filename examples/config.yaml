@@ -5,14 +5,14 @@ active_preset: preset_1
 
 presets:
   preset_1:
-    name: "Edgard Berendsen"
+    name: "My Business"
     
     # ==========================================
     # COMPANY INFORMATION
     # ==========================================
     company:
-      name: "Edgard Berendsen"
-      tagline: "Digital Solutions & Art"
+      name: "My Business"
+      tagline: "Your Tagline Here"
       # Default logo. Can be absolute or relative to home (~).
       logo: "assets/images/logo_code.svg"
 
@@ -20,31 +20,31 @@ presets:
     # CONTACT DETAILS
     # ==========================================
     contact:
-      street: "Creative Avenue 42"
+      street: "123 Main Street"
       city: "Amsterdam"
       postal_code: "1012 AB"
       country: "Netherlands"
       phone: "+31 6 1234 5678"
-      email: "hello@edgardberendsen.com"
-      website: "www.edgardberendsen.com"
+      email: "hello@example.com"
+      website: "www.example.com"
 
     # ==========================================
     # LEGAL INFORMATION
     # ==========================================
     legal:
       # Value Added Tax ID
-      tax_id: "NL853492812B01"
+      tax_id: "NL000000000B01"
       # Chamber of Commerce (KvK) number
-      chamber_of_commerce: "67891234"
+      chamber_of_commerce: "00000000"
 
     # ==========================================
     # BANKING DETAILS
     # ==========================================
     bank:
-      holder: "Edgard Berendsen"
-      iban: "NL91 ABNA 0417 1643 00"
-      bic: "ABNANL2A"
-      bank_name: "ABN AMRO"
+      holder: "Your Name"
+      iban: "NL00 BANK 0000 0000 00"
+      bic: "BANKXX2A"
+      bank_name: "Your Bank"
 
     # ==========================================
     # LAYOUT & SNIPPETS
@@ -77,7 +77,7 @@ presets:
     # Counter resets monthly if format contains {MM}
     quotation_number:
       enabled: true
-      format: "EB-{YYYY}-{NNN}"    # Example: EB-2025-001
+      format: "QT-{YYYY}-{NNN}"    # Example: QT-2025-001
       counter: 0
       last_reset_year: null
       last_reset_month: null
@@ -109,10 +109,10 @@ presets:
       table_alt: "#f8f9fa"    # Alternating table row background
 
   # ============================================================================
-  # PRESET 2: Lens & Light Photography
+  # PRESET 2: Photography Studio
   # ============================================================================
   preset_2:
-    name: "Lens & Light Photography"
+    name: "Photography Studio"
     
     company:
       name: "Lens & Light Photography"
@@ -124,19 +124,19 @@ presets:
       city: "Berlin"
       postal_code: "10707"
       country: "Germany"
-      phone: "+49 30 8821 4455"
-      email: "studio@lensandlight.de"
-      website: "www.lensandlight.de"
+      phone: "+49 30 1234 5678"
+      email: "studio@example.de"
+      website: "www.example.de"
 
     legal:
-      tax_id: "DE298765432"
+      tax_id: "DE000000000"
       chamber_of_commerce: ""
 
     bank:
-      holder: "Lens & Light Photography GmbH"
-      iban: "DE89 3704 0044 0532 0130 00"
-      bic: "COBADEFFXXX"
-      bank_name: "Commerzbank"
+      holder: "Photography Studio GmbH"
+      iban: "DE00 0000 0000 0000 0000 00"
+      bic: "BANKDEFFXXX"
+      bank_name: "Example Bank"
 
     layout:
       template: "preset_2"
@@ -183,10 +183,10 @@ presets:
       table_alt: "#f0f0f0"      # Very Light Gray - Table rows
 
   # ============================================================================
-  # PRESET 3: Vertex Consulting Group
+  # PRESET 3: Consulting Group
   # ============================================================================
   preset_3:
-    name: "Vertex Consulting Group"
+    name: "Consulting Group"
     
     company:
       name: "Vertex Consulting Group"
@@ -198,19 +198,19 @@ presets:
       city: "London"
       postal_code: "E14 5AB"
       country: "United Kingdom"
-      phone: "+44 20 7946 0958"
-      email: "enquiries@vertexconsulting.co.uk"
-      website: "www.vertexconsulting.co.uk"
+      phone: "+44 20 1234 5678"
+      email: "enquiries@example.co.uk"
+      website: "www.example.co.uk"
 
     legal:
-      tax_id: "GB123456789"
-      chamber_of_commerce: "09876543"
+      tax_id: "GB000000000"
+      chamber_of_commerce: "00000000"
 
     bank:
-      holder: "Vertex Consulting Group Ltd"
-      iban: "GB82 WEST 1234 5698 7654 32"
-      bic: "WESTGB2L"
-      bank_name: "NatWest"
+      holder: "Consulting Group Ltd"
+      iban: "GB00 BANK 0000 0000 0000 00"
+      bic: "BANKGB2L"
+      bank_name: "Example Bank"
 
     layout:
       template: "preset_3"
@@ -257,10 +257,10 @@ presets:
       table_alt: "#f1faee"      # Mint Cream - Subtle table rows
 
   # ============================================================================
-  # PRESET 4: Aurora Creative Studio
+  # PRESET 4: Creative Studio
   # ============================================================================
   preset_4:
-    name: "Aurora Creative Studio"
+    name: "Creative Studio"
     
     company:
       name: "Aurora Creative Studio"
@@ -272,17 +272,17 @@ presets:
       city: "Amsterdam"
       postal_code: "1016 GV"
       country: "Netherlands"
-      phone: "+31 20 555 8899"
-      email: "hello@auroracreative.nl"
-      website: "www.auroracreative.nl"
+      phone: "+31 20 123 4567"
+      email: "hello@example.nl"
+      website: "www.example.nl"
 
     legal:
-      tax_id: "NL862194701B01"
-      chamber_of_commerce: "81234567"
+      tax_id: "NL000000000B01"
+      chamber_of_commerce: "00000000"
 
     bank:
-      holder: "Aurora Creative Studio"
-      iban: "NL18 RABO 0123 4567 89"
+      holder: "Creative Studio"
+      iban: "NL00 RABO 0000 0000 00"
       bic: "RABONL2U"
       bank_name: "Rabobank"
 
@@ -294,7 +294,7 @@ presets:
       intro_text: "Let's make something amazing together!"
       terms: "Creative rights transfer upon full payment."
       signature_block: false
-      custom_footer: "Designed in Amsterdam with ❤️"
+      custom_footer: "Designed with care"
 
     defaults:
       currency: "EUR"
@@ -331,10 +331,10 @@ presets:
       table_alt: "#f8f0fc"      # Pale Lavender - Artistic table rows
 
   # ============================================================================
-  # PRESET 5: Terra Global Solutions
+  # PRESET 5: Global Solutions
   # ============================================================================
   preset_5:
-    name: "Terra Global Solutions"
+    name: "Global Solutions"
     
     company:
       name: "Terra Global Solutions"
@@ -346,19 +346,19 @@ presets:
       city: "Brussels"
       postal_code: "1049"
       country: "Belgium"
-      phone: "+32 2 555 7788"
-      email: "info@terraglobal.eu"
-      website: "www.terraglobal.eu"
+      phone: "+32 2 123 4567"
+      email: "info@example.eu"
+      website: "www.example.eu"
 
     legal:
-      tax_id: "BE0123456789"
-      chamber_of_commerce: "0876.543.210"
+      tax_id: "BE0000000000"
+      chamber_of_commerce: "0000.000.000"
 
     bank:
-      holder: "Terra Global Solutions BVBA"
-      iban: "BE68 5390 0754 7034"
-      bic: "KREDBEBB"
-      bank_name: "KBC Bank"
+      holder: "Global Solutions BVBA"
+      iban: "BE00 0000 0000 0000"
+      bic: "BANKBEBB"
+      bank_name: "Example Bank"
 
     layout:
       template: "preset_5"
@@ -368,7 +368,7 @@ presets:
       intro_text: "We appreciate the opportunity to quote for this project."
       terms: "Valid for 30 days. Subject to our General Terms of Service."
       signature_block: true
-      custom_footer: "Registered in Brussels under number BE0123456789"
+      custom_footer: ""
 
     defaults:
       currency: "EUR"
