@@ -1,6 +1,8 @@
 __pycache__/
 *.pyc
+# macOS metadata anywhere in the tree
 .DS_Store
+**/.DS_Store
 /project_resources/
 
 # Build artifacts
