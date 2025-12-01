@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
         toolbar.addAction(open_action)
 
         # Save
-        save_action = QAction(icon('save', 20, COLORS['text_secondary']), "Save", self)
+        save_action = QAction(icon('save', 20, COLORS['text_secondary']), "Save MD", self)
         save_action.setShortcut(QKeySequence.StandardKey.Save)
         save_action.setToolTip("Save file (⌘S)")
         save_action.triggered.connect(self.save_file)
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
 
         # Export PDF
-        export_action = QAction(icon('picture_as_pdf', 20, COLORS['text_secondary']), "Export", self)
+        export_action = QAction(icon('picture_as_pdf', 20, COLORS['text_secondary']), "Export PDF", self)
         export_action.setShortcut("Ctrl+E")
         export_action.setToolTip("Export to PDF (⌘E)")
         export_action.triggered.connect(self.export_pdf_dialog)
