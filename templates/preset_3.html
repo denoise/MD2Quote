@@ -25,7 +25,7 @@
         <div class="sidebar-content">
             {% if company.show_logo and company.logo %}
             <div class="logo-container">
-                <img src="{{ company.logo }}" alt="Logo" class="logo">
+                <img src="{{ company.logo }}" alt="Logo" class="logo" style="width: {{ company.logo_width|default(40) }}mm; max-height: none; height: auto;">
             </div>
             {% elif company.show_name %}
             <h1 class="company-name-text">{{ company.name }}</h1>

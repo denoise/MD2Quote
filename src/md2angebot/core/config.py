@@ -118,6 +118,9 @@ class ConfigLoader:
                     if 'show_logo' not in company:
                         company['show_logo'] = True
                         updated = True
+                    if 'logo_width' not in company:
+                        company['logo_width'] = 40
+                        updated = True
                 
                 # Backfill vat_type in defaults if missing
                 if 'defaults' in preset and 'vat_type' not in preset['defaults']:
@@ -228,6 +231,7 @@ class ConfigLoader:
                 'name': '',
                 'tagline': '',
                 'logo': '',
+                'logo_width': 40,
                 'show_name': True,
                 'show_tagline': True,
                 'show_logo': True

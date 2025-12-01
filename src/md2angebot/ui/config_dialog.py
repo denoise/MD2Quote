@@ -1492,6 +1492,28 @@ class ConfigDialog(QDialog):
         
         company_card.addWidget(FormRow("Logo", logo_container))
         
+        # Logo Width Slider
+        width_container = QWidget()
+        width_layout = QHBoxLayout(width_container)
+        width_layout.setContentsMargins(0, 0, 0, 0)
+        width_layout.setSpacing(SPACING['md'])
+        
+        self.logo_width_slider = QSlider(Qt.Orientation.Horizontal)
+        self.logo_width_slider.setRange(10, 150)  # 10mm to 150mm
+        self.logo_width_slider.setSingleStep(5)
+        self.logo_width_slider.setPageStep(10)
+        width_layout.addWidget(self.logo_width_slider, 1)
+        
+        self.logo_width_label = QLabel("40 mm")
+        self.logo_width_label.setFixedWidth(50)
+        self.logo_width_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.logo_width_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
+        width_layout.addWidget(self.logo_width_label)
+        
+        self.logo_width_slider.valueChanged.connect(lambda v: self.logo_width_label.setText(f"{v} mm"))
+        
+        company_card.addWidget(FormRow("Width", width_container))
+        
         # Logo preview with label
         logo_preview_row = QHBoxLayout()
         logo_preview_row.setSpacing(SPACING['sm'])
@@ -2179,6 +2201,7 @@ class ConfigDialog(QDialog):
             'name': self.company_name.text(),
             'tagline': self.company_tagline.text(),
             'logo': self.company_logo.path(),
+            'logo_width': self.logo_width_slider.value(),
             'show_name': self.company_show_name.isChecked(),
             'show_tagline': self.company_show_tagline.isChecked(),
             'show_logo': self.company_show_logo.isChecked(),
@@ -2281,6 +2304,10 @@ class ConfigDialog(QDialog):
         logo_path = company.get('logo', '')
         self.company_logo.setPath(logo_path)
         self.logo_preview.setPath(logo_path)
+        
+        logo_width = company.get('logo_width', 40)
+        self.logo_width_slider.setValue(logo_width)
+        self.logo_width_label.setText(f"{logo_width} mm")
         
         self.company_show_name.setChecked(company.get('show_name', True))
         self.company_show_tagline.setChecked(company.get('show_tagline', True))
