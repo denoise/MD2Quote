@@ -10,12 +10,12 @@ class TemplateRenderer:
         Initialize the template renderer with appropriate template directory priority.
         
         Development Mode (running from source):
-            1. Source templates (for live editing)
-            2. User config templates (fallback)
+            1. Source templates (`./templates/`) - for live editing
+            2. User config templates (`~/.config/md2angebot/templates/`) - fallback
         
-        Production Mode (bundled app):
-            1. User config templates (user customizations)
-            2. Bundled templates (defaults)
+        Production Mode (bundled .app):
+            1. User config templates - user customizations
+            2. Bundled templates - defaults
         """
         # Detect if running from source or bundled
         is_bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
@@ -27,10 +27,10 @@ class TemplateRenderer:
                 get_templates_path()
             ]
         else:
-            # Development: User config first to support in-app editor, source as fallback
+            # Development: Source templates first for live editing
             template_dirs = [
-                config.templates_dir,  # User config (overrides source)
-                get_templates_path(),  # Source templates (fallback)
+                get_templates_path(),  # Source templates (priority)
+                config.templates_dir,  # User config (fallback)
             ]
         
         self.env = Environment(
