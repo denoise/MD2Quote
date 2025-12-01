@@ -55,6 +55,7 @@ class ConfigLoader:
         self.config_path = self.config_dir / "config.yaml"
         self.templates_dir = self.config_dir / "templates"
         self.styles_dir = self.config_dir / "styles"
+        self.logos_dir = self.config_dir / "logos"
         self._ensure_config_exists()
         self.config = self._load_config()
 
@@ -68,6 +69,11 @@ class ConfigLoader:
             self.config_dir.mkdir(parents=True, exist_ok=True)
             self.templates_dir.mkdir(exist_ok=True)
             self.styles_dir.mkdir(exist_ok=True)
+            self.logos_dir.mkdir(exist_ok=True)
+        
+        # Ensure logos dir exists even if config dir already exists
+        if not self.logos_dir.exists():
+            self.logos_dir.mkdir(exist_ok=True)
 
         if not self.config_path.exists():
             example_config = self.project_root / "examples" / "config.yaml"
@@ -148,6 +154,7 @@ class ConfigLoader:
                     print(f"Error saving backfilled LLM config: {e}")
 
             data = self._migrate_llm_prompt(data)
+            data = self._migrate_logos(data)
             return data
         except Exception as e:
             print(f"Error loading config: {e}")
@@ -205,6 +212,44 @@ class ConfigLoader:
             except Exception as e:
                 print(f"Error saving config after LLM prompt migration: {e}")
 
+        return data
+
+    def _migrate_logos(self, data: dict) -> dict:
+        """Migrates logos from external paths to internal storage."""
+        presets = data.get('presets', {})
+        updated = False
+        
+        for preset_key, preset in presets.items():
+            company = preset.get('company', {})
+            logo_path = company.get('logo', '')
+            
+            if not logo_path:
+                continue
+                
+            # Skip if already in logos dir (just a filename, no path separators)
+            if '/' not in logo_path and '\\' not in logo_path:
+                # Check if this is already a migrated logo (exists in logos_dir)
+                if (self.logos_dir / logo_path).exists():
+                    continue
+            
+            # Try to resolve the path
+            resolved = self.resolve_path(logo_path)
+            if resolved and resolved.exists():
+                # Copy to internal storage
+                new_logo_path = self.copy_logo(str(resolved), preset_key)
+                if new_logo_path != logo_path:
+                    company['logo'] = new_logo_path
+                    updated = True
+                    print(f"Migrated logo for '{preset.get('name', preset_key)}' to internal storage")
+        
+        if updated:
+            try:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+                print("Saved logo migration changes.")
+            except Exception as e:
+                print(f"Error saving config after logo migration: {e}")
+        
         return data
 
     def _create_default_structure(self) -> dict:
@@ -520,6 +565,11 @@ class ConfigLoader:
         p = self.config_dir / path
         if p.exists():
             return p
+        
+        # Check relative to logos dir (for stored logos)
+        p = self.logos_dir / path
+        if p.exists():
+            return p
             
         # Check relative to project root (assets, etc.)
         p = self.project_root / path
@@ -527,6 +577,58 @@ class ConfigLoader:
             return p
             
         return None
+
+    def copy_logo(self, source_path: str, preset_key: str) -> str:
+        """
+        Copies a logo file to the internal logos directory.
+        
+        Args:
+            source_path: The original path to the logo file
+            preset_key: The preset key (used to create a unique filename)
+            
+        Returns:
+            The relative path to the stored logo (relative to logos_dir),
+            or the original path if copy fails or source doesn't exist.
+        """
+        if not source_path:
+            return ""
+        
+        source = Path(os.path.expanduser(source_path))
+        
+        # If already in logos dir, return as-is (just the filename)
+        try:
+            if source.parent.resolve() == self.logos_dir.resolve():
+                return source.name
+        except Exception:
+            pass
+        
+        # Check if source exists
+        if not source.exists():
+            # Try to resolve it first
+            resolved = self.resolve_path(source_path)
+            if resolved:
+                source = resolved
+            else:
+                # Source doesn't exist, return original path
+                return source_path
+        
+        # Create unique filename: preset_key + original extension
+        suffix = source.suffix.lower()
+        target_name = f"{preset_key}_logo{suffix}"
+        target_path = self.logos_dir / target_name
+        
+        try:
+            # Ensure logos dir exists
+            self.logos_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Copy the file
+            shutil.copy2(source, target_path)
+            
+            # Return just the filename (will be resolved via logos_dir)
+            return target_name
+        except Exception as e:
+            print(f"Warning: Could not copy logo to internal storage: {e}")
+            return source_path
 
     # -------------------------------------------------------------------------
     # Preset CRUD Operations
@@ -740,7 +842,7 @@ class ConfigLoader:
 
     def export_preset(self, preset_key: str, export_path: str, preset_data: dict = None) -> tuple[bool, str]:
         """
-        Exports a preset to a zip file containing config and templates.
+        Exports a preset to a zip file containing config, templates, and logo.
         If preset_data is provided, it uses that configuration (useful for exporting unsaved changes).
         Otherwise, it uses the stored configuration for preset_key.
         """
@@ -751,11 +853,25 @@ class ConfigLoader:
             return (False, f"Preset data not found for '{preset_key}'")
 
         try:
+            # Make a copy to modify for export
+            export_data = copy.deepcopy(preset_data)
+            
             with zipfile.ZipFile(export_path, 'w') as zf:
-                # 1. Write profile config
-                zf.writestr('profile.yaml', yaml.dump(preset_data, allow_unicode=True, sort_keys=False))
+                # 1. Handle logo - include in export if exists
+                logo_path_str = preset_data.get('company', {}).get('logo', '')
+                if logo_path_str:
+                    logo_path = self.resolve_path(logo_path_str)
+                    if logo_path and logo_path.exists():
+                        # Store logo with its original extension
+                        logo_arcname = f"logo{logo_path.suffix.lower()}"
+                        zf.write(logo_path, arcname=logo_arcname)
+                        # Update export config to reference the archived logo name
+                        export_data['company']['logo'] = logo_arcname
+                
+                # 2. Write profile config
+                zf.writestr('profile.yaml', yaml.dump(export_data, allow_unicode=True, sort_keys=False))
 
-                # 2. Write template files
+                # 3. Write template files
                 template_name = preset_data.get('layout', {}).get('template', preset_key)
                 
                 for ext in ['html', 'css']:
@@ -829,7 +945,25 @@ class ConfigLoader:
                     with open(self.templates_dir / f"{new_key}.css", 'w', encoding='utf-8') as f:
                         f.write("/* Imported CSS placeholder */")
 
-                # 5. Save to config
+                # 5. Extract and save logo if present
+                logo_files = [f for f in files if f.startswith('logo.') or f.startswith('logo')]
+                logo_source = next((f for f in logo_files if any(f.endswith(ext) for ext in ['.svg', '.png', '.jpg', '.jpeg'])), None)
+                
+                if logo_source:
+                    self.logos_dir.mkdir(parents=True, exist_ok=True)
+                    logo_ext = Path(logo_source).suffix.lower()
+                    logo_filename = f"{new_key}_logo{logo_ext}"
+                    logo_target = self.logos_dir / logo_filename
+                    
+                    with open(logo_target, 'wb') as f:
+                        f.write(zf.read(logo_source))
+                    
+                    # Update profile data to reference the stored logo
+                    if 'company' not in profile_data:
+                        profile_data['company'] = {}
+                    profile_data['company']['logo'] = logo_filename
+
+                # 6. Save to config
                 self.config.setdefault('presets', {})[new_key] = profile_data
                 
                 # Add to order

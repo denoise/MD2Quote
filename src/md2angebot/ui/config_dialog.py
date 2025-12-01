@@ -24,6 +24,7 @@ from PyQt6.QtSvg import QSvgRenderer
 from .styles import COLORS, SPACING, RADIUS
 from .icons import icon, icon_font, icon_char
 from ..utils import get_templates_path
+from ..core.config import config
 from ..core.llm import OPENROUTER_MODELS, OPENAI_MODELS, DEFAULT_SYSTEM_PROMPT
 
 
@@ -2430,10 +2431,15 @@ class ConfigDialog(QDialog):
         
         preset['name'] = self.preset_name_edit.text()
         
+        # Copy logo to internal storage if it's an external file
+        logo_path = self.company_logo.path()
+        if logo_path:
+            logo_path = config.copy_logo(logo_path, self.current_preset_key)
+        
         preset['company'] = {
             'name': self.company_name.text(),
             'tagline': self.company_tagline.text(),
-            'logo': self.company_logo.path(),
+            'logo': logo_path,
             'logo_width': self.logo_width_slider.value(),
             'show_name': self.company_show_name.isChecked(),
             'show_tagline': self.company_show_tagline.isChecked(),
