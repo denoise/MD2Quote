@@ -1,64 +1,344 @@
 # MD2Angebot - Development Guide
 
-## Running in Development Mode
+## Quick Start
 
 ```bash
-cd /Users/eberendsen/Documents/DEV/md2angebot
+# Install dependencies
+pip install -r requirements.txt
+
+# Run in development mode
 python3 main.py
 ```
 
-## Template Loading
+---
 
-The application automatically detects whether it's running from source or as a bundled `.app`:
+## Template System
 
-| Mode | Priority |
-|------|----------|
+### Template Loading Priority
+
+The application detects whether it's running from source or as a bundled `.app`:
+
+| Mode | Priority Order |
+|------|----------------|
 | **Development** | Source templates (`./templates/`) → User config (`~/.config/md2angebot/templates/`) |
 | **Production** | User config → Bundled templates |
 
-In development mode, your source templates always take priority. Edit files in `./templates/` and changes are picked up immediately on preview refresh.
+In development mode, source templates always take priority for fast iteration.
 
-## Template Auto-Reload
+### Template Structure
+
+Each preset requires two files:
+- `preset_N.html` — Jinja2 HTML template
+- `preset_N.css` — Stylesheet
+
+### Available Template Variables
+
+Templates receive these context variables:
+
+```jinja2
+{# Company info #}
+{{ company.name }}
+{{ company.tagline }}
+{{ company.logo }}  {# file:// URL #}
+{{ company.show_name }}
+{{ company.show_tagline }}
+{{ company.show_logo }}
+
+{# Contact #}
+{{ contact.street }}
+{{ contact.city }}
+{{ contact.postal_code }}
+{{ contact.country }}
+{{ contact.phone }}
+{{ contact.email }}
+{{ contact.website }}
+
+{# Legal #}
+{{ legal.tax_id }}
+{{ legal.chamber_of_commerce }}
+
+{# Bank #}
+{{ bank.holder }}
+{{ bank.iban }}
+{{ bank.bic }}
+{{ bank.bank_name }}
+
+{# Quotation #}
+{{ quotation.number }}
+{{ quotation.date }}
+{{ quotation.valid_days }}
+
+{# Client #}
+{{ client.name }}
+{{ client.email }}
+{{ client.address }}
+
+{# Content (rendered HTML from Markdown) #}
+{{ content }}
+
+{# Snippets #}
+{{ snippets.intro_text }}
+{{ snippets.terms }}
+{{ snippets.signature_block }}
+{{ snippets.custom_footer }}
+
+{# Defaults #}
+{{ defaults.currency }}
+{{ defaults.vat_type }}  {# "german_vat", "kleinunternehmer", "none" #}
+{{ defaults.tax_rate }}
+{{ defaults.payment_days }}
+{{ defaults.language }}
+
+{# Typography #}
+{{ typography.heading }}
+{{ typography.body }}
+{{ typography.mono }}
+{{ typography.sizes.company_name }}
+{{ typography.sizes.heading1 }}
+{{ typography.sizes.heading2 }}
+{{ typography.sizes.body }}
+{{ typography.sizes.small }}
+
+{# Colors #}
+{{ colors.primary }}
+{{ colors.accent }}
+{{ colors.background }}
+{{ colors.text }}
+{{ colors.muted }}
+{{ colors.border }}
+{{ colors.table_alt }}
+
+{# Layout #}
+{{ layout.page_margins }}  {# [top, right, bottom, left] #}
+```
+
+### Template Auto-Reload
 
 - Jinja2 cache is cleared before each render
-- File modification times are checked automatically
-- Changes take effect on the next preview refresh (< 1 second while typing)
+- Changes take effect on the next preview refresh
+- No restart required during development
 
-## Building for Production
+### Creating Custom Templates
+
+1. Create `your_template.html` and `your_template.css` in `./templates/`
+2. Use the variables above in your Jinja2 template
+3. The template will be available immediately
+
+---
+
+## Project Architecture
+
+### Core Modules (`src/md2angebot/core/`)
+
+| Module | Responsibility |
+|--------|----------------|
+| `config.py` | Configuration loading, preset management, profile import/export |
+| `parser.py` | Markdown parsing with YAML frontmatter extraction |
+| `renderer.py` | Jinja2 template rendering |
+| `pdf.py` | PDF generation using Qt WebEngine |
+| `llm.py` | OpenRouter/OpenAI API integration |
+
+### UI Modules (`src/md2angebot/ui/`)
+
+| Module | Responsibility |
+|--------|----------------|
+| `main_window.py` | Application window, toolbar, file operations |
+| `editor.py` | Markdown editor with syntax highlighting, multi-cursor |
+| `preview.py` | PDF preview panel |
+| `header.py` | Quotation/client input forms, LLM panel |
+| `config_dialog.py` | Settings and Profiles dialogs |
+| `styles.py` | Theme colors, spacing, global stylesheet |
+| `icons.py` | Material icons via TTF font |
+
+---
+
+## Key Patterns
+
+### Preview Refresh
+
+The preview updates on a debounced timer (800ms after last keystroke):
+
+```python
+self.preview_timer = QTimer()
+self.preview_timer.setSingleShot(True)
+self.preview_timer.setInterval(800)
+self.preview_timer.timeout.connect(self.refresh_preview)
+
+self.editor.textChanged.connect(self.on_text_changed)
+
+def on_text_changed(self):
+    self.preview_timer.start()  # Restarts the timer
+```
+
+### LLM Streaming
+
+LLM responses stream into the editor in real-time:
+
+```python
+class LLMWorker(QObject):
+    chunk_received = pyqtSignal(str)
+    
+    def run(self):
+        for chunk in self.llm_service.generate_stream(instruction, context):
+            self.chunk_received.emit(chunk)
+```
+
+### Configuration Persistence
+
+The `ConfigLoader` singleton manages all settings:
+
+```python
+from ..core.config import config
+
+# Get active preset
+preset = config.get_active_preset()
+
+# Generate quotation number
+number = config.generate_quotation_number(preset_key)
+
+# Save changes
+config._save_config()
+```
+
+---
+
+## Building
+
+### Development Build
 
 ```bash
-# Build the app
 ./build_app.sh
+```
 
-# Create DMG (optional)
+This creates `dist/MD2Angebot.app` using PyInstaller.
+
+### Distribution Build
+
+```bash
 ./create_dmg.sh
 ```
 
-Templates are bundled into the `.app` and frozen at build time.
+Creates a DMG installer for distribution.
 
-## Project Structure
+### What Gets Bundled
 
+- Python interpreter and dependencies
+- All source code
+- Templates from `./templates/`
+- Assets from `./assets/`
+- Fonts from `./assets/fonts/`
+
+---
+
+## Testing
+
+### Smoke Test
+
+```bash
+python3 test_core.py
 ```
-md2angebot/
-├── templates/          # Template files (HTML + CSS) - edit these during development
-├── src/md2angebot/
-│   ├── core/
-│   │   ├── renderer.py    # Template rendering logic
-│   │   └── config.py      # Configuration management
-│   └── ui/
-│       └── config_dialog.py  # Settings dialog with template editor
-└── main.py            # Application entry point
-```
 
-## FAQ
+Tests the core parsing and rendering pipeline.
 
-**Q: Will my template changes be included in the bundled app?**
+### Manual Testing Checklist
 
-A: Yes, but you need to rebuild the app after making changes.
+- [ ] Create new quotation
+- [ ] Open existing `.md` file
+- [ ] Save file
+- [ ] Export PDF
+- [ ] Switch profiles
+- [ ] Generate quotation number
+- [ ] Edit template and verify preview updates
+- [ ] Test LLM generation (if API key configured)
+- [ ] Import/Export profile
 
-**Q: How do I reset everything to defaults?**
+---
 
-A: Remove the config directory:
+## Troubleshooting
+
+### Template Changes Not Appearing
+
+In development, templates load from `./templates/`. If changes aren't appearing:
+
+1. Check you're editing files in the source `./templates/` directory
+2. Force a preview refresh with `⌘+R`
+3. Verify the preset is using the expected template
+
+### LLM Not Working
+
+1. Check API key is set in Settings → LLM
+2. Verify network connectivity
+3. Check console for error messages
+4. Try a different model
+
+### PDF Export Issues
+
+1. Ensure WeasyPrint is installed correctly
+2. Check for font loading errors in console
+3. Verify HTML/CSS syntax in templates
+
+### Reset to Defaults
+
+Remove the config directory to start fresh:
+
 ```bash
 rm -rf ~/.config/md2angebot/
 ```
+
+---
+
+## Common Tasks
+
+### Adding a New Preset
+
+1. Create `preset_N.html` and `preset_N.css` in `./templates/`
+2. Add the preset configuration to `examples/config.yaml`
+3. Update `DEFAULT_PRESET_KEYS` in `config.py` if it should be a default
+
+### Adding a New LLM Model
+
+Edit `src/md2angebot/core/llm.py`:
+
+```python
+OPENROUTER_MODELS = {
+    'new-provider/new-model': 'Display Name',
+    # ...existing models
+}
+```
+
+### Changing the Default Theme
+
+Edit `src/md2angebot/ui/styles.py`:
+
+```python
+COLORS = {
+    'bg_dark': '#0d1117',
+    'accent': '#58a6ff',
+    # ...
+}
+```
+
+---
+
+## Dependencies
+
+Core dependencies and their purposes:
+
+| Package | Purpose |
+|---------|---------|
+| PyQt6 | GUI framework |
+| PyQt6-WebEngine | PDF preview rendering |
+| WeasyPrint | HTML to PDF conversion |
+| Jinja2 | Template rendering |
+| mistune | Markdown parsing |
+| PyYAML | Configuration files |
+| certifi | SSL certificates for API calls |
+
+---
+
+## Contributing
+
+1. Follow existing code style (4-space indentation, type hints)
+2. Keep core logic in `core/`, UI in `ui/`
+3. Test changes with `python3 test_core.py`
+4. Update documentation if adding features
