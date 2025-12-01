@@ -2,6 +2,10 @@ import sys
 import os
 from pathlib import Path
 
+# Suppress "Skia Graphite backend not found" error on macOS
+if sys.platform == "darwin":
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-features=UseSkiaGraphite"
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 

@@ -78,7 +78,7 @@ def get_stylesheet():
     QWidget {{
         background-color: transparent;
         color: {COLORS['text_primary']};
-        font-family: "Helvetica Neue", "Segoe UI", "Noto Sans", "Ubuntu", sans-serif;
+        font-family: "Helvetica Neue", Arial;
         font-size: 13px;
     }}
     
