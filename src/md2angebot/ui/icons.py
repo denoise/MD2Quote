@@ -179,23 +179,12 @@ class MaterialIcons:
     
     def _load_font(self):
         """Load the Material Symbols font from assets."""
-        # Find the font file
-        font_paths = [
-            Path(__file__).parent.parent.parent.parent / "assets" / "fonts" / "MaterialSymbolsOutlined.ttf",
-            Path(__file__).parent.parent.parent.parent.parent / "assets" / "fonts" / "MaterialSymbolsOutlined.ttf",
-        ]
+        from md2angebot.utils import get_assets_path
         
-        # Also check relative to executable for packaged app
-        if hasattr(os, '_MEIPASS'):
-            font_paths.insert(0, Path(os._MEIPASS) / "assets" / "fonts" / "MaterialSymbolsOutlined.ttf")
+        # Find the font file using the centralized path utility
+        font_file = get_assets_path() / "fonts" / "MaterialSymbolsOutlined.ttf"
         
-        font_file = None
-        for path in font_paths:
-            if path.exists():
-                font_file = path
-                break
-        
-        if font_file:
+        if font_file.exists():
             font_id = QFontDatabase.addApplicationFont(str(font_file))
             if font_id >= 0:
                 families = QFontDatabase.applicationFontFamilies(font_id)
@@ -205,7 +194,7 @@ class MaterialIcons:
             else:
                 print(f"Warning: Failed to load Material Symbols font from {font_file}")
         else:
-            print("Warning: Material Symbols font file not found")
+            print(f"Warning: Material Symbols font file not found at {font_file}")
     
     def get_font(self, size: int = 20) -> QFont:
         """Get a QFont configured for Material Symbols."""
