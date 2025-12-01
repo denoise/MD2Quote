@@ -539,14 +539,19 @@ class LogoPreview(QFrame):
             self._show_placeholder()
             return
         
-        # Check if file exists
-        file_path = Path(path)
-        if not file_path.exists():
-            # Try to expand user path
-            file_path = Path(os.path.expanduser(path))
+        # Use config.resolve_path to find the logo (handles internal storage)
+        resolved = config.resolve_path(path)
+        if resolved:
+            file_path = resolved
+        else:
+            # Fallback: check if file exists directly
+            file_path = Path(path)
             if not file_path.exists():
-                self._show_placeholder()
-                return
+                # Try to expand user path
+                file_path = Path(os.path.expanduser(path))
+                if not file_path.exists():
+                    self._show_placeholder()
+                    return
         
         # Load the image based on file type
         suffix = file_path.suffix.lower()
