@@ -27,10 +27,10 @@ class TemplateRenderer:
                 get_templates_path()
             ]
         else:
-            # Development: Source templates first for live editing
+            # Development: User config first to support in-app editor, source as fallback
             template_dirs = [
-                get_templates_path(),  # Source templates (live editing)
-                config.templates_dir,  # User config (fallback)
+                config.templates_dir,  # User config (overrides source)
+                get_templates_path(),  # Source templates (fallback)
             ]
         
         self.env = Environment(
