@@ -155,6 +155,9 @@ ICONS = {
     'counter_3': '\ue0fd',
     'counter_4': '\ue0fe',
     'counter_5': '\ue0ff',
+
+    # AI / Automation
+    'auto_awesome': '\ue65f',
 }
 
 

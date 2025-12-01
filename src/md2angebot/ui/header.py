@@ -537,7 +537,7 @@ class HeaderWidget(QWidget):
         self.llm_send_button = QPushButton()
         self.llm_send_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.llm_send_button.setToolTip("Send instruction to LLM")
-        self.llm_send_button.setIcon(icon('smart_toy', 16, COLORS['bg_dark']))
+        self.llm_send_button.setIcon(icon('auto_awesome', 16, COLORS['bg_dark']))
         self.llm_send_button.setFixedSize(32, 32)
         self.llm_send_button.clicked.connect(self._on_llm_submit)
         self.llm_send_button.setStyleSheet(f"""
