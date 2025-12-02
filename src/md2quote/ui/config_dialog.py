@@ -2087,7 +2087,7 @@ class ConfigDialog(QDialog):
         lang_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         lang_col.addWidget(lang_label)
         self.defaults_language = QComboBox()
-        self.defaults_language.addItems(["de", "en"])
+        self.defaults_language.addItems(["de", "en", "es"])
         self.defaults_language.setMinimumHeight(24)
         self.defaults_language.setMinimumWidth(60)  # Reduced from 80
         lang_col.addWidget(self.defaults_language)
@@ -2109,6 +2109,7 @@ class ConfigDialog(QDialog):
         self.defaults_vat_type.addItem("No VAT / Keine Steuer", "none")
         self.defaults_vat_type.addItem("Kleinunternehmer (§19 UStG)", "kleinunternehmer")
         self.defaults_vat_type.addItem("German VAT / Deutsche USt", "german_vat")
+        self.defaults_vat_type.addItem("Chilean IVA / IVA Chile", "chilean_vat")
         self.defaults_vat_type.setMinimumHeight(24)
         self.defaults_vat_type.setMinimumWidth(150)  # Reduced from 200
         self.defaults_vat_type.currentIndexChanged.connect(self._on_vat_type_changed)
@@ -2243,7 +2244,7 @@ class ConfigDialog(QDialog):
         """Handle VAT type selection changes."""
         vat_type = self.defaults_vat_type.currentData()
         # Enable/disable tax rate based on VAT type
-        tax_enabled = (vat_type == 'german_vat')
+        tax_enabled = (vat_type in ['german_vat', 'chilean_vat'])
         self.defaults_tax_rate.setEnabled(tax_enabled)
         self.tax_rate_label.setEnabled(tax_enabled)
         self._update_vat_hint()
@@ -2254,7 +2255,8 @@ class ConfigDialog(QDialog):
         hints = {
             'none': 'No VAT will be shown on the quotation.',
             'kleinunternehmer': 'Quotation will include: "Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß §19 UStG."',
-            'german_vat': f'VAT at {self.defaults_tax_rate.value()}% will be shown on the quotation.'
+            'german_vat': f'VAT at {self.defaults_tax_rate.value()}% will be shown on the quotation.',
+            'chilean_vat': f'IVA at {self.defaults_tax_rate.value()}% will be shown on the quotation.'
         }
         self.vat_hint_label.setText(hints.get(vat_type, ''))
     

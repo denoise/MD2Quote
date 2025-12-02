@@ -54,7 +54,7 @@
 
     <div class="meta-container">
         <div class="recipient-section">
-            <div class="label">{% if defaults.language == 'de' %}Empfänger{% else %}To{% endif %}</div>
+            <div class="label">{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'es' %}Señor(es){% else %}To{% endif %}</div>
             <div class="recipient-details">
                 {% if client.contact %}{{ client.contact | replace('\n', '<br>') | safe }}<br>{% endif %}
                 {% if client.institution %}<strong>{{ client.institution }}</strong>{% elif client.name %}<strong>{{ client.name }}</strong>{% endif %}
@@ -65,24 +65,24 @@
 
         <div class="document-details">
             <div class="document-title">
-                {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
+                {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'es' %}COTIZACIÓN{% else %}QUOTATION{% endif %}
             </div>
             <table class="details-table">
                 <tr>
-                    <td class="detail-label">{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</td>
+                    <td class="detail-label">{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'es' %}Fecha{% else %}Date{% endif %}</td>
                     <td class="detail-value">{{ quotation.date }}</td>
                 </tr>
                 <tr>
-                    <td class="detail-label">{% if defaults.language == 'de' %}Nummer{% else %}No.{% endif %}</td>
+                    <td class="detail-label">{% if defaults.language == 'de' %}Nummer{% elif defaults.language == 'es' %}Nº{% else %}No.{% endif %}</td>
                     <td class="detail-value">{{ quotation.number }}</td>
                 </tr>
                 <tr>
-                    <td class="detail-label">{% if defaults.language == 'de' %}Gültig bis{% else %}Valid until{% endif %}</td>
-                    <td class="detail-value">{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</td>
+                    <td class="detail-label">{% if defaults.language == 'de' %}Gültig bis{% elif defaults.language == 'es' %}Válido hasta{% else %}Valid until{% endif %}</td>
+                    <td class="detail-value">{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'es' %}días{% else %}days{% endif %}</td>
                 </tr>
                 {% if client.customer_number %}
                 <tr>
-                    <td class="detail-label">{% if defaults.language == 'de' %}Kunden-Nr.{% else %}Cust. ID{% endif %}</td>
+                    <td class="detail-label">{% if defaults.language == 'de' %}Kunden-Nr.{% elif defaults.language == 'es' %}Cliente Nº{% else %}Cust. ID{% endif %}</td>
                     <td class="detail-value">{{ client.customer_number }}</td>
                 </tr>
                 {% endif %}
@@ -104,7 +104,7 @@
         <div class="closing-section">
             {% if snippets.terms %}
             <div class="terms-block">
-                <div class="terms-title">{% if defaults.language == 'de' %}Bedingungen{% else %}Terms{% endif %}</div>
+                <div class="terms-title">{% if defaults.language == 'de' %}Bedingungen{% elif defaults.language == 'es' %}Términos{% else %}Terms{% endif %}</div>
                 <p>{{ snippets.terms }}</p>
             </div>
             {% endif %}
@@ -113,7 +113,7 @@
             <div class="signature-block">
                 <div class="signature-line">
                     <div class="line"></div>
-                    <div class="sub">{% if defaults.language == 'de' %}Datum & Unterschrift{% else %}Date & Signature{% endif %}</div>
+                    <div class="sub">{% if defaults.language == 'de' %}Datum & Unterschrift{% elif defaults.language == 'es' %}Fecha y Firma{% else %}Date & Signature{% endif %}</div>
                 </div>
             </div>
             {% endif %}
@@ -143,7 +143,7 @@
                 {{ contact.postal_code }} {{ contact.city }}
             </div>
             <div class="col">
-                <strong>{% if defaults.language == 'de' %}Kontakt{% else %}Contact{% endif %}</strong><br>
+                <strong>{% if defaults.language == 'de' %}Kontakt{% elif defaults.language == 'es' %}Contacto{% else %}Contact{% endif %}</strong><br>
                 {{ contact.email }}<br>
                 {{ contact.phone }}
             </div>
@@ -156,8 +156,8 @@
             </div>
             {% endif %}
             <div class="col">
-                <strong>{% if defaults.language == 'de' %}Details{% else %}Details{% endif %}</strong><br>
-                {% if legal.tax_id %}VAT: {{ legal.tax_id }}<br>{% endif %}
+                <strong>{% if defaults.language == 'de' %}Details{% elif defaults.language == 'es' %}Detalles{% else %}Details{% endif %}</strong><br>
+                {% if legal.tax_id %}{% if defaults.vat_type == 'chilean_vat' %}RUT{% elif defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'es' %}NIF{% else %}VAT{% endif %}: {{ legal.tax_id }}<br>{% endif %}
                 {% if legal.chamber_of_commerce %}CoC: {{ legal.chamber_of_commerce }}{% endif %}
             </div>
         </div>

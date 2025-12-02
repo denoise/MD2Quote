@@ -42,7 +42,7 @@
         <!-- Document Title -->
         <div class="document-title">
             <div class="title-line"></div>
-            <h2>{% if defaults.language == 'de' %}Angebot{% else %}Quotation{% endif %}</h2>
+            <h2>{% if defaults.language == 'de' %}Angebot{% elif defaults.language == 'es' %}Cotización{% else %}Quotation{% endif %}</h2>
             <div class="title-line"></div>
         </div>
 
@@ -50,17 +50,17 @@
         <div class="meta-row">
             {% if quotation.number %}
             <div class="meta-item">
-                <span class="meta-label">{% if defaults.language == 'de' %}Angebots-Nr.{% else %}Reference{% endif %}</span>
+                <span class="meta-label">{% if defaults.language == 'de' %}Angebots-Nr.{% elif defaults.language == 'es' %}Ref.{% else %}Reference{% endif %}</span>
                 <span class="meta-value">{{ quotation.number }}</span>
             </div>
             {% endif %}
             <div class="meta-item">
-                <span class="meta-label">{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</span>
+                <span class="meta-label">{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'es' %}Fecha{% else %}Date{% endif %}</span>
                 <span class="meta-value">{{ quotation.date }}</span>
             </div>
             <div class="meta-item">
-                <span class="meta-label">{% if defaults.language == 'de' %}Gültig{% else %}Valid{% endif %}</span>
-                <span class="meta-value">{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</span>
+                <span class="meta-label">{% if defaults.language == 'de' %}Gültig{% elif defaults.language == 'es' %}Validez{% else %}Valid{% endif %}</span>
+                <span class="meta-value">{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'es' %}días{% else %}days{% endif %}</span>
             </div>
         </div>
 
@@ -90,7 +90,7 @@
             <div class="terms-section">
                 <div class="terms-header">
                     <span class="terms-icon">§</span>
-                    <span>{% if defaults.language == 'de' %}Konditionen{% else %}Terms & Conditions{% endif %}</span>
+                    <span>{% if defaults.language == 'de' %}Konditionen{% elif defaults.language == 'es' %}Términos y Condiciones{% else %}Terms & Conditions{% endif %}</span>
                 </div>
                 <p>{{ snippets.terms }}</p>
             </div>
@@ -147,12 +147,12 @@
                 </div>
                 {% endif %}
                 
-                {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
+                {% if (defaults.vat_type == 'german_vat' or defaults.vat_type == 'chilean_vat') and legal.tax_id %}
                 <div class="footer-row legal-row">
-                    <span>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT{% endif %}: {{ legal.tax_id }}</span>
+                    <span>{% if defaults.vat_type == 'chilean_vat' %}RUT{% elif defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'es' %}NIF{% else %}VAT{% endif %}: {{ legal.tax_id }}</span>
                     {% if legal.chamber_of_commerce %}
                     <span class="footer-sep">|</span>
-                    <span>{% if defaults.language == 'de' %}Handelsregister{% else %}Reg.{% endif %}: {{ legal.chamber_of_commerce }}</span>
+                    <span>{% if defaults.language == 'de' %}Handelsregister{% elif defaults.language == 'es' %}Reg.{% else %}Reg.{% endif %}: {{ legal.chamber_of_commerce }}</span>
                     {% endif %}
                 </div>
                 {% endif %}

@@ -34,29 +34,29 @@
         </div>
         <div class="quotation-meta">
             <h2>
-                {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
+                {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'es' %}COTIZACIÓN{% else %}QUOTATION{% endif %}
             </h2>
             <table>
                 {% if quotation.number %}
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Nr.{% else %}No.{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Nr.{% elif defaults.language == 'es' %}Nº{% else %}No.{% endif %}</td>
                     <td>{{ quotation.number }}</td>
                 </tr>
                 {% endif %}
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'es' %}Fecha{% else %}Date{% endif %}</td>
                     <td>{{ quotation.date }}</td>
                 </tr>
                 <tr>
-                    <td>{% if defaults.language == 'de' %}Gültig bis{% else %}Valid until{% endif %}</td>
-                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</td>
+                    <td>{% if defaults.language == 'de' %}Gültig bis{% elif defaults.language == 'es' %}Válido hasta{% else %}Valid until{% endif %}</td>
+                    <td>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'es' %}días{% else %}days{% endif %}</td>
                 </tr>
             </table>
         </div>
     </header>
 
     <section class="client-info">
-        <h3>{% if defaults.language == 'de' %}Empfänger{% else %}To{% endif %}</h3>
+        <h3>{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'es' %}Señor(es){% else %}To{% endif %}</h3>
         {% if client.contact %}<p>{{ client.contact | replace('\n', '<br>') | safe }}</p>{% endif %}
         {% if client.institution %}<p><strong>{{ client.institution }}</strong></p>{% elif client.name %}<p><strong>{{ client.name }}</strong></p>{% endif %}
         {% if client.address %}<p>{{ client.address | replace('\n', '<br>') | safe }}</p>{% endif %}
@@ -72,7 +72,7 @@
         
         {% if snippets.terms %}
         <div class="terms">
-            <strong>{% if defaults.language == 'de' %}Bedingungen{% else %}Terms{% endif %}:</strong> {{ snippets.terms }}
+            <strong>{% if defaults.language == 'de' %}Bedingungen{% elif defaults.language == 'es' %}Términos{% else %}Terms{% endif %}:</strong> {{ snippets.terms }}
         </div>
         {% endif %}
         
@@ -99,7 +99,7 @@
         {% endif %}
         {% if bank.iban or bank.bank_name %}
         <div class="bank-details">
-            <h4>{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
+            <h4>{% if defaults.language == 'de' %}Bankverbindung{% elif defaults.language == 'es' %}Datos bancarios{% else %}Bank Details{% endif %}</h4>
             <p>{{ bank.bank_name }}{% if bank.iban %} | IBAN: {{ bank.iban }}{% endif %}{% if bank.bic %} | BIC: {{ bank.bic }}{% endif %}</p>
             {% if bank.holder %}<p>{{ bank.holder }}</p>{% endif %}
         </div>
@@ -107,8 +107,8 @@
         <div class="company-footer">
             <p>{{ contact.street }}, {{ contact.postal_code }} {{ contact.city }}, {{ contact.country }}</p>
             <p>{{ contact.email }} | {{ contact.website }}</p>
-            {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
-            <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }}{% if legal.chamber_of_commerce %} | KvK: {{ legal.chamber_of_commerce }}{% endif %}</p>
+            {% if (defaults.vat_type == 'german_vat' or defaults.vat_type == 'chilean_vat') and legal.tax_id %}
+            <p>{% if defaults.vat_type == 'chilean_vat' %}RUT{% elif defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'es' %}NIF{% else %}VAT ID{% endif %}: {{ legal.tax_id }}{% if legal.chamber_of_commerce %} | KvK: {{ legal.chamber_of_commerce }}{% endif %}</p>
             {% elif legal.chamber_of_commerce %}
             <p>KvK: {{ legal.chamber_of_commerce }}</p>
             {% endif %}

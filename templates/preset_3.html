@@ -32,7 +32,7 @@
             {% endif %}
 
             <div class="meta-block top-spacer">
-                <h4 class="meta-label">{% if defaults.language == 'de' %}Anbieter{% else %}Provider{% endif %}</h4>
+                <h4 class="meta-label">{% if defaults.language == 'de' %}Anbieter{% elif defaults.language == 'es' %}Proveedor{% else %}Provider{% endif %}</h4>
                 <p class="company-address">
                     <strong>{{ company.name }}</strong><br>
                     {{ contact.street }}<br>
@@ -42,41 +42,41 @@
             </div>
 
             <div class="meta-block">
-                <h4 class="meta-label">{% if defaults.language == 'de' %}Kontakt{% else %}Contact{% endif %}</h4>
+                <h4 class="meta-label">{% if defaults.language == 'de' %}Kontakt{% elif defaults.language == 'es' %}Contacto{% else %}Contact{% endif %}</h4>
                 {% if contact.phone %}<p>{{ contact.phone }}</p>{% endif %}
                 {% if contact.email %}<p>{{ contact.email }}</p>{% endif %}
                 {% if contact.website %}<p>{{ contact.website }}</p>{% endif %}
             </div>
 
             <div class="meta-block">
-                <h4 class="meta-label">{% if defaults.language == 'de' %}Details{% else %}Details{% endif %}</h4>
+                <h4 class="meta-label">{% if defaults.language == 'de' %}Details{% elif defaults.language == 'es' %}Detalles{% else %}Details{% endif %}</h4>
                 <div class="meta-row">
-                    <span>{% if defaults.language == 'de' %}Datum{% else %}Date{% endif %}</span>
+                    <span>{% if defaults.language == 'de' %}Datum{% elif defaults.language == 'es' %}Fecha{% else %}Date{% endif %}</span>
                     <strong>{{ quotation.date }}</strong>
                 </div>
                 <div class="meta-row">
-                    <span>{% if defaults.language == 'de' %}Gültig{% else %}Valid{% endif %}</span>
-                    <strong>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% else %}days{% endif %}</strong>
+                    <span>{% if defaults.language == 'de' %}Gültig{% elif defaults.language == 'es' %}Validez{% else %}Valid{% endif %}</span>
+                    <strong>{{ quotation.valid_days }} {% if defaults.language == 'de' %}Tage{% elif defaults.language == 'es' %}días{% else %}days{% endif %}</strong>
                 </div>
                 <div class="meta-row">
-                    <span>{% if defaults.language == 'de' %}Nummer{% else %}Number{% endif %}</span>
+                    <span>{% if defaults.language == 'de' %}Nummer{% elif defaults.language == 'es' %}Número{% else %}Number{% endif %}</span>
                     <strong>{{ quotation.number }}</strong>
                 </div>
             </div>
 
             {% if bank.iban or bank.bank_name %}
             <div class="meta-block">
-                <h4 class="meta-label">{% if defaults.language == 'de' %}Bankverbindung{% else %}Bank Details{% endif %}</h4>
+                <h4 class="meta-label">{% if defaults.language == 'de' %}Bankverbindung{% elif defaults.language == 'es' %}Datos bancarios{% else %}Bank Details{% endif %}</h4>
                 {% if bank.bank_name %}<p>{{ bank.bank_name }}</p>{% endif %}
                 {% if bank.iban %}<p class="mono-text">{{ bank.iban }}</p>{% endif %}
                 {% if bank.bic %}<p>{{ bank.bic }}</p>{% endif %}
             </div>
             {% endif %}
 
-            {% if defaults.vat_type == 'german_vat' and legal.tax_id %}
+            {% if (defaults.vat_type == 'german_vat' or defaults.vat_type == 'chilean_vat') and legal.tax_id %}
             <div class="meta-block">
-                <h4 class="meta-label">{% if defaults.language == 'de' %}Rechtliches{% else %}Legal{% endif %}</h4>
-                <p>{% if defaults.language == 'de' %}USt-IdNr.{% else %}VAT ID{% endif %}: {{ legal.tax_id }}</p>
+                <h4 class="meta-label">{% if defaults.language == 'de' %}Rechtliches{% elif defaults.language == 'es' %}Legal{% else %}Legal{% endif %}</h4>
+                <p>{% if defaults.vat_type == 'chilean_vat' %}RUT{% elif defaults.language == 'de' %}USt-IdNr.{% elif defaults.language == 'es' %}NIF{% else %}VAT ID{% endif %}: {{ legal.tax_id }}</p>
                 {% if legal.chamber_of_commerce %}
                 <p>Reg: {{ legal.chamber_of_commerce }}</p>
                 {% endif %}
@@ -91,10 +91,10 @@
     <main>
         <header class="doc-header">
             <div class="doc-title">
-                {% if defaults.language == 'de' %}ANGEBOT{% else %}QUOTATION{% endif %}
+                {% if defaults.language == 'de' %}ANGEBOT{% elif defaults.language == 'es' %}COTIZACIÓN{% else %}QUOTATION{% endif %}
             </div>
             <div class="client-info">
-                <h4 class="meta-label">{% if defaults.language == 'de' %}Empfänger{% else %}Prepared For{% endif %}</h4>
+                <h4 class="meta-label">{% if defaults.language == 'de' %}Empfänger{% elif defaults.language == 'es' %}Preparado para{% else %}Prepared For{% endif %}</h4>
                 {% if client.contact %}<p>{{ client.contact | replace('\n', '<br>') | safe }}</p>{% endif %}
                 {% if client.institution %}<p class="client-name">{{ client.institution }}</p>{% elif client.name %}<p class="client-name">{{ client.name }}</p>{% endif %}
                 {% if client.address %}<p>{{ client.address | replace('\n', '<br>') | safe }}</p>{% endif %}
