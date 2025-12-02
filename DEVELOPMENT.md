@@ -12,28 +12,28 @@ python3 main.py
 
 ---
 
-## Template System
+## Layout System
 
-### Template Loading Priority
+### Layout Loading Priority
 
 The application detects whether it's running from source or as a bundled `.app`:
 
 | Mode | Priority Order |
 |------|----------------|
-| **Development** | Source templates (`./templates/`) → User config (`~/.config/md2quote/templates/`) |
-| **Production** | User config → Bundled templates |
+| **Development** | Source layouts (`./templates/`) → User config (`~/.config/md2quote/templates/`) |
+| **Production** | User config → Bundled layouts |
 
-In development mode, source templates always take priority for fast iteration.
+In development mode, source layouts always take priority for fast iteration.
 
-### Template Structure
+### Layout Structure
 
-Each preset requires two files:
+Each template requires two layout files:
 - `preset_N.html` — Jinja2 HTML template
 - `preset_N.css` — Stylesheet
 
-### Available Template Variables
+### Available Layout Variables
 
-Templates receive these context variables:
+Layouts receive these context variables:
 
 ```jinja2
 {# Company info #}
@@ -112,17 +112,17 @@ Templates receive these context variables:
 {{ layout.page_margins }}  {# [top, right, bottom, left] #}
 ```
 
-### Template Auto-Reload
+### Layout Auto-Reload
 
 - Jinja2 cache is cleared before each render
 - Changes take effect on the next preview refresh
 - No restart required during development
 
-### Creating Custom Templates
+### Creating Custom Layouts
 
-1. Create `your_template.html` and `your_template.css` in `./templates/`
+1. Create `your_layout.html` and `your_layout.css` in `./templates/`
 2. Use the variables above in your Jinja2 template
-3. The template will be available immediately
+3. The layout will be available immediately
 
 ---
 
@@ -132,7 +132,7 @@ Templates receive these context variables:
 
 | Module | Responsibility |
 |--------|----------------|
-| `config.py` | Configuration loading, preset management, profile import/export |
+| `config.py` | Configuration loading, template management, template import/export |
 | `parser.py` | Markdown parsing with YAML frontmatter extraction |
 | `renderer.py` | Jinja2 template rendering |
 | `pdf.py` | PDF generation using Qt WebEngine |
@@ -146,7 +146,7 @@ Templates receive these context variables:
 | `editor.py` | Markdown editor with syntax highlighting, multi-cursor |
 | `preview.py` | PDF preview panel |
 | `header.py` | Quotation/client input forms, LLM panel |
-| `config_dialog.py` | Settings and Profiles dialogs |
+| `config_dialog.py` | Settings and Templates dialogs |
 | `styles.py` | Theme colors, spacing, global stylesheet |
 | `icons.py` | Material icons via TTF font |
 
@@ -190,7 +190,7 @@ The `ConfigLoader` singleton manages all settings:
 ```python
 from ..core.config import config
 
-# Get active preset
+# Get active template
 preset = config.get_active_preset()
 
 # Generate quotation number
@@ -224,7 +224,7 @@ Creates a DMG installer for distribution.
 
 - Python interpreter and dependencies
 - All source code
-- Templates from `./templates/`
+- Layouts from `./templates/`
 - Assets from `./assets/`
 - Fonts from `./assets/fonts/`
 
@@ -246,23 +246,23 @@ Tests the core parsing and rendering pipeline.
 - [ ] Open existing `.md` file
 - [ ] Save file
 - [ ] Export PDF
-- [ ] Switch profiles
+- [ ] Switch templates
 - [ ] Generate quotation number
-- [ ] Edit template and verify preview updates
+- [ ] Edit layout and verify preview updates
 - [ ] Test LLM generation (if API key configured)
-- [ ] Import/Export profile
+- [ ] Import/Export template
 
 ---
 
 ## Troubleshooting
 
-### Template Changes Not Appearing
+### Layout Changes Not Appearing
 
-In development, templates load from `./templates/`. If changes aren't appearing:
+In development, layouts load from `./templates/`. If changes aren't appearing:
 
 1. Check you're editing files in the source `./templates/` directory
 2. Force a preview refresh with `⌘+R`
-3. Verify the preset is using the expected template
+3. Verify the template is using the expected layout
 
 ### LLM Not Working
 
@@ -275,7 +275,7 @@ In development, templates load from `./templates/`. If changes aren't appearing:
 
 1. Ensure WeasyPrint is installed correctly
 2. Check for font loading errors in console
-3. Verify HTML/CSS syntax in templates
+3. Verify HTML/CSS syntax in layouts
 
 ### Reset to Defaults
 
@@ -289,10 +289,10 @@ rm -rf ~/.config/md2quote/
 
 ## Common Tasks
 
-### Adding a New Preset
+### Adding a New Template
 
 1. Create `preset_N.html` and `preset_N.css` in `./templates/`
-2. Add the preset configuration to `examples/config.yaml`
+2. Add the template configuration to `examples/config.yaml`
 3. Update `DEFAULT_PRESET_KEYS` in `config.py` if it should be a default
 
 ### Adding a New LLM Model

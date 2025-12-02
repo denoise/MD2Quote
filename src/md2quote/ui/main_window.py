@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         self._restore_last_client_data()
         
         preset_name = self.preset_combo.currentText() if self.preset_combo.count() > 0 else "None"
-        self.statusbar.showMessage(f"Ready — Profile: {preset_name}")
+        self.statusbar.showMessage(f"Ready — Template: {preset_name}")
         
         QTimer.singleShot(100, self.sync_preset_ui)
         
@@ -171,7 +171,7 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        type_label = QLabel("Profile")
+        type_label = QLabel("Template")
         type_label.setStyleSheet(f"""
             color: {COLORS['text_muted']};
             font-size: 11px;
@@ -200,9 +200,9 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         toolbar.addWidget(spacer)
 
-        profiles_action = QAction(icon('badge', 20, COLORS['text_secondary']), "Profiles", self)
+        profiles_action = QAction(icon('badge', 20, COLORS['text_secondary']), "Templates", self)
         profiles_action.setShortcut("Ctrl+P")
-        profiles_action.setToolTip("Manage Profiles (⌘P)")
+        profiles_action.setToolTip("Manage Templates (⌘P)")
         profiles_action.triggered.connect(self.open_profiles)
         toolbar.addAction(profiles_action)
 
@@ -282,7 +282,7 @@ class MainWindow(QMainWindow):
                 self.header.quote_number_edit.clear()
                 self.header.quote_number_edit.setPlaceholderText("e.g. 2025-001")
             
-            self.statusbar.showMessage(f"Profile: {text}")
+            self.statusbar.showMessage(f"Template: {text}")
             self.refresh_preview()
     
     def _generate_new_quotation_number(self):
@@ -455,7 +455,7 @@ class MainWindow(QMainWindow):
         else:
             preset_config = copy.deepcopy(config.get_preset(self.current_preset))
         
-        # Get valid_days from profile defaults, fallback to 30
+        # Get valid_days from template defaults, fallback to 30
         profile_valid_days = preset_config.get('defaults', {}).get('valid_days', 30)
         
         defaults = {
@@ -734,14 +734,14 @@ class MainWindow(QMainWindow):
             self.current_file = old_file
 
     def open_profiles(self):
-        """Opens the profiles configuration dialog."""
+        """Opens the templates configuration dialog."""
         dialog = ConfigDialog(config, initial_preset_key=self.current_preset, parent=self)
         dialog.configSaved.connect(self.on_config_saved)
         dialog.presetPreviewRequested.connect(self._on_live_preview_requested)
         dialog.exec()
     
     def _on_live_preview_requested(self, preset_values: dict):
-        """Handle live preview request from the profiles dialog."""
+        """Handle live preview request from the templates dialog."""
         self.renderer = TemplateRenderer()
         self.refresh_preview(preset_override=preset_values)
 
@@ -764,4 +764,4 @@ class MainWindow(QMainWindow):
         self._update_llm_button_state()
         
         preset_name = self.preset_combo.currentText()
-        self.statusbar.showMessage(f"Profile saved: {preset_name}")
+        self.statusbar.showMessage(f"Template saved: {preset_name}")

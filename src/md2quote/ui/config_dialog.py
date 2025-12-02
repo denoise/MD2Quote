@@ -825,7 +825,7 @@ class PresetItemWidget(QWidget):
 class PresetListWidget(QFrame):
     """
     A widget displaying a list of presets with add/delete/duplicate buttons.
-    Used in the left column of the Profiles dialog.
+    Used in the left column of the Templates dialog.
     """
     
     presetSelected = pyqtSignal(str)  # Emits preset_key when selection changes
@@ -849,7 +849,7 @@ class PresetListWidget(QFrame):
         layout.setSpacing(SPACING['sm'])
         
         # Header
-        header = QLabel("PROFILES")
+        header = QLabel("TEMPLATES")
         header.setStyleSheet(f"""
             QLabel {{
                 color: {COLORS['accent']};
@@ -880,17 +880,17 @@ class PresetListWidget(QFrame):
         row1.setSpacing(8)
         
         self.add_btn = ModernActionButton("New", "add")
-        self.add_btn.setToolTip("Create a new profile")
+        self.add_btn.setToolTip("Create a new template")
         self.add_btn.clicked.connect(self._on_add_clicked)
         row1.addWidget(self.add_btn, 1)
         
         self.duplicate_btn = ModernActionButton("Copy", "content_copy")
-        self.duplicate_btn.setToolTip("Duplicate selected profile")
+        self.duplicate_btn.setToolTip("Duplicate selected template")
         self.duplicate_btn.clicked.connect(self._on_duplicate_clicked)
         row1.addWidget(self.duplicate_btn, 1)
         
         self.delete_btn = ModernActionButton("Delete", "delete", is_destructive=True)
-        self.delete_btn.setToolTip("Delete selected profile")
+        self.delete_btn.setToolTip("Delete selected template")
         self.delete_btn.clicked.connect(self._on_delete_clicked)
         row1.addWidget(self.delete_btn, 1)
         
@@ -901,12 +901,12 @@ class PresetListWidget(QFrame):
         row2.setSpacing(8)
         
         self.import_btn = ModernActionButton("Import", "download")
-        self.import_btn.setToolTip("Import profile from ZIP")
+        self.import_btn.setToolTip("Import template from ZIP")
         self.import_btn.clicked.connect(self._on_import_clicked)
         row2.addWidget(self.import_btn, 1)
         
         self.export_btn = ModernActionButton("Export", "upload")
-        self.export_btn.setToolTip("Export profile to ZIP")
+        self.export_btn.setToolTip("Export template to ZIP")
         self.export_btn.clicked.connect(self._on_export_clicked)
         row2.addWidget(self.export_btn, 1)
         
@@ -1045,13 +1045,13 @@ class PresetListWidget(QFrame):
             self.presetSelected.emit(preset_key)
     
     def _on_add_clicked(self):
-        """Handle add button click - create new profile."""
+        """Handle add button click - create new template."""
         name, ok = QInputDialog.getText(
             self,
-            "New Profile",
-            "Enter name for the new profile:",
+            "New Template",
+            "Enter name for the new template:",
             QLineEdit.EchoMode.Normal,
-            "New Profile"
+            "New Template"
         )
         if ok and name.strip():
             self.presetCreated.emit(name.strip())
@@ -1069,13 +1069,13 @@ class PresetListWidget(QFrame):
             QMessageBox.warning(
                 self,
                 "Cannot Delete",
-                "You cannot delete the last remaining profile."
+                "You cannot delete the last remaining template."
             )
             return
         
         reply = QMessageBox.question(
             self,
-            "Delete Profile",
+            "Delete Template",
             f"Are you sure you want to delete '{preset_name}'?\n\n"
             "This will also delete the associated template files.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -1096,8 +1096,8 @@ class PresetListWidget(QFrame):
         
         new_name, ok = QInputDialog.getText(
             self,
-            "Duplicate Profile",
-            "Enter name for the duplicated profile:",
+            "Duplicate Template",
+            "Enter name for the duplicated template:",
             QLineEdit.EchoMode.Normal,
             f"{preset_name} (Copy)"
         )
@@ -1108,14 +1108,14 @@ class PresetListWidget(QFrame):
 
     def _on_import_clicked(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Import Profile", "", "Zip Files (*.zip)"
+            self, "Import Template", "", "Zip Files (*.zip)"
         )
         if path:
             new_key, error = self.config_loader.import_preset(path)
             if error:
                 QMessageBox.warning(self, "Import Failed", error)
             else:
-                QMessageBox.information(self, "Success", "Profile imported successfully.")
+                QMessageBox.information(self, "Success", "Template imported successfully.")
                 self.presetImported.emit(new_key)
 
     def _on_export_clicked(self):
@@ -1370,7 +1370,7 @@ class ConfigDialog(QDialog):
         else:
             self.current_preset_key = self.config.get('active_preset', 'preset_1')
         
-        self.setWindowTitle("Profiles")
+        self.setWindowTitle("Templates")
         self.setMinimumSize(1100, 620)
         self.resize(1200, 720)
         
@@ -1478,7 +1478,7 @@ class ConfigDialog(QDialog):
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
         
-        title = QLabel("Profiles")
+        title = QLabel("Templates")
         title.setStyleSheet(f"""
             font-size: 24px;
             font-weight: 600;
@@ -1486,7 +1486,7 @@ class ConfigDialog(QDialog):
         """)
         title_col.addWidget(title)
         
-        subtitle = QLabel("Manage your sender profiles and document settings")
+        subtitle = QLabel("Manage your sender templates and document settings")
         subtitle.setStyleSheet(f"""
             color: {COLORS['text_muted']};
             font-size: 13px;
@@ -1519,7 +1519,7 @@ class ConfigDialog(QDialog):
         name_row = QHBoxLayout()
         name_row.setSpacing(SPACING['sm'])
         
-        name_label = QLabel("Profile Name:")
+        name_label = QLabel("Template Name:")
         name_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         name_row.addWidget(name_label)
         
@@ -1868,11 +1868,11 @@ class ConfigDialog(QDialog):
         buttons_row = QHBoxLayout()
         buttons_row.setSpacing(SPACING['sm'])
 
-        edit_html_btn = QPushButton("Edit Template HTML")
+        edit_html_btn = QPushButton("Edit HTML")
         edit_html_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         edit_html_btn.clicked.connect(self._edit_template)
 
-        edit_css_btn = QPushButton("Edit Template CSS")
+        edit_css_btn = QPushButton("Edit CSS")
         edit_css_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         edit_css_btn.clicked.connect(self._edit_css)
 
@@ -2192,7 +2192,7 @@ class ConfigDialog(QDialog):
         qn_card.addWidget(hint)
         
         # Format presets
-        preset_label = QLabel("Format Presets")
+        preset_label = QLabel("Format Templates")
         preset_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 500; font-size: 12px;")
         qn_card.addWidget(preset_label)
         
@@ -2325,7 +2325,7 @@ class ConfigDialog(QDialog):
         new_key, error = self.config_loader.create_preset(name, self.current_preset_key)
         
         if error:
-            QMessageBox.warning(self, "Error", f"Could not create profile:\n{error}")
+            QMessageBox.warning(self, "Error", f"Could not create template:\n{error}")
             return
         
         # Copy the new preset data to our working config
@@ -2358,7 +2358,7 @@ class ConfigDialog(QDialog):
         safe_name = "".join([c for c in name if c.isalpha() or c.isdigit() or c==' ']).strip().replace(' ', '_')
         
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export Profile", f"{safe_name}.zip", "Zip Files (*.zip)"
+            self, "Export Template", f"{safe_name}.zip", "Zip Files (*.zip)"
         )
         
         if path:
@@ -2369,7 +2369,7 @@ class ConfigDialog(QDialog):
             )
             
             if success:
-                QMessageBox.information(self, "Success", f"Profile exported to {path}")
+                QMessageBox.information(self, "Success", f"Template exported to {path}")
             else:
                 QMessageBox.warning(self, "Export Failed", error)
 

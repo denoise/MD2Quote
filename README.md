@@ -14,13 +14,13 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 - **Multi-Cursor Editing** — VS Code-style `⌘+D` to select and edit multiple occurrences
 - **Page Breaks** — Use `+++` on its own line to insert page breaks
 
-### Profile Management
-- **Unlimited Profiles** — Create or import as many company identities as you need
+### Template Management
+- **Unlimited Templates** — Create or import as many company identities as you need
 - **Company Branding** — Custom logo, name, tagline with visibility controls
 - **Contact Details** — Address, phone, email, website
 - **Legal Information** — Tax ID, Chamber of Commerce number
 - **Bank Details** — IBAN, BIC, bank name for payment info
-- **Import/Export** — Share profiles as `.zip` archives
+- **Import/Export** — Share templates as `.zip` archives
 
 ### Quotation Numbering
 - **Custom Formats** — Use placeholders like `{YYYY}`, `{MM}`, `{NNN}`, `{PREFIX}`
@@ -34,12 +34,12 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 - **Context-Aware** — AI understands your current document for better suggestions
 - **Custom System Prompts** — Tailor the AI behavior to your needs
 
-### Templates & Styling
-- **5 Built-in Templates** — Professional designs ready to use
-- **Custom HTML/CSS** — Create your own templates with Jinja2
+### Layouts & Styling
+- **5 Built-in Layouts** — Professional designs ready to use
+- **Custom HTML/CSS** — Create your own layouts with Jinja2
 - **Typography Control** — Configure fonts for headings, body, and monospace text
 - **Color Themes** — Customize primary, accent, background, and text colors
-- **Page Margins** — Adjustable margins per profile
+- **Page Margins** — Adjustable margins per template
 
 ### VAT & Tax Support
 - **German VAT** — Standard VAT calculation with configurable rates
@@ -54,8 +54,8 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 ![Main Window](images/main_window.png)
 *Main application window with live preview*
 
-![Profile Configuration](images/profile_menu.png)
-*Profile configuration and management*
+![Template Configuration](images/profile_menu.png)
+*Template configuration and management*
 
 ## Download
 
@@ -99,7 +99,7 @@ python3 main.py
 
 ### Creating a Quotation
 
-1. **Select a Profile** — Choose from the toolbar dropdown
+1. **Select a Template** — Choose from the toolbar dropdown
 2. **Fill Client Details** — Enter name, email, and address in the header
 3. **Write Content** — Use Markdown in the editor pane
 4. **Preview** — See the PDF update live on the right
@@ -154,7 +154,7 @@ Insert `+++` on its own line to create a page break in the PDF output.
 | `⌘+O` | Open file |
 | `⌘+S` | Save file |
 | `⌘+E` | Export to PDF |
-| `⌘+P` | Open Profiles |
+| `⌘+P` | Open Templates |
 | `⌘+,` | Open Settings |
 | `⌘+D` | Select next occurrence (multi-cursor) |
 | `⌘+B` | Bold text |
@@ -174,14 +174,14 @@ All configuration is stored in `~/.config/md2quote/`:
 ```
 ~/.config/md2quote/
 ├── config.yaml      # Main configuration file
-├── templates/       # Custom HTML/CSS templates
+├── templates/       # Custom HTML/CSS layouts
 ├── logos/           # Stored logo files
 └── styles/          # Custom stylesheets
 ```
 
-### Profile Configuration
+### Template Configuration
 
-Each profile supports these settings:
+Each template supports these settings:
 
 ```yaml
 preset_1:
@@ -313,13 +313,13 @@ For detailed development instructions, see **[DEVELOPMENT.md](DEVELOPMENT.md)**.
 python3 main.py
 ```
 
-Templates in `./templates/` are loaded directly — edit and refresh to see changes.
+Layouts in `./templates/` are loaded directly — edit and refresh to see changes.
 
-### Template Editing
+### Layout Editing
 
-- Templates use Jinja2 + HTML/CSS
-- Each preset has its own template (`preset_1.html`, `preset_1.css`, etc.)
-- User templates in `~/.config/md2quote/templates/` take priority in production
+- Layouts use Jinja2 + HTML/CSS
+- Each template has its own layout (`preset_1.html`, `preset_1.css`, etc.)
+- User layouts in `~/.config/md2quote/templates/` take priority in production
 
 ### Running Tests
 

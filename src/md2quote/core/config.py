@@ -252,8 +252,9 @@ class ConfigLoader:
         for i in range(1, 6):
             key = f"preset_{i}"
             presets[key] = self._get_empty_preset(f"Preset {i}", key)
-            
-        presets['preset_1']['name'] = 'Default Profile'
+        
+        # Add the first preset as the default one
+        presets['preset_1']['name'] = 'Default Template'
         
         return {
             'presets': presets,
@@ -349,7 +350,7 @@ class ConfigLoader:
         if 'snippets' not in preset1:
              preset1['snippets'] = empty['snippets']
              
-        preset1['name'] = old_data.get('company', {}).get('name', 'Migrated Profile')
+        preset1['name'] = old_data.get('company', {}).get('name', 'Migrated Template')
         
         try:
             with open(self.config_path, 'w', encoding='utf-8') as f:
@@ -832,27 +833,35 @@ class ConfigLoader:
                 files = zf.namelist()
                 
                 if 'profile.yaml' not in files:
-                    return (None, "Invalid profile archive: profile.yaml missing")
+                    return (None, "Invalid template archive: profile.yaml missing")
                 
+                # Load config
                 try:
                     profile_data = yaml.safe_load(zf.read('profile.yaml'))
-                except yaml.YAMLError:
+                except Exception:
                     return (None, "Invalid profile.yaml format")
-                    
+                
                 if not profile_data or not isinstance(profile_data, dict):
-                    return (None, "Invalid profile configuration")
-
+                    return (None, "Invalid template configuration")
+                    
                 new_key = self._generate_preset_key()
                 
+                # Ensure layout structure
                 if 'layout' not in profile_data:
                     profile_data['layout'] = {}
-                profile_data['layout']['template'] = new_key
                 
-                original_name = profile_data.get('name', 'Imported Profile')
+                # Always ensure template key matches (or at least is set) if missing or we want to force it
+                if 'template' not in profile_data.get('layout', {}):
+                     if 'layout' not in profile_data: profile_data['layout'] = {}
+                     profile_data['layout']['template'] = new_key
+                
+                original_name = profile_data.get('name', 'Imported Template')
+                
+                # Rename if it conflicts
                 existing_names = [p.get('name') for p in self.config.get('presets', {}).values()]
                 if original_name in existing_names:
                     profile_data['name'] = f"{original_name} (Imported)"
-                
+                    
                 self.templates_dir.mkdir(parents=True, exist_ok=True)
                 
                 html_source = 'template.html' if 'template.html' in files else next((f for f in files if f.endswith('.html')), None)
@@ -897,7 +906,6 @@ class ConfigLoader:
                 self._save_config()
                 
                 return (new_key, None)
-
         except Exception as e:
             return (None, f"Import failed: {str(e)}")
 

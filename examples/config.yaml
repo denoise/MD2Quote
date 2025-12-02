@@ -109,7 +109,7 @@ presets:
       table_alt: "#f8f9fa"    # Alternating table row background
 
   # ============================================================================
-  # PRESET 2: Photography Studio
+  # TEMPLATE 2: Photography Studio
   # ============================================================================
   preset_2:
     name: "Photography Studio"
@@ -183,7 +183,7 @@ presets:
       table_alt: "#f0f0f0"      # Very Light Gray - Table rows
 
   # ============================================================================
-  # PRESET 3: Consulting Group
+  # TEMPLATE 3: Consulting Group
   # ============================================================================
   preset_3:
     name: "Consulting Group"
@@ -257,7 +257,7 @@ presets:
       table_alt: "#f1faee"      # Mint Cream - Subtle table rows
 
   # ============================================================================
-  # PRESET 4: Creative Studio
+  # TEMPLATE 4: Creative Studio
   # ============================================================================
   preset_4:
     name: "Creative Studio"
@@ -331,7 +331,7 @@ presets:
       table_alt: "#f8f0fc"      # Pale Lavender - Artistic table rows
 
   # ============================================================================
-  # PRESET 5: Global Solutions
+  # TEMPLATE 5: Global Solutions
   # ============================================================================
   preset_5:
     name: "Global Solutions"

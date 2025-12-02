@@ -1,7 +1,7 @@
 # MD2Quote — Project Context
 
 ## What It Does
-Converts Markdown → professional PDF quotations with live preview, multiple company profiles, LLM-powered content, and customizable templates.
+Converts Markdown → professional PDF quotations with live preview, multiple company templates, LLM-powered content, and customizable layouts.
 
 ## Tech Stack
 - **GUI**: PyQt6 + PyQt6-WebEngine (preview)
@@ -14,7 +14,7 @@ Converts Markdown → professional PDF quotations with live preview, multiple co
 ```
 src/md2quote/
 ├── core/
-│   ├── config.py     # Profiles, quotation numbering, import/export
+│   ├── config.py     # Templates, quotation numbering, import/export
 │   ├── parser.py     # Markdown + YAML frontmatter
 │   ├── renderer.py   # Jinja2 rendering
 │   ├── pdf.py        # Qt WebEngine PDF generation
@@ -24,13 +24,13 @@ src/md2quote/
 │   ├── editor.py        # Multi-cursor markdown editor
 │   ├── preview.py       # PDF preview pane
 │   ├── header.py        # Forms + LLM panel
-│   └── config_dialog.py # Settings/Profiles dialogs
+│   └── config_dialog.py # Settings/Templates dialogs
 templates/               # preset_1-5.html/.css
 ```
 
 ## Key Features
 - Live PDF preview (800ms debounce)
-- 5 profiles with company/contact/bank info
+- 5 templates with company/contact/bank info
 - Quotation numbering: `{YYYY}-{NNN}`, auto-reset
 - LLM: Claude, GPT-4o, Gemini, Llama (streaming)
 - Multi-cursor editing (⌘+D)
@@ -46,8 +46,8 @@ python3 test_core.py  # Smoke test
 
 ## Config
 Stored in `~/.config/md2quote/`:
-- `config.yaml` — All profiles and LLM settings
-- `templates/` — User template overrides
+- `config.yaml` — All templates and LLM settings
+- `templates/` — User layout overrides
 - `logos/` — Stored logo files
 
 ## Architecture Notes
