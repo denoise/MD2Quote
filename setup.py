@@ -34,8 +34,8 @@ OPTIONS = {
         'CFBundleName': 'MD2Quote',
         'CFBundleDisplayName': 'MD2Quote',
         'CFBundleIdentifier': 'com.denoise.md2quote',
-        'CFBundleVersion': '0.9.0 beta',
-        'CFBundleShortVersionString': '0.9.0 beta',
+        'CFBundleVersion': '0.9.1 beta',
+        'CFBundleShortVersionString': '0.9.1 beta',
         'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': '10.15',
         'CFBundleDocumentTypes': [

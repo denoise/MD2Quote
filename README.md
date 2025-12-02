@@ -44,6 +44,7 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 ### VAT & Tax Support
 - **German VAT** — Standard VAT calculation with configurable rates
 - **Kleinunternehmer** — Small business exemption notice
+- **Chilean VAT** — Support for Chilean tax requirements
 - **No VAT** — Option to hide VAT entirely
 
 ---
