@@ -15,7 +15,7 @@ A modern markdown-to-quotation generator with live PDF preview, AI-powered conte
 - **Page Breaks** — Use `+++` on its own line to insert page breaks
 
 ### Profile Management
-- **5 Configurable Profiles** — Switch between different company identities instantly
+- **Unlimited Profiles** — Create or import as many company identities as you need
 - **Company Branding** — Custom logo, name, tagline with visibility controls
 - **Contact Details** — Address, phone, email, website
 - **Legal Information** — Tax ID, Chamber of Commerce number
